@@ -131,6 +131,7 @@ dependencies = [
     "pathspec==0.12.1",
     "pillow==11.2.1",
     "platformdirs==4.3.8",
+    "pre-commit>=4.2.0",
     "prometheus-api-client==0.5.7",
     "prometheus-client==0.22.0",
     "prometheus-fastapi-instrumentator==7.1.0",
