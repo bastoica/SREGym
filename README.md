@@ -27,24 +27,24 @@ Moreover, AIOpsLab provides a built-in benchmark suite with a set of problems to
 <h2 id="📦installation">📦 Installation</h2>
 
 ### Requirements
-- Python >= 3.11
+- Python >= 3.12
 - [Helm](https://helm.sh/)
+- [brew](https://docs.brew.sh/Homebrew-and-Python)
 
 Recommended installation:
 ```bash
-sudo apt install python3.11 python3.11-venv python3.11-dev python3-pip # poetry requires python >= 3.11
+brew install python@3.12 uv
 ```
-
-We recommend [Poetry](https://python-poetry.org/docs/) for managing dependencies. You can also use a standard `pip install -e .` to install the dependencies.
+https://github.com/astral-sh/uv
+We recommend [uv](https://github.com/astral-sh/uv) for managing dependencies. You can also use a standard `pip install -e .` to install the dependencies.
 
 ```bash
 git clone --recurse-submodules <CLONE_PATH_TO_THE_REPO>
-cd AIOpsLab
-poetry env use python3.11
-export PATH="$HOME/.local/bin:$PATH" # export poetry to PATH if needed
-poetry install # -vvv for verbose output
-poetry self add poetry-plugin-shell # installs poetry shell plugin
-poetry shell
+cd SREArena
+which python3.12 # finds the python interpreter path
+uv venv -p <python_interpreter_path>
+source .venv/bin/activate
+uv sync
 ```
 
 <h2 id="🚀quickstart">🚀 Quick Start </h2>
