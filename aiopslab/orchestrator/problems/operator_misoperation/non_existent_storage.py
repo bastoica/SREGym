@@ -1,15 +1,17 @@
 """
 This fault specifies a non-existent storage class.
 """
+
+import time
+from datetime import datetime, timedelta
 from typing import Any
 
-from aiopslab.orchestrator.tasks import *
-from aiopslab.orchestrator.evaluators.quantitative import *
 from aiopslab.generators.fault.inject_operator import K8SOperatorFaultInjector
+from aiopslab.orchestrator.evaluators.quantitative import *
+from aiopslab.orchestrator.tasks import *
 from aiopslab.service.apps.tidb_cluster_operator import TiDBCluster
 from aiopslab.session import SessionItem
-from datetime import datetime, timedelta
-import time
+
 
 class K8SOperatorNonExistentStorageBaseTask:
     def __init__(self):
@@ -31,6 +33,7 @@ class K8SOperatorNonExistentStorageBaseTask:
         print("== Fault Recovery ==")
         self.injector._recover("non_existent_storage")
         print(f"Recovered non-existent failure of the TiDB cluster\n")
+
 
 ################## Detection Problem ##################
 class K8SOperatorNonExistentStorageDetection(

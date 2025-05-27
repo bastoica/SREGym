@@ -3,19 +3,20 @@
 
 """Orchestrator class that interfaces with the agent and the environment."""
 
-from aiopslab.service.helm import Helm
-from aiopslab.service.kubectl import KubeCtl
-from aiopslab.session import Session
-from aiopslab.orchestrator.problems.registry import ProblemRegistry
-from aiopslab.orchestrator.parser import ResponseParser
-from aiopslab.utils.status import *
-from aiopslab.utils.critical_section import CriticalSection
-from aiopslab.service.telemetry.prometheus import Prometheus
-import time
-import inspect
 import asyncio
 import atexit
+import inspect
 import os
+import time
+
+from aiopslab.orchestrator.parser import ResponseParser
+from aiopslab.orchestrator.problems.registry import ProblemRegistry
+from aiopslab.service.helm import Helm
+from aiopslab.service.kubectl import KubeCtl
+from aiopslab.service.telemetry.prometheus import Prometheus
+from aiopslab.session import Session
+from aiopslab.utils.critical_section import CriticalSection
+from aiopslab.utils.status import *
 
 
 class Orchestrator:
@@ -55,7 +56,7 @@ class Orchestrator:
             "kubectl apply -f https://openebs.github.io/charts/openebs-operator.yaml"
         )
         self.kubectl.exec_command(
-            "kubectl patch storageclass openebs-hostpath -p '{\"metadata\": {\"annotations\":{\"storageclass.kubernetes.io/is-default-class\":\"true\"}}}'"
+            'kubectl patch storageclass openebs-hostpath -p \'{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}\''
         )
         self.kubectl.wait_for_ready("openebs")
         print("OpenEBS setup completed.")
@@ -165,7 +166,9 @@ class Orchestrator:
                 if env_response == SubmissionStatus.VALID_SUBMISSION:
                     break
                 elif env_response == SubmissionStatus.INVALID_SUBMISSION:
-                    raise ValueError("Invalid submission!")  # TODO (@manish): ask to retry?
+                    raise ValueError(
+                        "Invalid submission!"
+                    )  # TODO (@manish): ask to retry?
 
                 action_instr = env_response + "\n" + "Please take the next action"
         except Exception as e:
@@ -194,7 +197,7 @@ class Orchestrator:
         with CriticalSection():
             self.session.problem.recover_fault()
             atexit.unregister(exit_cleanup_fault)
-            
+
         # Beyond recovering from fault,
         # I feel sometimes it is safer to delete the whole namespace.
         # But this will take more time.
@@ -202,7 +205,9 @@ class Orchestrator:
         self.session.problem.app.cleanup()
         self.prometheus.teardown()
         print("Uninstalling OpenEBS...")
-        self.kubectl.exec_command("kubectl delete sc openebs-hostpath openebs-device --ignore-not-found")
+        self.kubectl.exec_command(
+            "kubectl delete sc openebs-hostpath openebs-device --ignore-not-found"
+        )
         self.kubectl.exec_command(
             "kubectl delete -f https://openebs.github.io/charts/openebs-operator.yaml"
         )

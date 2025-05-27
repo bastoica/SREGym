@@ -1,16 +1,17 @@
 """Container kill problem in the HotelReservation application."""
 
 from typing import Any
+
 import yaml
 
-from aiopslab.orchestrator.tasks import *
-from aiopslab.orchestrator.evaluators.quantitative import *
-from aiopslab.service.kubectl import KubeCtl
-from aiopslab.service.apps.hotelres import HotelReservation
-from aiopslab.generators.workload.wrk import Wrk
 from aiopslab.generators.fault.inject_symp import SymptomFaultInjector
-from aiopslab.session import SessionItem
+from aiopslab.generators.workload.wrk import Wrk
+from aiopslab.orchestrator.evaluators.quantitative import *
+from aiopslab.orchestrator.tasks import *
 from aiopslab.paths import TARGET_MICROSERVICES
+from aiopslab.service.apps.hotelres import HotelReservation
+from aiopslab.service.kubectl import KubeCtl
+from aiopslab.session import SessionItem
 
 from .helpers import get_frontend_url
 

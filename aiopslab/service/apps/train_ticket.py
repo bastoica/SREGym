@@ -1,11 +1,11 @@
 """Interface to the Train Ticket application"""
+
 import time
 
+from aiopslab.paths import TARGET_MICROSERVICES, TRAIN_TICKET_METADATA
+from aiopslab.service.apps.base import Application
 from aiopslab.service.helm import Helm
 from aiopslab.service.kubectl import KubeCtl
-from aiopslab.service.apps.base import Application
-from aiopslab.paths import TARGET_MICROSERVICES
-from aiopslab.paths import TRAIN_TICKET_METADATA
 
 
 class TrainTicket(Application):
@@ -36,6 +36,7 @@ class TrainTicket(Application):
     def cleanup(self):
         # Helm.uninstall(**self.helm_configs)
         self.kubectl.delete_namespace(self.namespace)
+
 
 # if __name__ == "__main__":
 #     app = TrainTicket()

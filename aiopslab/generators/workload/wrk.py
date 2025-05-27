@@ -3,14 +3,18 @@
 
 """Interface to the wrk workload generator."""
 
-from kubernetes import client, config
-from aiopslab.paths import BASE_DIR
-import yaml
 import time
+
+import yaml
+from kubernetes import client, config
+
+from aiopslab.paths import BASE_DIR
 
 
 class Wrk:
-    def __init__(self, rate, dist="norm", connections=2, duration=6, threads=2, latency=True):
+    def __init__(
+        self, rate, dist="norm", connections=2, duration=6, threads=2, latency=True
+    ):
         self.rate = rate
         self.dist = dist
         self.connections = connections
@@ -19,7 +23,7 @@ class Wrk:
         self.latency = latency
 
         config.load_kube_config()
-    
+
     def create_configmap(self, name, namespace, payload_script_path):
         with open(payload_script_path, "r") as script_file:
             script_content = script_file.read()
@@ -41,7 +45,9 @@ class Wrk:
 
         try:
             print(f"Creating ConfigMap '{name}'...")
-            api_instance.create_namespaced_config_map(namespace=namespace, body=configmap_body)
+            api_instance.create_namespaced_config_map(
+                namespace=namespace, body=configmap_body
+            )
             print(f"ConfigMap '{name}' created successfully.")
         except client.exceptions.ApiException as e:
             print(f"Error creating ConfigMap '{name}': {e}")
@@ -55,14 +61,20 @@ class Wrk:
         container = job_template["spec"]["template"]["spec"]["containers"][0]
         container["args"] = [
             "wrk",
-            "-D", self.dist,
-            "-t", str(self.threads),
-            "-c", str(self.connections),
-            "-d", f"{self.duration}s",
+            "-D",
+            self.dist,
+            "-t",
+            str(self.threads),
+            "-c",
+            str(self.connections),
+            "-d",
+            f"{self.duration}s",
             "-L",
-            "-s", f"/scripts/{payload_script}",
+            "-s",
+            f"/scripts/{payload_script}",
             url,
-            "-R", str(self.rate),
+            "-R",
+            str(self.rate),
         ]
 
         if self.latency:
@@ -84,15 +96,15 @@ class Wrk:
 
         api_instance = client.BatchV1Api()
         try:
-            existing_job = api_instance.read_namespaced_job(name=job_name, namespace=namespace)
+            existing_job = api_instance.read_namespaced_job(
+                name=job_name, namespace=namespace
+            )
             if existing_job:
                 print(f"Job '{job_name}' already exists. Deleting it...")
                 api_instance.delete_namespaced_job(
                     name=job_name,
                     namespace=namespace,
-                    body=client.V1DeleteOptions(
-                        propagation_policy="Foreground"
-                    )
+                    body=client.V1DeleteOptions(propagation_policy="Foreground"),
                 )
                 time.sleep(5)
         except client.exceptions.ApiException as e:
@@ -101,7 +113,9 @@ class Wrk:
                 return
 
         try:
-            response = api_instance.create_namespaced_job(namespace=namespace, body=job_template)
+            response = api_instance.create_namespaced_job(
+                namespace=namespace, body=job_template
+            )
             print(f"Job created: {response.metadata.name}")
         except client.exceptions.ApiException as e:
             print(f"Error creating job: {e}")
@@ -109,7 +123,9 @@ class Wrk:
 
         try:
             while True:
-                job_status = api_instance.read_namespaced_job_status(name=job_name, namespace=namespace)
+                job_status = api_instance.read_namespaced_job_status(
+                    name=job_name, namespace=namespace
+                )
                 if job_status.status.ready:
                     print("Job completed successfully.")
                     break
@@ -124,12 +140,13 @@ class Wrk:
         namespace = "default"
         configmap_name = "wrk2-payload-script"
 
-        self.create_configmap(name=configmap_name, namespace=namespace, payload_script_path=payload_script)
+        self.create_configmap(
+            name=configmap_name, namespace=namespace, payload_script_path=payload_script
+        )
 
         self.create_wrk_job(
             job_name="wrk2-job",
             namespace=namespace,
             payload_script=payload_script.name,
-            url=url
+            url=url,
         )
-

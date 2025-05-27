@@ -4,6 +4,7 @@
 """Utility functions for handling status and errors."""
 
 from enum import Enum
+
 from colorama import Fore, Style
 
 from aiopslab.config import Config

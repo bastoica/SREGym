@@ -3,10 +3,10 @@
 
 import pathlib
 import sys
-import pytz
 from datetime import datetime, timedelta
 
-from kubernetes import config, client
+import pytz
+from kubernetes import client, config
 from yaml import full_load
 
 root_path = pathlib.Path(__file__).parent

@@ -1,14 +1,16 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-import os
 import json
-import yaml
+import os
 import time
 from subprocess import CalledProcessError
+
+import yaml
+
+from aiopslab.paths import BASE_DIR, PROMETHEUS_METADATA
 from aiopslab.service.helm import Helm
 from aiopslab.service.kubectl import KubeCtl
-from aiopslab.paths import PROMETHEUS_METADATA, BASE_DIR
 
 
 class Prometheus:
@@ -98,7 +100,9 @@ class Prometheus:
     def _delete_pvc(self):
         """Delete the PersistentVolume and associated PersistentVolumeClaim."""
         pvc_name = self._get_pvc_name_from_file(self.pvc_config_file)
-        result = KubeCtl().exec_command(f"kubectl get pvc {pvc_name} --ignore-not-found")
+        result = KubeCtl().exec_command(
+            f"kubectl get pvc {pvc_name} --ignore-not-found"
+        )
 
         if result:
             print(f"Deleting PersistentVolumeClaim {pvc_name}")

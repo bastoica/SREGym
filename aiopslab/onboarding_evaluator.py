@@ -3,16 +3,17 @@
 
 """Orchestrator class that interfaces with the agent and the environment."""
 
+import asyncio
+import inspect
+import time
+
+from aiopslab.orchestrator.onboarding_eval_parser import EvalParser
+from aiopslab.orchestrator.problems.registry import ProblemRegistry
 from aiopslab.service.helm import Helm
 from aiopslab.service.kubectl import KubeCtl
-from aiopslab.session import Session
-from aiopslab.orchestrator.problems.registry import ProblemRegistry
-from aiopslab.orchestrator.onboarding_eval_parser import EvalParser
-from aiopslab.utils.status import *
 from aiopslab.service.telemetry.prometheus import Prometheus
-import time
-import inspect
-import asyncio
+from aiopslab.session import Session
+from aiopslab.utils.status import *
 
 
 class Evaluator:
@@ -55,7 +56,7 @@ class Evaluator:
                 "kubectl apply -f https://openebs.github.io/charts/openebs-operator.yaml"
             )
             self.kubectl.exec_command(
-                "kubectl patch storageclass openebs-hostpath -p '{\"metadata\": {\"annotations\":{\"storageclass.kubernetes.io/is-default-class\":\"true\"}}}'"
+                'kubectl patch storageclass openebs-hostpath -p \'{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}\''
             )
             self.kubectl.wait_for_ready("openebs")
             print("OpenEBS setup completed.")
@@ -118,29 +119,28 @@ class Evaluator:
         # special handling for submit
         if api == "submit":
             self.session.set_solution(args[0] if len(args) == 1 else args)
-            
+
             # Use the problem's eval method to check if solution is valid
             try:
                 # Calculate the current duration manually since session isn't ended yet
                 current_time = time.time()
                 current_duration = current_time - self.session.start_time
-                
+
                 # Create a temporary dict to store results
                 temp_results = self.session.problem.eval(
-                    self.session.solution, 
-                    self.session.history, 
-                    current_duration
+                    self.session.solution, self.session.history, current_duration
                 )
-                
+
                 # Check if the solution is successful based on eval results
                 if temp_results.get("success", False):
                     env_response = SubmissionStatus.VALID_SUBMISSION
                 else:
                     env_response = SubmissionStatus.INVALID_SUBMISSION
-                    
+
             except Exception as e:
                 print(f"Error validating submission: {e}")
                 import traceback
+
                 traceback.print_exc()
                 env_response = SubmissionStatus.INVALID_SUBMISSION
         else:
@@ -164,50 +164,50 @@ class Evaluator:
         action, env_response, results = "", "", {}
         self.session.start()
         self.execution_start_time = time.time()
-        
+
         # Initial environment response
         env_response = await self.ask_env(action)
-        
+
         while env_response != SubmissionStatus.VALID_SUBMISSION:
             action = await self.ask_agent(action_instr)
             self.sprint.agent(action)
-            
+
             env_response = await self.ask_env(action)
             self.sprint.service(env_response)
-            
+
             if env_response == SubmissionStatus.VALID_SUBMISSION:
                 print("Submission is correct!")
                 break
             elif env_response == SubmissionStatus.INVALID_SUBMISSION:
-                print("Your submission was invalid. Please continue working on the problem.")
+                print(
+                    "Your submission was invalid. Please continue working on the problem."
+                )
             else:
                 action_instr = env_response
-        
+
         self.session.end()
-        
+
         # Final evaluation with the valid submission
         if env_response == SubmissionStatus.VALID_SUBMISSION:
             results = self.session.problem.eval(
                 self.session.solution, self.session.history, self.session.get_duration()
             )
             self.sprint.result(results)
-        
+
         self.session.set_results(results)
         self.session.to_json()
         self.session.problem.recover_fault()
-        
+
         # App cleanup
         self.session.problem.app.cleanup()
-        
+
         self.execution_end_time = time.time()
         total_execution_time = self.execution_end_time - self.execution_start_time
         time_keys = ["TTD", "TTL", "TTA", "TTM"]
         key = next((k for k in time_keys if k in results), None)
-        framework_overhead = (
-            total_execution_time - (results.get(key, 0) or 0)
-        )
+        framework_overhead = total_execution_time - (results.get(key, 0) or 0)
         print(f"Framework overhead: {framework_overhead}")
-        
+
         return {
             "history": self.session.history,
             "final_state": env_response,

@@ -2,8 +2,8 @@
 # Licensed under the MIT License.
 
 from .revoke_auth import (
+    MongoDBRevokeAuthAnalysis,
     MongoDBRevokeAuthDetection,
     MongoDBRevokeAuthLocalization,
-    MongoDBRevokeAuthAnalysis,
     MongoDBRevokeAuthMitigation,
 )

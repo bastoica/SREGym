@@ -2,11 +2,10 @@
 # Licensed under the MIT License.
 
 from aiopslab.config import Config
+from aiopslab.orchestrator.evaluators.qualitative import LLMJudge
+from aiopslab.orchestrator.evaluators.quantitative import *
 from aiopslab.paths import BASE_DIR
 from aiopslab.service.kubectl import KubeCtl
-from aiopslab.orchestrator.evaluators.quantitative import *
-from aiopslab.orchestrator.evaluators.qualitative import LLMJudge
-
 
 config = Config(BASE_DIR / "config.yml")
 

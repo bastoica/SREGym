@@ -1,18 +1,18 @@
-# Ramifications: The TiDB cluster can become unhealthy: 
+# Ramifications: The TiDB cluster can become unhealthy:
 # $ kubectl get events -n tidb-cluster
 # 10m         Warning   Unhealthy              pod/basic-tidb-0                                                   Readiness probe failed: dial tcp 10.244.0.27:4000: connect: connection refused
 
 # Only a few pods (e.g., 4 out of 100,000 replicas requested) are created successfully.
 
+import time
+from datetime import datetime, timedelta
 from typing import Any
 
-from aiopslab.orchestrator.tasks import *
-from aiopslab.orchestrator.evaluators.quantitative import *
 from aiopslab.generators.fault.inject_operator import K8SOperatorFaultInjector
+from aiopslab.orchestrator.evaluators.quantitative import *
+from aiopslab.orchestrator.tasks import *
 from aiopslab.service.apps.tidb_cluster_operator import TiDBCluster
 from aiopslab.session import SessionItem
-from datetime import datetime, timedelta
-import time
 
 
 class K8SOperatorOverloadReplicasBaseTask:

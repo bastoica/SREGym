@@ -3,8 +3,8 @@
 
 """Parser for various APIs that an Agent may invoke."""
 
-import re
 import ast
+import re
 
 from aiopslab.utils.status import ResponseParsingError
 

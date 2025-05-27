@@ -3,9 +3,11 @@
 
 """Interface to run shell commands in the service cluster."""
 
-import subprocess
-import paramiko
 import os
+import subprocess
+
+import paramiko
+
 from aiopslab.paths import config
 
 
@@ -85,7 +87,9 @@ class Shell:
                 return output_message
 
         except Exception as e:
-            raise RuntimeError(f"Failed to execute command via SSH: {command}\nError: {str(e)}")
+            raise RuntimeError(
+                f"Failed to execute command via SSH: {command}\nError: {str(e)}"
+            )
 
         finally:
             ssh_client.close()
@@ -94,7 +98,7 @@ class Shell:
     def docker_exec(container_name: str, command: str):
         """Execute a command inside a running Docker container."""
         escaped_command = command.replace('"', '\\"')
-        
+
         docker_command = f'docker exec {container_name} sh -c "{escaped_command}"'
 
         try:
@@ -102,7 +106,7 @@ class Shell:
                 docker_command,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                shell=True
+                shell=True,
             )
 
             if out.stderr or out.returncode != 0:
@@ -115,4 +119,6 @@ class Shell:
                 return output_message
 
         except Exception as e:
-            raise RuntimeError(f"Failed to execute command in Docker container: {container_name}\nError: {str(e)}")
+            raise RuntimeError(
+                f"Failed to execute command in Docker container: {container_name}\nError: {str(e)}"
+            )

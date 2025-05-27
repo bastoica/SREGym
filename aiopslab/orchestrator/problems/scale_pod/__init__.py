@@ -2,8 +2,8 @@
 # Licensed under the MIT License.
 
 from .scale_pod_social_net import (
+    ScalePodSocialNetAnalysis,
     ScalePodSocialNetDetection,
     ScalePodSocialNetLocalization,
-    ScalePodSocialNetAnalysis,
     ScalePodSocialNetMitigation,
 )

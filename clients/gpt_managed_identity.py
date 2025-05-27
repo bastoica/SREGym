@@ -1,14 +1,14 @@
 """Naive GPT client (with shell access) for AIOpsLab. Uses Azure Managed Identity for authentication.
 
-Achiam, Josh, Steven Adler, Sandhini Agarwal, Lama Ahmad, Ilge Akkaya, Florencia Leoni Aleman, Diogo Almeida et al. 
+Achiam, Josh, Steven Adler, Sandhini Agarwal, Lama Ahmad, Ilge Akkaya, Florencia Leoni Aleman, Diogo Almeida et al.
 "Gpt-4 technical report." arXiv preprint arXiv:2303.08774 (2023).
 
 Code: https://openai.com/index/gpt-4-research/
 Paper: https://arxiv.org/abs/2303.08774
 """
 
-import sys
 import asyncio
+import sys
 
 from aiopslab.orchestrator import Orchestrator
 from clients.utils.llm import GPTClient

@@ -2,11 +2,11 @@
 
 from typing import Any
 
-from aiopslab.orchestrator.tasks import *
-from aiopslab.orchestrator.evaluators.quantitative import *
-from aiopslab.service.kubectl import KubeCtl
-from aiopslab.service.apps.astronomy_shop import AstronomyShop
 from aiopslab.generators.fault.inject_otel import OtelFaultInjector
+from aiopslab.orchestrator.evaluators.quantitative import *
+from aiopslab.orchestrator.tasks import *
+from aiopslab.service.apps.astronomy_shop import AstronomyShop
+from aiopslab.service.kubectl import KubeCtl
 from aiopslab.session import SessionItem
 
 

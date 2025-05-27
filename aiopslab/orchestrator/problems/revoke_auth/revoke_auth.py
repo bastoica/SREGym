@@ -5,14 +5,14 @@
 
 from typing import Any
 
-from aiopslab.orchestrator.tasks import *
-from aiopslab.orchestrator.evaluators.quantitative import *
-from aiopslab.service.kubectl import KubeCtl
-from aiopslab.service.apps.hotelres import HotelReservation
-from aiopslab.generators.workload.wrk import Wrk
 from aiopslab.generators.fault.inject_app import ApplicationFaultInjector
-from aiopslab.session import SessionItem
+from aiopslab.generators.workload.wrk import Wrk
+from aiopslab.orchestrator.evaluators.quantitative import *
+from aiopslab.orchestrator.tasks import *
 from aiopslab.paths import TARGET_MICROSERVICES
+from aiopslab.service.apps.hotelres import HotelReservation
+from aiopslab.service.kubectl import KubeCtl
+from aiopslab.session import SessionItem
 
 from .helpers import get_frontend_url
 
@@ -98,8 +98,10 @@ class MongoDBRevokeAuthLocalization(MongoDBRevokeAuthBaseTask, LocalizationTask)
             return self.results
 
         # Calculate exact match and subset
-        is_exact = is_exact_match(soln, self.faulty_service) or is_exact_match(soln, self.faulty_service.removeprefix("mongodb-")) # Given that monogodb-geo and geo are closely coupled
-                                                                                                                                   # (likewise with rate), either pod should be an answer
+        is_exact = is_exact_match(soln, self.faulty_service) or is_exact_match(
+            soln, self.faulty_service.removeprefix("mongodb-")
+        )  # Given that monogodb-geo and geo are closely coupled
+        # (likewise with rate), either pod should be an answer
         is_sub = is_subset([self.faulty_service], soln)
 
         # Determine accuracy
@@ -118,39 +120,6 @@ class MongoDBRevokeAuthLocalization(MongoDBRevokeAuthBaseTask, LocalizationTask)
 
         self.results["success"] = is_exact or (is_sub and len(soln) == 1)
         self.results["is_subset"] = is_sub
-
-        return self.results
-
-
-################## Root cause analysis Problem ##################
-class MongoDBRevokeAuthAnalysis(MongoDBRevokeAuthBaseTask, AnalysisTask):
-    def __init__(self, faulty_service: str = "mongodb-geo"):
-        MongoDBRevokeAuthBaseTask.__init__(self, faulty_service=faulty_service)
-        AnalysisTask.__init__(self, self.app)
-
-    def eval(self, soln: Any, trace: list[SessionItem], duration: float):
-        print("== Evaluation ==")
-
-        if not isinstance(soln, dict):
-            print("Solution is not a dictionary")
-            self.results["system_level_correct"] = False
-            self.results["fault_type_correct"] = False
-            self.results["success"] = False
-            super().eval(soln, trace, duration)
-            return self.results
-
-        is_sys_level_correct = is_exact_match_lower(
-            soln.get("system_level", ""), "Application"
-        )
-        is_fault_type_correct = is_exact_match_lower(
-            soln.get("fault_type", ""), "Authentication Issue"
-        )
-
-        self.results["system_level_correct"] = is_sys_level_correct
-        self.results["fault_type_correct"] = is_fault_type_correct
-        self.results["success"] = is_sys_level_correct and is_fault_type_correct
-
-        super().eval(soln, trace, duration)
 
         return self.results
 

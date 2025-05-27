@@ -1,14 +1,17 @@
 """
 This fault specifies an invalid update strategy.
 """
+
+import time
+from datetime import datetime, timedelta
 from typing import Any
-from aiopslab.orchestrator.tasks import *
-from aiopslab.orchestrator.evaluators.quantitative import *
+
 from aiopslab.generators.fault.inject_operator import K8SOperatorFaultInjector
+from aiopslab.orchestrator.evaluators.quantitative import *
+from aiopslab.orchestrator.tasks import *
 from aiopslab.service.apps.tidb_cluster_operator import TiDBCluster
 from aiopslab.session import SessionItem
-from datetime import datetime, timedelta
-import time
+
 
 class K8SOperatorWrongUpdateStrategyBaseTask:
     def __init__(self):

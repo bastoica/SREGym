@@ -1,10 +1,10 @@
-"""Naive Qwen client (with shell access) for AIOpsLab.
-"""
+"""Naive Qwen client (with shell access) for AIOpsLab."""
 
-import os
 import asyncio
+import os
 
 import wandb
+
 from aiopslab.orchestrator import Orchestrator
 from clients.utils.llm import QwenClient
 from clients.utils.templates import DOCS_SHELL_ONLY
@@ -18,13 +18,11 @@ class Agent:
     def init_context(self, problem_desc: str, instructions: str, apis: str):
         """Initialize the context for the agent."""
 
-        self.shell_api = self._filter_dict(
-            apis, lambda k, _: "exec_shell" in k)
+        self.shell_api = self._filter_dict(apis, lambda k, _: "exec_shell" in k)
         self.submit_api = self._filter_dict(apis, lambda k, _: "submit" in k)
 
-        def stringify_apis(apis): return "\n\n".join(
-            [f"{k}\n{v}" for k, v in apis.items()]
-        )
+        def stringify_apis(apis):
+            return "\n\n".join([f"{k}\n{v}" for k, v in apis.items()])
 
         self.system_message = DOCS_SHELL_ONLY.format(
             prob_desc=problem_desc,
@@ -58,7 +56,7 @@ class Agent:
 if __name__ == "__main__":
     # Load use_wandb from environment variable with a default of False
     use_wandb = os.getenv("USE_WANDB", "false").lower() == "true"
-    
+
     if use_wandb:
         # Initialize wandb running
         wandb.init(project="AIOpsLab", entity="AIOpsLab")

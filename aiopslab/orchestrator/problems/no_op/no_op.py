@@ -2,16 +2,16 @@
 
 from typing import Any
 
-from aiopslab.orchestrator.tasks import *
+from aiopslab.generators.fault.inject_noop import NoopFaultInjector
+from aiopslab.generators.workload.wrk import Wrk
 from aiopslab.orchestrator.evaluators.quantitative import *
-from aiopslab.service.kubectl import KubeCtl
+from aiopslab.orchestrator.tasks import *
+from aiopslab.paths import TARGET_MICROSERVICES
+from aiopslab.service.apps.astronomy_shop import AstronomyShop
 from aiopslab.service.apps.hotelres import HotelReservation
 from aiopslab.service.apps.socialnet import SocialNetwork
-from aiopslab.service.apps.astronomy_shop import AstronomyShop
-from aiopslab.generators.workload.wrk import Wrk
-from aiopslab.generators.fault.inject_noop import NoopFaultInjector
+from aiopslab.service.kubectl import KubeCtl
 from aiopslab.session import SessionItem
-from aiopslab.paths import TARGET_MICROSERVICES
 
 from .helpers import get_frontend_url
 
@@ -45,7 +45,7 @@ class NoOpBaseTask:
         self.injector = NoopFaultInjector(namespace=self.namespace)
 
     def start_workload(self):
-        if self.app_name != 'astronomy_shop':
+        if self.app_name != "astronomy_shop":
             print("== Start Workload ==")
             frontend_url = get_frontend_url(self.app)
 

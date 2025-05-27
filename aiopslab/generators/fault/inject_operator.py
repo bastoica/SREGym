@@ -1,7 +1,9 @@
-import yaml
 import time
-from aiopslab.service.kubectl import KubeCtl
+
+import yaml
+
 from aiopslab.generators.fault.base import FaultInjector
+from aiopslab.service.kubectl import KubeCtl
 
 
 class K8SOperatorFaultInjector(FaultInjector):

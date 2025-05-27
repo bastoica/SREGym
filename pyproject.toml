@@ -2,6 +2,7 @@
 name = "aiopslab"
 require-python = ">= 3.12"
 version = "0.0.1"
+
 dependencies = [
     "aiohappyeyeballs==2.6.1",
     "aiohttp==3.12.1",
@@ -205,3 +206,11 @@ dependencies = [
     "yarl==1.20.0",
     "zipp==3.22.0",
 ]
+
+[tool.black]
+line-length = 88
+target-version = ["py312"]
+
+[tool.isort]
+profile = "black"
+line_length = 88

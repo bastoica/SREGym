@@ -5,16 +5,16 @@
 """AIOpsLab CLI client."""
 
 import asyncio
+
 from prompt_toolkit import PromptSession
-from prompt_toolkit.styles import Style
+from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.patch_stdout import patch_stdout
+from prompt_toolkit.styles import Style
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
-from prompt_toolkit.completion import WordCompleter
 
 from aiopslab.orchestrator import Orchestrator
-
 
 WELCOME = """
 # AIOpsLab

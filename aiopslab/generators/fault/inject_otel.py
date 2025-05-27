@@ -1,5 +1,6 @@
 import json
 import subprocess
+
 from aiopslab.generators.fault.base import FaultInjector
 from aiopslab.service.kubectl import KubeCtl
 
@@ -43,7 +44,7 @@ class OtelFaultInjector(FaultInjector):
         self.kubectl.exec_command(
             f"kubectl rollout restart deployment flagd -n {self.namespace}"
         )
-        
+
         print(f"Fault injected: Feature flag '{feature_flag}' set to 'on'.")
 
     def recover_fault(self, feature_flag: str):

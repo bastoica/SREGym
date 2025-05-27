@@ -4,18 +4,19 @@
 """Inject faults at the OS layer."""
 
 import json
-import yaml
 import subprocess
 
-from aiopslab.service.kubectl import KubeCtl
+import yaml
+
 from aiopslab.generators.fault.base import FaultInjector
-from aiopslab.paths import BASE_DIR
 from aiopslab.generators.fault.helpers import (
     get_pids_by_name,
-    sn_svc_process_names,
-    hr_svc_process_names,
     hr_mongod_process_names,
+    hr_svc_process_names,
+    sn_svc_process_names,
 )
+from aiopslab.paths import BASE_DIR
+from aiopslab.service.kubectl import KubeCtl
 
 
 class OSFaultInjector(FaultInjector):

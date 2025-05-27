@@ -4,6 +4,7 @@
 """Inject faults at the application layer: Code, MongoDB, Redis, etc."""
 
 import time
+
 from aiopslab.generators.fault.base import FaultInjector
 from aiopslab.service.kubectl import KubeCtl
 

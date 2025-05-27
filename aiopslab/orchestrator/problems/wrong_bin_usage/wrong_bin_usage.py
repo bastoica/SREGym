@@ -2,14 +2,14 @@
 
 from typing import Any
 
-from aiopslab.orchestrator.tasks import *
-from aiopslab.orchestrator.evaluators.quantitative import *
-from aiopslab.service.kubectl import KubeCtl
-from aiopslab.service.apps.hotelres import HotelReservation
-from aiopslab.generators.workload.wrk import Wrk
 from aiopslab.generators.fault.inject_virtual import VirtualizationFaultInjector
-from aiopslab.session import SessionItem
+from aiopslab.generators.workload.wrk import Wrk
+from aiopslab.orchestrator.evaluators.quantitative import *
+from aiopslab.orchestrator.tasks import *
 from aiopslab.paths import TARGET_MICROSERVICES
+from aiopslab.service.apps.hotelres import HotelReservation
+from aiopslab.service.kubectl import KubeCtl
+from aiopslab.session import SessionItem
 
 from .helpers import get_frontend_url
 
@@ -120,39 +120,6 @@ class WrongBinUsageLocalization(WrongBinUsageBaseTask, LocalizationTask):
         return self.results
 
 
-################## Root cause analysis Problem ##################
-class WrongBinUsageAnalysis(WrongBinUsageBaseTask, AnalysisTask):
-    def __init__(self, faulty_service: str = "profile"):
-        WrongBinUsageBaseTask.__init__(self, faulty_service=faulty_service)
-        AnalysisTask.__init__(self, self.app)
-
-    def eval(self, soln: Any, trace: list[SessionItem], duration: float):
-        print("== Evaluation ==")
-
-        if not isinstance(soln, dict):
-            print("Solution is not a dictionary")
-            self.results["system_level_correct"] = False
-            self.results["fault_type_correct"] = False
-            self.results["success"] = False
-            super().eval(soln, trace, duration)
-            return self.results
-
-        is_sys_level_correct = is_exact_match_lower(
-            soln.get("system_level", ""), "Application"
-        )
-        is_fault_type_correct = is_exact_match_lower(
-            soln.get("fault_type", ""), "Network/Storage Issue"
-        )
-
-        self.results["system_level_correct"] = is_sys_level_correct
-        self.results["fault_type_correct"] = is_fault_type_correct
-        self.results["success"] = is_sys_level_correct and is_fault_type_correct
-
-        super().eval(soln, trace, duration)
-
-        return self.results
-
-
 ################## Mitigation Problem ##################
 class WrongBinUsageMitigation(WrongBinUsageBaseTask, MitigationTask):
     def __init__(self, faulty_service: str = "profile"):
@@ -172,11 +139,23 @@ class WrongBinUsageMitigation(WrongBinUsageBaseTask, MitigationTask):
             for container_status in pod.status.container_statuses:
                 if container_status.state.waiting:
                     reason = container_status.state.waiting.reason
-                    if reason in ["CrashLoopBackOff", "Error", "ImagePullBackOff", "ErrImagePull"]:
-                        print(f"Container {container_status.name} is in error state: {reason}")
+                    if reason in [
+                        "CrashLoopBackOff",
+                        "Error",
+                        "ImagePullBackOff",
+                        "ErrImagePull",
+                    ]:
+                        print(
+                            f"Container {container_status.name} is in error state: {reason}"
+                        )
                         all_normal = False
-                elif container_status.state.terminated and container_status.state.terminated.reason != "Completed":
-                    print(f"Container {container_status.name} is terminated with reason: {container_status.state.terminated.reason}")
+                elif (
+                    container_status.state.terminated
+                    and container_status.state.terminated.reason != "Completed"
+                ):
+                    print(
+                        f"Container {container_status.name} is terminated with reason: {container_status.state.terminated.reason}"
+                    )
                     all_normal = False
                 elif not container_status.ready:
                     print(f"Container {container_status.name} is not ready")
@@ -188,10 +167,12 @@ class WrongBinUsageMitigation(WrongBinUsageBaseTask, MitigationTask):
                 return self.results
 
         # Check if the deployment was updated to use the right binary
-        expected_command = "profile" # Command dictates which binary will be ran, we want to run /go/bin/profile and not /go/bin/geo
+        expected_command = "profile"  # Command dictates which binary will be ran, we want to run /go/bin/profile and not /go/bin/geo
 
         try:
-            deployment = self.kubectl.get_deployment(self.faulty_service, self.namespace)
+            deployment = self.kubectl.get_deployment(
+                self.faulty_service, self.namespace
+            )
             containers = deployment.spec.template.spec.containers
 
             for container in containers:

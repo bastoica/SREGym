@@ -1,15 +1,16 @@
 """Custom parser for the onboarding task evaluator"""
 
-import re
 import ast
+import re
 
 from aiopslab.utils.status import ResponseParsingError
+
 
 class EvalParser:
     def __init__(self):
         # Define list of known API commands that need special handling
         self.known_apis = ["submit"]
-        
+
     def parse(self, response: str) -> dict:
         """Parses the response string to extract the API name and arguments.
 
@@ -21,20 +22,20 @@ class EvalParser:
         """
         code_block = self.extract_codeblock(response)
         context = self.extract_context(response)
-        
+
         # If there's no code block, check if the response itself is a command
         if not code_block:
             code_block = response.strip()
-            
+
         # Check if the code block is a simple "submit" command without parameters
         if code_block.strip() == "submit":
             return {
                 "api_name": "submit",
-                "args": [None],  # Placeholder argument 
+                "args": [None],  # Placeholder argument
                 "kwargs": {},
                 "context": context,
             }
-            
+
         # Handle other known APIs with function call syntax
         if any(code_block.strip().startswith(api + "(") for api in self.known_apis):
             api_name = self.parse_api_name(code_block)
@@ -45,7 +46,7 @@ class EvalParser:
                 "kwargs": kwargs,
                 "context": context,
             }
-            
+
         # Default to exec_shell for unrecognized commands
         # Strip any leading/trailing backticks if present
         command = code_block.strip("` \n")

@@ -2,21 +2,20 @@
 # Licensed under the MIT License.
 
 import os
-import time
-import subprocess
-import socket
 import select
+import socket
+import subprocess
 import threading
-from datetime import datetime
-from typing import Union
+import time
 from datetime import datetime, timedelta
-from kubernetes import client
+from typing import Union
 
 import pandas as pd
 import pytz
+from kubernetes import client
 from prometheus_api_client import PrometheusConnect
 
-from aiopslab.observer import monitor_config, root_path, get_pod_list, get_services_list
+from aiopslab.observer import get_pod_list, get_services_list, monitor_config, root_path
 
 normal_metrics = [
     # cpu
@@ -148,11 +147,11 @@ class PrometheusAPI:
         self.pod_list, self.service_list = self.initialize_pod_and_service_lists(
             namespace
         )
-    
+
     def is_port_in_use(self, port):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             return s.connect_ex(("127.0.0.1", port)) == 0
-    
+
     def find_free_port(self, start=32000, end=32100):
         for port in range(start, end):
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -179,7 +178,7 @@ class PrometheusAPI:
         if self.port_forward_process and self.port_forward_process.poll() is None:
             print("Port-forwarding already active.")
             return
-        
+
         for attempt in range(3):
             if self.is_port_in_use(self.port):
                 print(
@@ -188,7 +187,9 @@ class PrometheusAPI:
                 time.sleep(3)
                 continue
 
-            command = f"kubectl port-forward svc/prometheus-server {self.port}:80 -n observe"
+            command = (
+                f"kubectl port-forward svc/prometheus-server {self.port}:80 -n observe"
+            )
             self.port_forward_process = subprocess.Popen(
                 command,
                 shell=True,
@@ -370,7 +371,7 @@ class PrometheusAPI:
                         dt.to_csv(f, header=False, index=False)
                 else:
                     dt.to_csv(file_path, index=False)
-            self.cleanup() # Stop port-forwarding after metrics are exported
+            self.cleanup()  # Stop port-forwarding after metrics are exported
 
             # # for metric in istio_metrics:
             #     data_raw = self.client.custom_query_range(f"{metric}{{namespace='{namespace}'}}", time_format_transform(start_time), time_format_transform(current_et), step=step)
@@ -405,13 +406,13 @@ class PrometheusAPI:
             #     else:
             #         dt.to_csv(file_path, index=False)
             start_time = current_et
-            
+
         # Print the folder structure
         export_msg = f"Metrics data exported to directory: {save_path}\n\nFolder structure of exported metrics:\n"
         for root, dirs, files in os.walk(save_path):
             level = root.replace(save_path, "").count(os.sep)
             indent = " " * 4 * level
-            export_msg += f"{indent}{os.path.basename(root)}/\n"  
+            export_msg += f"{indent}{os.path.basename(root)}/\n"
             subindent = " " * 4 * (level + 1)
             for f in files:
                 export_msg += f"{subindent}{f}\n"

@@ -2,9 +2,10 @@
 # Licensed under the MIT License.
 
 import time
-from aiopslab.service.kubectl import KubeCtl
-from aiopslab.service.apps.base import Application
+
 from aiopslab.paths import FAULT_SCRIPTS, HOTEL_RES_METADATA
+from aiopslab.service.apps.base import Application
+from aiopslab.service.kubectl import KubeCtl
 
 
 class HotelReservation(Application):
@@ -69,10 +70,10 @@ class HotelReservation(Application):
         print(f"Deploying Kubernetes configurations in namespace: {self.namespace}")
         self.kubectl.apply_configs(self.namespace, self.k8s_deploy_path)
         self.kubectl.wait_for_ready(self.namespace)
-    
+
     def deploy_without_wait(self):
         """Deploy the Kubernetes configurations without waiting for ready."""
-        
+
         print(f"Deploying Kubernetes configurations in namespace: {self.namespace}")
         self.kubectl.apply_configs(self.namespace, self.k8s_deploy_path)
         print(f"Waiting for stability...")

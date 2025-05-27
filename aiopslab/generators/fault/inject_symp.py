@@ -5,11 +5,14 @@ import os
 import subprocess
 import threading
 import time
-import yaml
 from typing import List
+
+import yaml
+
+from aiopslab.generators.fault.base import FaultInjector
 from aiopslab.service.helm import Helm
 from aiopslab.service.kubectl import KubeCtl
-from aiopslab.generators.fault.base import FaultInjector
+
 
 class SymptomFaultInjector(FaultInjector):
     def __init__(self, namespace: str):
@@ -114,9 +117,9 @@ class SymptomFaultInjector(FaultInjector):
                 "mode": "one",
                 "duration": "200s",
                 "selector": {"labelSelectors": {"io.kompose.service": microservice}},
-                "containerNames": containers
-                if isinstance(containers, list)
-                else [containers],
+                "containerNames": (
+                    containers if isinstance(containers, list) else [containers]
+                ),
             },
         }
 

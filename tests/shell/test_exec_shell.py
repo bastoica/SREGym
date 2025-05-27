@@ -2,6 +2,7 @@
 # Licensed under the MIT License.
 
 import unittest
+
 from aiopslab.service.shell import Shell
 
 

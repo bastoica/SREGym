@@ -5,14 +5,14 @@
 
 from typing import Any
 
-from aiopslab.orchestrator.tasks import *
-from aiopslab.orchestrator.evaluators.quantitative import *
-from aiopslab.service.kubectl import KubeCtl
-from aiopslab.service.apps.hotelres import HotelReservation
-from aiopslab.generators.workload.wrk import Wrk
 from aiopslab.generators.fault.inject_symp import SymptomFaultInjector
-from aiopslab.session import SessionItem
+from aiopslab.generators.workload.wrk import Wrk
+from aiopslab.orchestrator.evaluators.quantitative import *
+from aiopslab.orchestrator.tasks import *
 from aiopslab.paths import TARGET_MICROSERVICES
+from aiopslab.service.apps.hotelres import HotelReservation
+from aiopslab.service.kubectl import KubeCtl
+from aiopslab.session import SessionItem
 
 from .helpers import get_frontend_url
 
@@ -40,11 +40,11 @@ class NetworkLossBaseTask:
         )
 
     def inject_fault(self):
-        print("== Fault Injection ==")      
+        print("== Fault Injection ==")
         self.injector._inject(
             fault_type="network_loss",
             microservices=[self.faulty_service],
-            duration="200s"
+            duration="200s",
         )
         print(f"Service: {self.faulty_service} | Namespace: {self.namespace}\n")
 
@@ -53,6 +53,7 @@ class NetworkLossBaseTask:
         self.injector._recover(
             fault_type="network_loss",
         )
+
 
 ################## Detection Problem ##################
 class NetworkLossDetection(NetworkLossBaseTask, DetectionTask):
@@ -79,9 +80,7 @@ class NetworkLossDetection(NetworkLossBaseTask, DetectionTask):
 
 
 ################## Localization Problem ##################
-class NetworkLossLocalization(
-    NetworkLossBaseTask, LocalizationTask
-):
+class NetworkLossLocalization(NetworkLossBaseTask, LocalizationTask):
     def __init__(self):
         NetworkLossBaseTask.__init__(self)
         LocalizationTask.__init__(self, self.app)
@@ -119,4 +118,3 @@ class NetworkLossLocalization(
         self.results["is_subset"] = is_sub
 
         return self.results
-

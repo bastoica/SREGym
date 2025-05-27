@@ -1,10 +1,10 @@
-import time
 import json
+import time
 
+from aiopslab.paths import TIDB_METADATA
+from aiopslab.service.apps.base import Application
 from aiopslab.service.helm import Helm
 from aiopslab.service.kubectl import KubeCtl
-from aiopslab.service.apps.base import Application
-from aiopslab.paths import TIDB_METADATA
 
 
 class TiDBCluster(Application):

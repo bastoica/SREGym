@@ -2,11 +2,12 @@
 # Licensed under the MIT License.
 
 
-from datetime import datetime, timedelta
 import os
-import pandas as pd
 import shutil
 import zipfile
+from datetime import datetime, timedelta
+
+import pandas as pd
 
 
 def get_dates_and_timestamps(start, end):

@@ -6,16 +6,16 @@
 
 import asyncio
 import json
+
 from prompt_toolkit import PromptSession
-from prompt_toolkit.styles import Style
+from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.patch_stdout import patch_stdout
+from prompt_toolkit.styles import Style
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
-from prompt_toolkit.completion import WordCompleter
 
 from aiopslab.onboarding_evaluator import Evaluator
-
 
 WELCOME = """
 # AIOpsLab Onboarding Assessment
@@ -124,14 +124,14 @@ async def main():
     await agent.set_problem()
 
     results = await orchestrator.start_problem()
-    
+
     session_data = orchestrator.session.to_dict()
-    
+
     with open(f"{first_name}_results.json", "w") as f:
         json.dump(session_data, f, indent=2)
-    
+
     print(f"Results saved to {first_name}_results.json")
-    
+
     return results
 
 

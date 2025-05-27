@@ -3,15 +3,15 @@
 
 import json
 import os
-import socket
-import time
 import select
+import socket
 import subprocess
 import threading
+import time
 from datetime import datetime, timedelta
 
-import requests
 import pandas as pd
+import requests
 
 from aiopslab.observer import root_path
 
@@ -80,14 +80,22 @@ class TraceAPI:
     def is_port_in_use(self, port):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             return s.connect_ex(("127.0.0.1", port)) == 0
-        
+
     def get_jaeger_pod_name(self):
         try:
             result = subprocess.check_output(
-                ["kubectl", "get", "pods", "-n", self.namespace,
-                 "-l", "app.kubernetes.io/name=jaeger",
-                 "-o", "jsonpath={.items[0].metadata.name}"],
-                text=True
+                [
+                    "kubectl",
+                    "get",
+                    "pods",
+                    "-n",
+                    self.namespace,
+                    "-l",
+                    "app.kubernetes.io/name=jaeger",
+                    "-o",
+                    "jsonpath={.items[0].metadata.name}",
+                ],
+                text=True,
             )
             return result.strip()
         except subprocess.CalledProcessError as e:
@@ -109,7 +117,9 @@ class TraceAPI:
                 pod_name = self.get_jaeger_pod_name()
                 command = f"kubectl port-forward pod/{pod_name} 16686:16686 -n {self.namespace}"
             else:
-                command = f"kubectl port-forward svc/jaeger 16686:16686 -n {self.namespace}"
+                command = (
+                    f"kubectl port-forward svc/jaeger 16686:16686 -n {self.namespace}"
+                )
 
             print("Starting port-forward with command:", command)
             self.port_forward_process = subprocess.Popen(
@@ -168,20 +178,23 @@ class TraceAPI:
                 print("Error closing process streams:", e)
             self.port_forward_process = None
 
-
     def cleanup(self):
         self.stop_port_forward()
         for thread in self.output_threads:
             thread.join(timeout=5)
             if thread.is_alive():
-                print(f"Thread {thread.name} could not be joined and may need to be stopped forcefully.")
+                print(
+                    f"Thread {thread.name} could not be joined and may need to be stopped forcefully."
+                )
         self.output_threads.clear()
         print("Cleanup completed.")
 
     def get_services(self) -> list:
         """Fetch a list of services from the tracing API."""
         url = f"{self.base_url}/api/services"
-        headers = {"Accept": "application/json"} if self.namespace == "astronomy-shop" else {}
+        headers = (
+            {"Accept": "application/json"} if self.namespace == "astronomy-shop" else {}
+        )
 
         try:
             response = requests.get(url, headers=headers)
@@ -207,7 +220,9 @@ class TraceAPI:
         if limit is not None:
             url += f"&limit={limit}"
 
-        headers = {"Accept": "application/json"} if self.namespace == "astronomy-shop" else {}
+        headers = (
+            {"Accept": "application/json"} if self.namespace == "astronomy-shop" else {}
+        )
         try:
             response = requests.get(url, headers=headers)
             response.raise_for_status()
@@ -287,7 +302,10 @@ class TraceAPI:
                 for tag in span.get("tags", []):
                     if tag["key"] == "error" and tag["value"] == True:
                         has_error = True
-                    if tag["key"] == "http.status_code" or tag["key"] == "response_class":
+                    if (
+                        tag["key"] == "http.status_code"
+                        or tag["key"] == "response_class"
+                    ):
                         response = tag["value"]
                 error_list.append(has_error)
                 response_list.append(response)
@@ -311,7 +329,7 @@ class TraceAPI:
         os.makedirs(path, exist_ok=True)
         file_path = os.path.join(path, f"traces_{int(time.time())}.csv")
         df.to_csv(file_path, index=False)
-        self.cleanup() # Stop port-forwarding after traces are exported
+        self.cleanup()  # Stop port-forwarding after traces are exported
         return f"Traces data exported to: {file_path}"
 
 

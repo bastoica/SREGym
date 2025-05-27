@@ -3,9 +3,9 @@
 
 import unittest
 
-from aiopslab.service.apps.socialnet import SocialNetwork
 from aiopslab.orchestrator.parser import ResponseParser
 from aiopslab.orchestrator.tasks.detection import DetectionTask
+from aiopslab.service.apps.socialnet import SocialNetwork
 
 
 class TestParser(unittest.TestCase):

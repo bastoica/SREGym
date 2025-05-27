@@ -1,5 +1,5 @@
-from aiopslab.service.kubectl import KubeCtl
 from aiopslab.service.apps.base import Application
+from aiopslab.service.kubectl import KubeCtl
 
 
 def get_frontend_url(app: Application):

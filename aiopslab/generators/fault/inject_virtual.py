@@ -3,14 +3,15 @@
 
 """Inject faults at the virtualization layer: K8S, Docker, etc."""
 
-import yaml
 import time
 
-from aiopslab.service.kubectl import KubeCtl
-from aiopslab.service.helm import Helm
+import yaml
+
 from aiopslab.generators.fault.base import FaultInjector
-from aiopslab.service.apps.base import Application
 from aiopslab.paths import TARGET_MICROSERVICES
+from aiopslab.service.apps.base import Application
+from aiopslab.service.helm import Helm
+from aiopslab.service.kubectl import KubeCtl
 
 
 class VirtualizationFaultInjector(FaultInjector):

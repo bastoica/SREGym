@@ -3,17 +3,17 @@
 
 """Assign pods to non existent node problem for the SocialNetwork application."""
 
-from typing import Any
 import time
+from typing import Any
 
-from aiopslab.orchestrator.tasks import *
-from aiopslab.orchestrator.evaluators.quantitative import is_exact_match, is_subset
-from aiopslab.service.kubectl import KubeCtl
-from aiopslab.service.apps.socialnet import SocialNetwork
-from aiopslab.generators.workload.wrk import Wrk
 from aiopslab.generators.fault.inject_virtual import VirtualizationFaultInjector
-from aiopslab.session import SessionItem
+from aiopslab.generators.workload.wrk import Wrk
+from aiopslab.orchestrator.evaluators.quantitative import is_exact_match, is_subset
+from aiopslab.orchestrator.tasks import *
 from aiopslab.paths import TARGET_MICROSERVICES
+from aiopslab.service.apps.socialnet import SocialNetwork
+from aiopslab.service.kubectl import KubeCtl
+from aiopslab.session import SessionItem
 
 from .helpers import get_frontend_url
 
@@ -125,47 +125,6 @@ class AssignNonExistentNodeSocialNetLocalization(
 
         self.results["success"] = is_exact or (is_sub and len(soln) == 1)
         self.results["is_subset"] = is_sub
-
-        return self.results
-
-
-################## Analysis Problem ##################
-class AssignNonExistentNodeSocialNetAnalysis(
-    AssignNonExistentNodeSocialNetBaseTask, AnalysisTask
-):
-    def __init__(self):
-        AssignNonExistentNodeSocialNetBaseTask.__init__(self)
-        AnalysisTask.__init__(self, self.app)
-
-    def eval(self, soln: Any, trace: list[SessionItem], duration: float):
-        print("== Evaluation ==")
-        # Ensure soln is a dictionary
-        if isinstance(soln, dict):
-            # Expected solution
-            expected_system_level = "Virtualization"
-            expected_fault_type = "Dependency Problem"
-
-            provided_system_level = soln.get("system_level", "").strip().lower()
-            provided_fault_type = soln.get("fault_type", "").strip().lower()
-
-            is_system_level_correct = (
-                provided_system_level == expected_system_level.lower()
-            )
-            is_fault_type_correct = provided_fault_type == expected_fault_type.lower()
-
-            self.results["system_level_correct"] = is_system_level_correct
-            self.results["fault_type_correct"] = is_fault_type_correct
-            self.results["success"] = is_system_level_correct and is_fault_type_correct
-        else:
-            self.results["system_level_correct"] = False
-            self.results["fault_type_correct"] = False
-            self.results["success"] = False
-
-            print(
-                "Solution is not a dictionary. Should make it a dictionary with keys: 'system_level' and 'fault_type'."
-            )
-
-        super().eval(soln, trace, duration)
 
         return self.results
 

@@ -3,5 +3,4 @@
 
 from .detection import DetectionTask
 from .localization import LocalizationTask
-from .analysis import AnalysisTask
 from .mitigation import MitigationTask

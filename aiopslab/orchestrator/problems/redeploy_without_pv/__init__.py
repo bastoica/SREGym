@@ -1,6 +1,5 @@
-from .redeploy_without_pv import (
-    RedeployWithoutPVDetection,
-    # RedeployWithoutPVLocalization,
+from .redeploy_without_pv import (  # RedeployWithoutPVLocalization,
     RedeployWithoutPVAnalysis,
+    RedeployWithoutPVDetection,
     RedeployWithoutPVMitigation,
 )

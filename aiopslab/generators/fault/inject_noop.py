@@ -1,5 +1,5 @@
-from aiopslab.service.kubectl import KubeCtl
 from aiopslab.generators.fault.base import FaultInjector
+from aiopslab.service.kubectl import KubeCtl
 
 
 class NoopFaultInjector(FaultInjector):

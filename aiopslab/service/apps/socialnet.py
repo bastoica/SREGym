@@ -3,11 +3,10 @@
 
 """Interface to the social network application from DeathStarBench"""
 
+from aiopslab.paths import SOCIAL_NETWORK_METADATA, TARGET_MICROSERVICES
+from aiopslab.service.apps.base import Application
 from aiopslab.service.helm import Helm
 from aiopslab.service.kubectl import KubeCtl
-from aiopslab.service.apps.base import Application
-from aiopslab.paths import TARGET_MICROSERVICES
-from aiopslab.paths import SOCIAL_NETWORK_METADATA
 
 
 class SocialNetwork(Application):

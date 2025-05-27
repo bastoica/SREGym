@@ -1,10 +1,10 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-import os
 import json
+import os
 
-from aiopslab.paths import LLM_CACHE_FILE, CACHE_DIR
+from aiopslab.paths import CACHE_DIR, LLM_CACHE_FILE
 
 
 class LLMCache:

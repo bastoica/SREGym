@@ -2,7 +2,8 @@
 # Licensed under the MIT License.
 
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 from aiopslab.orchestrator.evaluators.qualitative import LLMJudge
 from aiopslab.session import SessionItem
 

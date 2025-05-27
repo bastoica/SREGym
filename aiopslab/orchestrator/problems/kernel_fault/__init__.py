@@ -1,4 +1,1 @@
-from .kernel_fault import (
-    KernelFaultDetection,
-    KernelFaultLocalization,
-)
+from .kernel_fault import KernelFaultDetection, KernelFaultLocalization

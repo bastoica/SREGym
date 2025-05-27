@@ -2,15 +2,15 @@
 # Licensed under the MIT License.
 
 import os
-import threading
 import shutil
+import threading
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from aiopslab.observer.trace_api import TraceAPI
+from aiopslab.observer import monitor_config, root_path
 from aiopslab.observer.log_api import LogAPI
 from aiopslab.observer.metric_api import PrometheusAPI
-from aiopslab.observer import monitor_config, root_path
+from aiopslab.observer.trace_api import TraceAPI
 
 
 def collect_traces(start_time, end_time):
