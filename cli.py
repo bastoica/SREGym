@@ -1,8 +1,4 @@
-# Copyright (c) Microsoft Corporation.
-# Licensed under the MIT License.
-
-
-"""AIOpsLab CLI client."""
+"""SREArena CLI client."""
 
 import asyncio
 
@@ -17,7 +13,7 @@ from rich.panel import Panel
 from aiopslab.orchestrator import Orchestrator
 
 WELCOME = """
-# AIOpsLab
+# SREArena
 - Type your commands or actions below.
 - Use `exit` to quit the application.
 - Use `start <problem_id>` to begin a new problem.
@@ -104,7 +100,7 @@ class HumanAgent:
     async def get_user_input(self, completer=None):
         loop = asyncio.get_running_loop()
         style = Style.from_dict({"prompt": "ansigreen bold"})
-        prompt_text = [("class:prompt", "aiopslab> ")]
+        prompt_text = [("class:prompt", "SREArena> ")]
 
         with patch_stdout():
             try:
