@@ -103,13 +103,12 @@ class LiteLLMBackend:
                 "budget_tokens": self.thinking_budget_tools,
             }
             kwargs.pop("top_p")
-
         completion = litellm.completion(**kwargs)
-
         finish_reason = completion.choices[0].finish_reason
         # FIXME: when using openai models, finish_reason would be the function name if
         # the model decides to do function calling
-        if finish_reason == "tool_calls" or finish_reason in tools["function"]["name"]:
+        tool_names = [tool["function"]["name"] for tool in tools]
+        if finish_reason == "tool_calls" or finish_reason in tool_names:
             function_name = completion.choices[0].message.tool_calls[0].function.name
             function_arguments = json.loads(
                 completion.choices[0].message.tool_calls[0].function.arguments
