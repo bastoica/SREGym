@@ -33,32 +33,8 @@ class ProblemRegistry:
     def __init__(self):
         self.PROBLEM_REGISTRY = {
             # K8s target port misconfig
-            "k8s_target_port-misconfig-detection-1": lambda: K8STargetPortMisconfigDetection(
+            "k8s_target_port-misconfig-1": lambda: K8STargetPortMisconfig(
                 faulty_service="user-service"
-            ),
-            "k8s_target_port-misconfig-localization-1": lambda: K8STargetPortMisconfigLocalization(
-                faulty_service="user-service"
-            ),
-            "k8s_target_port-misconfig-mitigation-1": lambda: K8STargetPortMisconfigMitigation(
-                faulty_service="user-service"
-            ),
-            "k8s_target_port-misconfig-detection-2": lambda: K8STargetPortMisconfigDetection(
-                faulty_service="text-service"
-            ),
-            "k8s_target_port-misconfig-localization-2": lambda: K8STargetPortMisconfigLocalization(
-                faulty_service="text-service"
-            ),
-            "k8s_target_port-misconfig-mitigation-2": lambda: K8STargetPortMisconfigMitigation(
-                faulty_service="text-service"
-            ),
-            "k8s_target_port-misconfig-detection-3": lambda: K8STargetPortMisconfigDetection(
-                faulty_service="post-storage-service"
-            ),
-            "k8s_target_port-misconfig-localization-3": lambda: K8STargetPortMisconfigLocalization(
-                faulty_service="post-storage-service"
-            ),
-            "k8s_target_port-misconfig-mitigation-3": lambda: K8STargetPortMisconfigMitigation(
-                faulty_service="post-storage-service"
             ),
             # MongoDB auth missing
             "auth_miss_mongodb-detection-1": MongoDBAuthMissingDetection,
