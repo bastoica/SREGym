@@ -108,10 +108,13 @@ class MCPClient:
 
         print(f"tool {tool_name}, args {tool_args}")
         # Execute tool call
-        result = await self.session.call_tool(tool_name, tool_args)
-        tool_results.append({"call": tool_name, "result": result})
-        print(f"tool result: {result}")
-        final_text.append(f"[Calling tool {tool_name} with args {tool_args}]")
+        if finish_reason == "stop":
+            final_text.append(response_message.content)
+        else:
+            result = await self.session.call_tool(tool_name, tool_args)
+            tool_results.append({"call": tool_name, "result": result})
+            print(f"tool result: {result}")
+            final_text.append(f"[Calling tool {tool_name} with args {tool_args}]")
 
         return "\n".join(final_text)
 
