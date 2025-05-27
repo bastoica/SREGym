@@ -1,5 +1,3 @@
-"""Detection Oracle for evaluating detection accuracy."""
-
 from aiopslab.orchestrator.evaluators.quantitative import is_exact_match
 from aiopslab.orchestrator.oracles.base import Oracle
 
@@ -9,21 +7,18 @@ class DetectionOracle(Oracle):
         super().__init__(problem)
         self.expected = expected
 
-    def evaluate(self, solution, trace, duration) -> dict:
+    def evaluate(self, solution) -> dict:
         print("== Detection Evaluation ==")
+        results = {}
 
         if isinstance(solution, str):
-            if is_exact_match(solution.strip().lower(), self.expected.lower()):
-                print(f"✅ Correct detection: {solution}")
-                self.problem.add_result("Detection Accuracy", "Correct")
-                self.problem.results["success"] = True
-            else:
-                print(f"❌ Incorrect detection: {solution}")
-                self.problem.add_result("Detection Accuracy", "Incorrect")
-                self.problem.results["success"] = False
+            is_correct = is_exact_match(solution.strip().lower(), self.expected.lower())
+            results["Detection Accuracy"] = "Correct" if is_correct else "Incorrect"
+            results["success"] = is_correct
+            print(f"{'✅' if is_correct else '❌'} Detection: {solution}")
         else:
+            results["Detection Accuracy"] = "Invalid Format"
+            results["success"] = False
             print("❌ Invalid detection format")
-            self.problem.add_result("Detection Accuracy", "Invalid Format")
-            self.problem.results["success"] = False
 
-        return self.problem.eval(solution, trace, duration)
+        return results
