@@ -1,0 +1,23 @@
+# set cloulab or kind as the default mode
+mode: kind
+
+cloudlab:
+  ssh_user: ubuntu
+  ssh_key: ~/.ssh/id_rsa
+
+  # dummy ip nodes
+  nodes:
+    - 10.10.1.101
+    - 10.10.1.102
+    - 10.10.1.103
+
+# fallback to kind if cloublab is not avilable 
+kind:
+  ssh_user: <your-user>
+  ssh_key: ~/ssh
+
+  # point to kind configs here
+  kind_config_x86: <path-to>/kind/kind-config-arm.yaml
+  kind_config_arm: <path-to>/kind/kind-config-arm.yaml
+
+pod_network_cidr: 192.168.0.0/16

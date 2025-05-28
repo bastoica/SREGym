@@ -5,7 +5,11 @@ class RemoteExecutor:
         self.host = host
         self.client = paramiko.SSHClient()
         self.client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        self.client.connect(hostname=host, username=user, key_filename=key_path)
+        self.client.connect(
+            hostname=host,
+            username=user,
+            key_filename=key_path,
+        )
 
     def exec(self, cmd):
         stdin, stdout, stderr = self.client.exec_command(cmd)
