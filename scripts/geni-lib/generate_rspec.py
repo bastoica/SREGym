@@ -22,7 +22,7 @@ node1.routable_control_ip = True
 node2.routable_control_ip = True
 
 # Create a link between the two nodes
-link1 = request.Link(members = [node1, node2])
+link1 = request.Link(members=[node1, node2])
 
 # Print the RSpec to the console
 portal.context.printRequestRSpec()
