@@ -13,6 +13,7 @@ from aiopslab.orchestrator.problems.auth_miss_mongodb import MongoDBAuthMissing
 from aiopslab.orchestrator.problems.k8s_target_port_misconfig import (
     K8STargetPortMisconfig,
 )
+from aiopslab.orchestrator.problems.revoke_auth import MongoDBRevokeAuth
 
 # from aiopslab.orchestrator.problems.kafka_queue_problems import *
 # from aiopslab.orchestrator.problems.kernel_fault import *
@@ -38,16 +39,18 @@ from aiopslab.orchestrator.problems.k8s_target_port_misconfig import (
 class ProblemRegistry:
     def __init__(self):
         self.PROBLEM_REGISTRY = {
-            # K8s target port misconfig
-            "k8s_target_port-misconfig-1": lambda: K8STargetPortMisconfig(
+            "k8s_target_port-misconfig": lambda: K8STargetPortMisconfig(
                 faulty_service="user-service"
             ),
             # MongoDB auth missing
             "auth_miss_mongodb": MongoDBAuthMissing,
-            # "auth_miss_mongodb-detection-1": MongoDBAuthMissingDetection,
-            # "auth_miss_mongodb-localization-1": MongoDBAuthMissingLocalization,
-            # "auth_miss_mongodb-mitigation-1": MongoDBAuthMissingMitigation,
-            # # MongoDB auth revoke
+            # MongoDB auth revoke
+            "revoke_auth_mongodb-1": lambda: MongoDBRevokeAuth(
+                faulty_service="mongodb-geo"
+            ),
+            "revoke_auth_mongodb-2": lambda: MongoDBRevokeAuth(
+                faulty_service="mongodb-rate"
+            ),
             # "revoke_auth_mongodb-detection-1": lambda: MongoDBRevokeAuthDetection(
             #     faulty_service="mongodb-geo"
             # ),
