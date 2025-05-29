@@ -1,7 +1,5 @@
 """K8S misconfig fault problem in the SocialNetwork application."""
 
-# aiopslab/orchestrator/problems/k8s_target_port.py
-
 from aiopslab.generators.fault.inject_virtual import VirtualizationFaultInjector
 from aiopslab.generators.workload.wrk import Wrk
 from aiopslab.orchestrator.oracles.detection import DetectionOracle
