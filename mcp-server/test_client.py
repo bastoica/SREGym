@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import sys
 from contextlib import AsyncExitStack
 from typing import Optional
 
@@ -33,7 +34,7 @@ class MCPClient:
             raise ValueError("Server script must be a .py or .js file")
 
         command = (
-            "/Users/yms/tianyins_group/srearena/.venv/bin/python3"
+            sys.executable  # Uses the current Python interpreter from the activated venv
             if is_python
             else "node"
         )
