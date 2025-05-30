@@ -1,6 +1,3 @@
-# Copyright (c) Microsoft Corporation.
-# Licensed under the MIT License.
-
 """Inject faults at the virtualization layer: K8S, Docker, etc."""
 
 import time
