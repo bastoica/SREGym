@@ -6,6 +6,8 @@ from typing import Dict, Optional
 
 import litellm
 from dotenv import load_dotenv
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_litellm import ChatLiteLLM
 
 logging.basicConfig(
     level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -50,43 +52,44 @@ class LiteLLMBackend:
 
     def inference(
         self,
-        system_prompt: str,
-        messages: str | list[dict[str, str]],
+        messages: str | list[SystemMessage | HumanMessage | AIMessage],
+        system_prompt: Optional[str] = None,
         tools: Optional[list[any]] = None,
     ):
         if isinstance(messages, str):
             logger.debug(f"NL input as str received: {messages}")
-            messages = []
-
-            if self.thinking_tools == "wx":
-                messages = [
-                    {"role": "control", "content": "thinking"},
-                    {"role": "user", "content": system_prompt + "\n" + input},
-                ]
-            else:
-                messages = [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": input},
-                ]
-        if isinstance(messages, list):
+            # FIXME: This should be deprecated as it does not contain prior history of chat.
+            # We are buildling new agents on langgraph, which will change how messages are
+            # composed.
+            if system_prompt is None:
+                logger.debug("No system prompt provided. Using default system prompt.")
+                system_prompt = "You are a helpful assistant."
+            prompt_messages = [
+                SystemMessage(content=system_prompt),
+                HumanMessage(content=messages),
+            ]
+        elif isinstance(messages, list):
             logger.debug(f"NL input as list received: {messages}")
-            if messages[0].get("role") is None:
+            prompt_messages = messages
+            if isinstance(messages[0], HumanMessage):
                 logger.debug("No system message provided.")
-                system_message = {
-                    "role": "system",
-                    "content": "You are a helpful assistant.",
-                }
+                system_message = SystemMessage(content="You are a helpful assistant.")
                 if system_prompt is None:
                     logger.warning(
                         "No system prompt provided. Using default system prompt."
                     )
                 else:
                     logger.debug("Using system prompt provided.")
-                    system_message["content"] = system_prompt
+                    system_message.content = system_prompt
                 logger.debug(
                     f"inserting [{system_message}] at the beginning of messages"
                 )
-                messages.insert(0, system_message)
+                prompt_messages.insert(0, system_message)
+        else:
+            raise ValueError(
+                f"messages must be either a string or a list of dicts, but got {type(messages)}"
+            )
+        logger.debug(f"prompting llm with messages: {prompt_messages}")
 
         kwargs = {
             "model": f"{self.provider}/{self.model_name}",
@@ -102,20 +105,24 @@ class LiteLLMBackend:
             "extra_headers": self.extra_headers,
         }
 
-        if tools:
-            kwargs["tools"] = tools
+        llm = ChatLiteLLM(
+            model=f"{self.provider}/{self.model_name}",
+            api_key=self.api_key,
+            temperature=self.temperature,
+            api_base=self.url,
+            top_p=self.top_p,
+        )
 
-        if self.thinking_tools == "anthropic":
-            kwargs["thinking"] = {
-                "type": "enabled",
-                "budget_tokens": self.thinking_budget_tools,
-            }
-            kwargs.pop("top_p")
-        completion = litellm.completion(**kwargs)
-        finish_reason = completion.choices[0].finish_reason
-        return completion, finish_reason
+        if tools:
+            logger.debug(f"binding tools to llm: {tools}")
+            llm.bind_tools(tools, tool_choice="auto")
+
+        completion = llm.completion_with_retry(**kwargs)
+        logger.debug(f"llm response: {completion}")
+        return completion
         # FIXME: when using openai models, finish_reason would be the function name if
         # the model decides to do function calling
+        # NEW: chatlitellm interface also expects openai fashion tool naming
         # tool_names = [tool["function"]["name"] for tool in tools]
         # if finish_reason == "tool_calls" or finish_reason in tool_names:
         #     function_name = completion.choices[0].message.tool_calls[0].function.name
