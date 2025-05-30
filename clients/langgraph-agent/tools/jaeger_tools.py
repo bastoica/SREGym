@@ -12,7 +12,10 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-@tool("get_traces")
+@tool(
+    "get_traces",
+    description="get traces of last n minutes from jaeger by service and operation",
+)
 def get_traces(mcp_ctx, service: str, operation: str, last_n_minutes: int) -> str:
     result = mcp_ctx.call_tool(
         "get_traces",
@@ -28,14 +31,14 @@ def get_traces(mcp_ctx, service: str, operation: str, last_n_minutes: int) -> st
     return result
 
 
-@tool("get_services")
+@tool("get_services", description="get services from jaeger")
 def get_services(mcp_ctx) -> str:
     result = mcp_ctx.call_tool("get_services")
     logger.info(f"calling mcp get_services from langchain get_services")
     return result
 
 
-@tool("get_operations")
+@tool("get_operations", description="get operations from jaeger by service")
 def get_operations(mcp_ctx, service: str) -> str:
     result = mcp_ctx.call_tool("get_operations", arguments={"service": service})
     logger.info(f"calling mcp get_operations from langchain get_operations")

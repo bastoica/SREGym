@@ -19,14 +19,14 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-class MCPClient:
+class MCPClientCtxManager:
     def __init__(self, server_paths: dict[str, str]):
         # Initialize session and client objects
-        self.sessions: Optional[dict[str, ClientSession]] = None
+        self.sessions: dict[str, ClientSession] = dict()
         self.exit_stack = AsyncExitStack()
         self.server_paths = server_paths
 
-    async def connect_to_server(self, server_script_path: str):
+    async def connect_to_servers(self):
         """Connect to an MCP server
 
         Args:
@@ -34,8 +34,8 @@ class MCPClient:
         """
         # TODO: how to connect to remotely hosted mcp server?
         for server_name, server_path in self.server_paths.items():
-            is_python = server_script_path.endswith(".py")
-            is_js = server_script_path.endswith(".js")
+            is_python = server_path.endswith(".py")
+            is_js = server_path.endswith(".js")
             if not (is_python or is_js):
                 raise ValueError("Server script must be a .py or .js file")
 
@@ -45,7 +45,7 @@ class MCPClient:
                 else "node"
             )
             server_params = StdioServerParameters(
-                command=command, args=[server_script_path], env=None
+                command=command, args=[server_path], env=None
             )
 
             logging.info(f"Starting server: {server_name} with params: {server_params}")
@@ -55,7 +55,7 @@ class MCPClient:
             )
             stdio, write = stdio_transport
             session = await self.exit_stack.enter_async_context(
-                ClientSession(self.stdio, self.write)
+                ClientSession(stdio, write)
             )
 
             await session.initialize()

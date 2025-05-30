@@ -3,7 +3,8 @@
 import os
 
 from dotenv import load_dotenv
-from get_llm_backend import LiteLLMBackend
+
+from .get_llm_backend import LiteLLMBackend
 
 load_dotenv()
 
