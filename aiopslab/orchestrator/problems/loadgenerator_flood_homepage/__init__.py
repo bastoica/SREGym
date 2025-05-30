@@ -1,4 +1,1 @@
-from .loadgenerator_flood_homepage import (
-    LoadGeneratorFloodHomepageDetection,
-    LoadGeneratorFloodHomepageLocalization,
-)
+from .loadgenerator_flood_homepage import LoadGeneratorFloodHomepage

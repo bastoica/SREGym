@@ -1,4 +1,1 @@
-from .kafka_queue_problems import (
-    KafkaQueueProblemsDetection,
-    KafkaQueueProblemsLocalization,
-)
+from .kafka_queue_problems import KafkaQueueProblems

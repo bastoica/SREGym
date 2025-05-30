@@ -1,1 +1,1 @@
-from .image_slow_load import ImageSlowLoadDetection, ImageSlowLoadLocalization
+from .image_slow_load import ImageSlowLoad

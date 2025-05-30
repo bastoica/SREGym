@@ -1,4 +1,1 @@
-from .ad_service_manual_gc import (
-    AdServiceManualGcDetection,
-    AdServiceManualGcLocalization,
-)
+from .ad_service_manual_gc import AdServiceManualGc

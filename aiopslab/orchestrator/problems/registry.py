@@ -9,20 +9,40 @@
 # from aiopslab.orchestrator.problems.container_kill import *
 # from aiopslab.orchestrator.problems.disk_woreout import *
 # from aiopslab.orchestrator.problems.image_slow_load import *
+from aiopslab.orchestrator.problems.ad_service_failure import AdServiceFailure
+from aiopslab.orchestrator.problems.ad_service_high_cpu import AdServiceHighCpu
+from aiopslab.orchestrator.problems.ad_service_manual_gc import AdServiceManualGc
 from aiopslab.orchestrator.problems.assign_non_existent_node import (
     AssignNonExistentNode,
 )
 from aiopslab.orchestrator.problems.auth_miss_mongodb import MongoDBAuthMissing
+from aiopslab.orchestrator.problems.cart_service_failure import CartServiceFailure
 from aiopslab.orchestrator.problems.container_kill import ChaosMeshContainerKill
+from aiopslab.orchestrator.problems.image_slow_load import ImageSlowLoad
 from aiopslab.orchestrator.problems.k8s_target_port_misconfig import (
     K8STargetPortMisconfig,
+)
+from aiopslab.orchestrator.problems.kafka_queue_problems import KafkaQueueProblems
+from aiopslab.orchestrator.problems.loadgenerator_flood_homepage import (
+    LoadGeneratorFloodHomepage,
 )
 from aiopslab.orchestrator.problems.misconfig_app import MisconfigAppHotelRes
 from aiopslab.orchestrator.problems.network_delay import ChaosMeshNetworkDelay
 from aiopslab.orchestrator.problems.network_loss import ChaosMeshNetworkLoss
 from aiopslab.orchestrator.problems.no_op import NoOp
+from aiopslab.orchestrator.problems.payment_service_failure import PaymentServiceFailure
+from aiopslab.orchestrator.problems.payment_service_unreachable import (
+    PaymentServiceUnreachable,
+)
 from aiopslab.orchestrator.problems.pod_failure import ChaosMeshPodFailure
 from aiopslab.orchestrator.problems.pod_kill import ChaosMeshPodKill
+from aiopslab.orchestrator.problems.product_catalog_failure import (
+    ProductCatalogServiceFailure,
+)
+from aiopslab.orchestrator.problems.recommendation_service_cache_failure import (
+    RecommendationServiceCacheFailure,
+)
+from aiopslab.orchestrator.problems.redeploy_without_pv import RedeployWithoutPV
 from aiopslab.orchestrator.problems.revoke_auth import MongoDBRevokeAuth
 from aiopslab.orchestrator.problems.scale_pod import ScalePodSocialNet
 from aiopslab.orchestrator.problems.storage_user_unregistered import (
@@ -80,29 +100,18 @@ class ProblemRegistry:
             "noop_hotel_reservation": lambda: NoOp(app_name="hotel_reservation"),
             "noop_social_network": lambda: NoOp(app_name="social_network"),
             "noop_astronomy_shop": lambda: NoOp(app_name="astronomy_shop"),
-            # # Open Telemetry Demo (Astronomy Shop) feature flag failures
-            # "astronomy_shop_ad_service_failure-detection-1": AdServiceFailureDetection,
-            # "astronomy_shop_ad_service_failure-localization-1": AdServiceFailureLocalization,
-            # "astronomy_shop_ad_service_high_cpu-detection-1": AdServiceHighCpuDetection,
-            # "astronomy_shop_ad_service_high_cpu-localization-1": AdServiceHighCpuLocalization,
-            # "astronomy_shop_ad_service_manual_gc-detection-1": AdServiceManualGcDetection,
-            # "astronomy_shop_ad_service_manual_gc-localization-1": AdServiceManualGcLocalization,
-            # "astronomy_shop_cart_service_failure-detection-1": CartServiceFailureDetection,
-            # "astronomy_shop_cart_service_failure-localization-1": CartServiceFailureLocalization,
-            # "astronomy_shop_image_slow_load-detection-1": ImageSlowLoadDetection,
-            # "astronomy_shop_image_slow_load-localization-1": ImageSlowLoadLocalization,
-            # "astronomy_shop_kafka_queue_problems-detection-1": KafkaQueueProblemsDetection,
-            # "astronomy_shop_kafka_queue_problems-localization-1": KafkaQueueProblemsLocalization,
-            # "astronomy_shop_loadgenerator_flood_homepage-detection-1": LoadGeneratorFloodHomepageDetection,
-            # "astronomy_shop_loadgenerator_flood_homepage-localization-1": LoadGeneratorFloodHomepageLocalization,
-            # "astronomy_shop_payment_service_failure-detection-1": PaymentServiceFailureDetection,
-            # "astronomy_shop_payment_service_failure-localization-1": PaymentServiceFailureLocalization,
-            # "astronomy_shop_payment_service_unreachable-detection-1": PaymentServiceUnreachableDetection,
-            # "astronomy_shop_payment_service_unreachable-localization-1": PaymentServiceUnreachableLocalization,
-            # "astronomy_shop_product_catalog_service_failure-detection-1": ProductCatalogServiceFailureDetection,
-            # "astronomy_shop_product_catalog_service_failure-localization-1": ProductCatalogServiceFailureLocalization,
-            # "astronomy_shop_recommendation_service_cache_failure-detection-1": RecommendationServiceCacheFailureDetection,
-            # "astronomy_shop_recommendation_service_cache_failure-localization-1": RecommendationServiceCacheFailureLocalization,
+            "astronomy_shop_ad_service_failure": AdServiceFailure,
+            "astronomy_shop_ad_service_high_cpu": AdServiceHighCpu,
+            "astronomy_shop_ad_service_manual_gc": AdServiceManualGc,
+            "astronomy_shop_kafka_queue_problems": KafkaQueueProblems,
+            "astronomy_shop_cart_service_failure": CartServiceFailure,
+            "astronomy_shop_image_slow_load": ImageSlowLoad,
+            "astronomy_shop_loadgenerator_flood_homepage": LoadGeneratorFloodHomepage,
+            "astronomy_shop_payment_service_failure": PaymentServiceFailure,
+            "astronomy_shop_payment_service_unreachable": PaymentServiceUnreachable,
+            "astronomy_shop_product_catalog_service_failure": ProductCatalogServiceFailure,
+            "astronomy_shop_recommendation_service_cache_failure": RecommendationServiceCacheFailure,
+            "redeploy_without_PV": RedeployWithoutPV,
             # # Redeployment of namespace without deleting the PV
             # "redeploy_without_PV-detection-1": RedeployWithoutPVDetection,
             # # "redeploy_without_PV-localization-1": RedeployWithoutPVLocalization,
@@ -111,7 +120,7 @@ class ProblemRegistry:
             # "wrong_bin_usage-detection-1": WrongBinUsageDetection,
             # "wrong_bin_usage-localization-1": WrongBinUsageLocalization,
             # "wrong_bin_usage-mitigation-1": WrongBinUsageMitigation,
-            # # K8S operator misoperation
+            # # K8S operator misoperation -> Refactor later, not sure if they're working
             # # "operator_overload_replicas-detection-1": K8SOperatorOverloadReplicasDetection,
             # # "operator_overload_replicas-localization-1": K8SOperatorOverloadReplicasLocalization,
             # # "operator_non_existent_storage-detection-1": K8SOperatorNonExistentStorageDetection,

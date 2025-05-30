@@ -1,4 +1,1 @@
-from .recommendation_service_cache_failure import (
-    RecommendationServiceCacheFailureDetection,
-    RecommendationServiceCacheFailureLocalization,
-)
+from .recommendation_service_cache_failure import RecommendationServiceCacheFailure

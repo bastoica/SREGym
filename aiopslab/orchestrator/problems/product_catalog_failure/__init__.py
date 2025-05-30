@@ -1,4 +1,1 @@
-from .product_catalog_failure import (
-    ProductCatalogServiceFailureDetection,
-    ProductCatalogServiceFailureLocalization,
-)
+from .product_catalog_failure import ProductCatalogServiceFailure
