@@ -1,1 +1,1 @@
-from .pod_kill import PodKillDetection, PodKillLocalization
+from .pod_kill import ChaosMeshPodKill

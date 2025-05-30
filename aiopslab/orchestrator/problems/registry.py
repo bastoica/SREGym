@@ -9,12 +9,22 @@
 # from aiopslab.orchestrator.problems.container_kill import *
 # from aiopslab.orchestrator.problems.disk_woreout import *
 # from aiopslab.orchestrator.problems.image_slow_load import *
+from aiopslab.orchestrator.problems.assign_non_existent_node import (
+    AssignNonExistentNode,
+)
 from aiopslab.orchestrator.problems.auth_miss_mongodb import MongoDBAuthMissing
+from aiopslab.orchestrator.problems.container_kill import ChaosMeshContainerKill
 from aiopslab.orchestrator.problems.k8s_target_port_misconfig import (
     K8STargetPortMisconfig,
 )
 from aiopslab.orchestrator.problems.misconfig_app import MisconfigAppHotelRes
+from aiopslab.orchestrator.problems.network_delay import ChaosMeshNetworkDelay
+from aiopslab.orchestrator.problems.network_loss import ChaosMeshNetworkLoss
+from aiopslab.orchestrator.problems.no_op import NoOp
+from aiopslab.orchestrator.problems.pod_failure import ChaosMeshPodFailure
+from aiopslab.orchestrator.problems.pod_kill import ChaosMeshPodKill
 from aiopslab.orchestrator.problems.revoke_auth import MongoDBRevokeAuth
+from aiopslab.orchestrator.problems.scale_pod import ScalePodSocialNet
 from aiopslab.orchestrator.problems.storage_user_unregistered import (
     MongoDBUserUnregistered,
 )
@@ -60,48 +70,16 @@ class ProblemRegistry:
                 faulty_service="mongodb-rate"
             ),
             "misconfig_app_hotel_res": MisconfigAppHotelRes,
-            # # App misconfig
-            # "misconfig_app_hotel_res-detection-1": MisconfigAppHotelResDetection,
-            # "misconfig_app_hotel_res-localization-1": MisconfigAppHotelResLocalization,
-            # "misconfig_app_hotel_res-mitigation-1": MisconfigAppHotelResMitigation,
-            # # Scale pod to zero deployment
-            # "scale_pod_zero_social_net-detection-1": ScalePodSocialNetDetection,
-            # "scale_pod_zero_social_net-localization-1": ScalePodSocialNetLocalization,
-            # "scale_pod_zero_social_net-mitigation-1": ScalePodSocialNetMitigation,
-            # # Assign pod to non-existent node
-            # "assign_to_non_existent_node_social_net-detection-1": AssignNonExistentNodeSocialNetDetection,
-            # "assign_to_non_existent_node_social_net-localization-1": AssignNonExistentNodeSocialNetLocalization,
-            # "assign_to_non_existent_node_social_net-mitigation-1": AssignNonExistentNodeSocialNetMitigation,
-            # # Chaos mesh container kill
-            # "container_kill-detection": ContainerKillDetection,
-            # "container_kill-localization": ContainerKillLocalization,
-            # # Pod failure
-            # "pod_failure_hotel_res-detection-1": PodFailureDetection,
-            # "pod_failure_hotel_res-localization-1": PodFailureLocalization,
-            # # Pod kill
-            # "pod_kill_hotel_res-detection-1": PodKillDetection,
-            # "pod_kill_hotel_res-localization-1": PodKillLocalization,
-            # # Network loss
-            # "network_loss_hotel_res-detection-1": NetworkLossDetection,
-            # "network_loss_hotel_res-localization-1": NetworkLossLocalization,
-            # # Network delay
-            # "network_delay_hotel_res-detection-1": NetworkDelayDetection,
-            # "network_delay_hotel_res-localization-1": NetworkDelayLocalization,
-            # # No operation
-            # "noop_detection_hotel_reservation-1": lambda: NoOpDetection(
-            #     app_name="hotel"
-            # ),
-            # "noop_detection_social_network-1": lambda: NoOpDetection(app_name="social"),
-            # "noop_detection_astronomy_shop-1": lambda: NoOpDetection(
-            #     app_name="astronomy_shop"
-            # ),
-            # # NOTE: This should be getting fixed by the great powers of @jinghao-jia
-            # # Kernel fault -> https://github.com/xlab-uiuc/agent-ops/pull/10#issuecomment-2468992285
-            # # There's a bug in chaos mesh regarding this fault, wait for resolution and retest kernel fault
-            # # "kernel_fault_hotel_reservation-detection-1": KernelFaultDetection,
-            # # "kernel_fault_hotel_reservation-localization-1": KernelFaultLocalization
-            # # "disk_woreout-detection-1": DiskWoreoutDetection,
-            # # "disk_woreout-localization-1": DiskWoreoutLocalization,
+            "scale_pod_zero_social_net": ScalePodSocialNet,
+            "assign_to_non_existent_node": AssignNonExistentNode,
+            "chaos_mesh_container_kill": ChaosMeshContainerKill,
+            "chaos_mesh_pod_failure": ChaosMeshPodFailure,
+            "chaos_mesh_pod_kill": ChaosMeshPodKill,
+            "chaos_mesh_network_loss": ChaosMeshNetworkLoss,
+            "chaos_mesh_network_delay": ChaosMeshNetworkDelay,
+            "noop_hotel_reservation": lambda: NoOp(app_name="hotel_reservation"),
+            "noop_social_network": lambda: NoOp(app_name="social_network"),
+            "noop_astronomy_shop": lambda: NoOp(app_name="astronomy_shop"),
             # # Open Telemetry Demo (Astronomy Shop) feature flag failures
             # "astronomy_shop_ad_service_failure-detection-1": AdServiceFailureDetection,
             # "astronomy_shop_ad_service_failure-localization-1": AdServiceFailureLocalization,

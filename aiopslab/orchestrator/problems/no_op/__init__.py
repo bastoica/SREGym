@@ -1,1 +1,1 @@
-from .no_op import NoOpDetection
+from .no_op import NoOp

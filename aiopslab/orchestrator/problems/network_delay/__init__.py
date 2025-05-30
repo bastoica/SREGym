@@ -1,1 +1,1 @@
-from .network_delay import NetworkDelayDetection, NetworkDelayLocalization
+from .network_delay import ChaosMeshNetworkDelay

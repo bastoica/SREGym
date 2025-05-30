@@ -1,1 +1,1 @@
-from .container_kill import ContainerKillDetection, ContainerKillLocalization
+from .container_kill import ChaosMeshContainerKill
