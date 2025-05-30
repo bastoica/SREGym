@@ -14,6 +14,9 @@ from aiopslab.orchestrator.problems.k8s_target_port_misconfig import (
     K8STargetPortMisconfig,
 )
 from aiopslab.orchestrator.problems.revoke_auth import MongoDBRevokeAuth
+from aiopslab.orchestrator.problems.storage_user_unregistered import (
+    MongoDBUserUnregistered,
+)
 
 # from aiopslab.orchestrator.problems.kafka_queue_problems import *
 # from aiopslab.orchestrator.problems.kernel_fault import *
@@ -42,52 +45,19 @@ class ProblemRegistry:
             "k8s_target_port-misconfig": lambda: K8STargetPortMisconfig(
                 faulty_service="user-service"
             ),
-            # MongoDB auth missing
             "auth_miss_mongodb": MongoDBAuthMissing,
-            # MongoDB auth revoke
             "revoke_auth_mongodb-1": lambda: MongoDBRevokeAuth(
                 faulty_service="mongodb-geo"
             ),
             "revoke_auth_mongodb-2": lambda: MongoDBRevokeAuth(
                 faulty_service="mongodb-rate"
             ),
-            # "revoke_auth_mongodb-detection-1": lambda: MongoDBRevokeAuthDetection(
-            #     faulty_service="mongodb-geo"
-            # ),
-            # "revoke_auth_mongodb-localization-1": lambda: MongoDBRevokeAuthLocalization(
-            #     faulty_service="mongodb-geo"
-            # ),
-            # "revoke_auth_mongodb-mitigation-1": lambda: MongoDBRevokeAuthMitigation(
-            #     faulty_service="mongodb-geo"
-            # ),
-            # "revoke_auth_mongodb-detection-2": lambda: MongoDBRevokeAuthDetection(
-            #     faulty_service="mongodb-rate"
-            # ),
-            # "revoke_auth_mongodb-localization-2": lambda: MongoDBRevokeAuthLocalization(
-            #     faulty_service="mongodb-rate"
-            # ),
-            # "revoke_auth_mongodb-mitigation-2": lambda: MongoDBRevokeAuthMitigation(
-            #     faulty_service="mongodb-rate"
-            # ),
-            # # MongoDB user unregistered
-            # "user_unregistered_mongodb-detection-1": lambda: MongoDBUserUnregisteredDetection(
-            #     faulty_service="mongodb-geo"
-            # ),
-            # "user_unregistered_mongodb-localization-1": lambda: MongoDBUserUnregisteredLocalization(
-            #     faulty_service="mongodb-geo"
-            # ),
-            # "user_unregistered_mongodb-mitigation-1": lambda: MongoDBUserUnregisteredMitigation(
-            #     faulty_service="mongodb-geo"
-            # ),
-            # "user_unregistered_mongodb-detection-2": lambda: MongoDBUserUnregisteredDetection(
-            #     faulty_service="mongodb-rate"
-            # ),
-            # "user_unregistered_mongodb-localization-2": lambda: MongoDBUserUnregisteredLocalization(
-            #     faulty_service="mongodb-rate"
-            # ),
-            # "user_unregistered_mongodb-mitigation-2": lambda: MongoDBUserUnregisteredMitigation(
-            #     faulty_service="mongodb-rate"
-            # ),
+            "storage_user_unregistered-1": lambda: MongoDBUserUnregistered(
+                faulty_service="mongodb-geo"
+            ),
+            "storage_user_unregistered-2": lambda: MongoDBUserUnregistered(
+                faulty_service="mongodb-rate"
+            ),
             # # App misconfig
             # "misconfig_app_hotel_res-detection-1": MisconfigAppHotelResDetection,
             # "misconfig_app_hotel_res-localization-1": MisconfigAppHotelResLocalization,
