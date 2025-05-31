@@ -1,0 +1,9 @@
+{
+    "framework": "emulab-ch2",
+    "cert-path": <path-to-cloudlab-cert>,
+    "key-path": <path-to-cloudlab-key>,
+    "user-name": <cloudlab-username>,
+    "user-urn": "urn:publicid:IDN+emulab.net+user+<cloudlab-username>",
+    "user-pubkeypath": <path-to-cloudlab-pubkey>,
+    "project": <cloudlab-project>
+}
