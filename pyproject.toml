@@ -212,7 +212,7 @@ requires = ["setuptools>=80.8.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["aiopslab", "clients"]
+packages = ["aiopslab", "clients", "provisioner"]
 
 [tool.uv.sources]
 geni-lib-xlab = { path = "scripts/geni-lib/mod/geni_lib_xlab-1.0.0.tar.gz" }

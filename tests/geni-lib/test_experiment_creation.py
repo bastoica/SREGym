@@ -50,7 +50,7 @@ except Exception as e:
 ### Create the sliver (actual experiment)
 print(f"Creating sliver in slice: {SLICE_NAME}")
 try:
-    igm = aggregate.createsliver(context, SLICE_NAME, request)
+    igm = AGGREGATE.createsliver(context, SLICE_NAME, request)
     print(f"Sliver created\n")
 except Exception as e:
     print(f"Error creating sliver: {e}")
@@ -65,7 +65,7 @@ if isinstance(login_info, list):
     login_info = "\n".join(map(str, login_info))
 with open(f"{SLICE_NAME}.login.info.txt", "a") as f:
     f.write(f"Slice name: {SLICE_NAME}\n")
-    f.write(f"Cluster name: {aggregate.name}\n")
+    f.write(f"Cluster name: {AGGREGATE.name}\n")
     f.write(f"Duration: {DURATION} hours\n")
     f.write(login_info)
 print(f"\nSSH info saved to {SLICE_NAME}.login.info.txt\n")

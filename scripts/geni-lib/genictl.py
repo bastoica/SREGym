@@ -12,7 +12,7 @@ from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.enums import EditingMode
 from prompt_toolkit.key_binding import KeyBindings
 
-from utils import collect_hardware_info_from_html, parse_sliver_info
+from provisioner.utils.parser import parse_sliver_info, collect_and_parse_hardware_info
 
 warnings.filterwarnings("ignore")
 
@@ -63,6 +63,8 @@ def create_sliver(context, args):
         if isinstance(login_info, list):
             login_info = "\n".join(map(str, login_info))
         with open(f"{args.slice_name}.login.info.txt", "w") as f:
+            f.write(f"Slice name: {args.slice_name}\n")
+            f.write(f"Cluster name: {aggregate.name}\n")
             f.write(login_info)
 
         print(f"Sliver '{args.slice_name}' created")
@@ -156,7 +158,7 @@ def get_aggregate(site):
 
 
 def get_hardware_info(context=None, args=None):
-    hardware_info_list = collect_hardware_info_from_html()
+    hardware_info_list = collect_and_parse_hardware_info()
     if hardware_info_list:
         print(
             f"\n{'Hardware Name':<20} | {'Cluster Name':<30} | {'Total':<7} | {'Free':<7}"
@@ -184,7 +186,7 @@ def quick_experiment_creation(context, args):
             f"Creating a quick {node_count} node cluster of hardware type: {hardware_type}"
         )
 
-        hardware_info_list = collect_hardware_info_from_html()
+        hardware_info_list = collect_and_parse_hardware_info()
         slice_name = "test-" + str(random.randint(100000, 999999))
         cluster_name = None
 
@@ -261,8 +263,10 @@ def quick_experiment_creation(context, args):
             f.write(f"Slice name: {slice_name}\n")
             f.write(f"Cluster name: {cluster_name}\n")
             f.write(f"Duration: {duration} hours\n")
+            f.write(f"Hardware type: {hardware_type}\n")
             f.write(f"Node count: {node_count}\n")
             f.write(f"OS Image: {os_type}\n")
+            f.write("Login info:\n")
             f.write(login_info)
             f.write("\n")
             f.write("To delete the experiment, run the following command:\n")
