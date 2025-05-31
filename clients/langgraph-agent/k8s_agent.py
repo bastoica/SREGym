@@ -12,7 +12,6 @@ from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode
 from llm_backend.init_backend import get_llm_backend_for_tools
 from tools.jaeger_tools import *
-from tools.mcp_client_ctx import MCPClientCtxManager
 from typing_extensions import TypedDict
 
 logging.basicConfig(
@@ -28,17 +27,10 @@ class State(TypedDict):
     messages: Annotated[list, add_messages]
 
 
-# FIXME: when having multiple tools, this logic should add the corresponding
-#   ctx to tools
-mcp_ctx_manager = MCPClientCtxManager(
-    {"observability": "../../mcp_server/observability_server.py"}
-)
-session = asyncio.run(mcp_ctx_manager.connect_to_servers())
-
 llm = get_llm_backend_for_tools()
-get_traces = GetTraces(session)
-get_services = GetServices(session)
-get_operations = GetOperations(session)
+get_traces = GetTraces()
+get_services = GetServices()
+get_operations = GetOperations()
 tools = [
     get_traces,
     get_services,
