@@ -227,4 +227,3 @@ packages = ["srearena", "clients", "provisioner"]
 
 [tool.uv.sources]
 geni-lib-xlab = { path = "scripts/geni-lib/mod/geni_lib_xlab-1.0.0.tar.gz" }
-packages = ["srearena", "clients"]
