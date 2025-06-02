@@ -37,6 +37,7 @@ class AssignNonExistentNodeSocialNetBaseTask:
             payload_script=self.payload_script,
             url=f"{frontend_url}/wrk2-api/post/compose",
         )
+        self.wrk = wrk2
         wrk2.start()
 
     def inject_fault(self):

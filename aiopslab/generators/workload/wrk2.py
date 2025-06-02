@@ -1,10 +1,11 @@
 import math
 import textwrap
 import time
+from datetime import datetime
 from pathlib import Path
 
 import yaml
-from kubernetes import client, config
+from kubernetes import client, config, stream
 
 from aiopslab.generators.workload.stream import STREAM_WORKLOAD_EPS, StreamWorkloadManager, WorkloadEntry
 from aiopslab.paths import BASE_DIR
@@ -182,7 +183,9 @@ class Wrk2WorkloadManager(StreamWorkloadManager):
         self.batch_v1_api = client.BatchV1Api()
 
         self.log_pool = []
-        self.last_log_time = None
+
+        # different from self.last_log_time, which is the timestamp of the whole entry
+        self.last_log_line_time = None
 
     def create_task(self):
         namespace = "default"
@@ -201,21 +204,26 @@ class Wrk2WorkloadManager(StreamWorkloadManager):
             payload_script=self.payload_script.name,
         )
 
-    def _parse_log(self, logs: list[str]) -> WorkloadEntry:
+    def _parse_log(self, logs: list[tuple[str, str]]) -> WorkloadEntry:
         # -----------------------------------------------------------------------
         #   10 requests in 10.00s, 2.62KB read
         #   Non-2xx or 3xx responses: 10
 
         number = -1
         ok = True
+
         try:
-            for i, log in enumerate(logs):
-                if "-" * 35 in log and "requests" in logs[i + 1]:
-                    parts = logs[i + 1].split(" ")
+            start_time = logs[0]["time"][0:26] + "Z"  # Convert to ISO 8601 format
+            start_time = datetime.strptime(start_time, "%Y-%m-%dT%H:%M:%S.%fZ").timestamp()
+
+            for i, part in enumerate(logs):
+                log = part["content"]
+                if "-" * 35 in log and "requests in" in logs[i + 1]["content"]:
+                    parts = logs[i + 1]["content"].split(" ")
                     for j, part in enumerate(parts):
                         if part != "":
                             number = parts[j]
-                            assert parts[j + 1] == "requests"
+                            assert j + 1 < len(parts) and parts[j + 1] == "requests"
                             break
                 if "Non-2xx or 3xx responses" in log:
                     ok = False
@@ -224,11 +232,12 @@ class Wrk2WorkloadManager(StreamWorkloadManager):
         except Exception as e:
             print(f"Error parsing log: {e}")
             number = 0
+            start_time = -1
 
         return WorkloadEntry(
-            time=time.time(),
+            time=start_time,
             number=number,
-            log="\n".join(logs),
+            log="\n".join([part["content"] for part in logs]),
             ok=ok,
         )
 
@@ -243,7 +252,23 @@ class Wrk2WorkloadManager(StreamWorkloadManager):
             "timestamps": True,
         }
         if start_time is not None:
-            kwargs["since_time"] = math.ceil(time.time() - start_time) + STREAM_WORKLOAD_EPS
+            # Get the current time inside the pod by executing 'date +%s' in the pod
+            resp = stream.stream(
+                self.core_v1_api.connect_get_namespaced_pod_exec,
+                name=pods.items[0].metadata.name,
+                namespace=namespace,
+                command=["date", "-Ins"],
+                stderr=True,
+                stdin=False,
+                stdout=True,
+                tty=False,
+            )
+            # print(f"Pod current time: {resp.strip()}")
+            # 2025-01-01T12:34:56,123456
+            shorter = resp.strip()[:26]
+            pod_current_time = datetime.strptime(shorter, "%Y-%m-%dT%H:%M:%S,%f").timestamp()
+            # Use the difference between pod's current time and requested start_time
+            kwargs["since_seconds"] = math.ceil(pod_current_time - start_time) + STREAM_WORKLOAD_EPS
 
         try:
             logs = self.core_v1_api.read_namespaced_pod_log(pods.items[0].metadata.name, namespace, **kwargs)
@@ -256,10 +281,11 @@ class Wrk2WorkloadManager(StreamWorkloadManager):
             timestamp = log[0:30]
             content = log[31:]
 
-            if self.last_log_time is not None and timestamp <= self.last_log_time:
+            # last_log_line_time: in string format, e.g. "2025-01-01T12:34:56.789012345Z"
+            if self.last_log_line_time is not None and timestamp <= self.last_log_line_time:
                 continue
 
-            self.last_log_time = timestamp
+            self.last_log_line_time = timestamp
             self.log_pool.append(dict(time=timestamp, content=content))
 
         # End pattern is:
@@ -270,10 +296,10 @@ class Wrk2WorkloadManager(StreamWorkloadManager):
 
         last_end = 0
         for i, log in enumerate(self.log_pool):
-            if i > 0 and "Requests/sec:" in self.log_pool[i - 1] or "Transfer/sec:" in log:
-                grouped_logs.append(self._parse_log(self.log_pool[last_end:i]))
-                last_end = i
-                break
+            if (i > 0 and "Requests/sec:" in self.log_pool[i - 1]["content"]) and "Transfer/sec:" in log["content"]:
+                result = self._parse_log(self.log_pool[last_end : i + 1])
+                grouped_logs.append(result)
+                last_end = i + 1
 
         self.log_pool = self.log_pool[last_end:]
 

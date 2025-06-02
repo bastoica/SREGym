@@ -33,11 +33,12 @@ class WorkloadManager(ABC):
         pass
 
     @abstractmethod
-    def collect(self, number=100, start_time=None):
+    def collect(self, number=100, since_seconds=None):
         """
         Run the workload generator until collected data is sufficient.
-        - Number of requests should be at least `number` starting from `start_time`.
-        - If `start_time` is not provided, it should start from the current time.
+        - Number of requests should be at least `number` starting from `since_seconds` ago.
+        - If `since_seconds` is not provided, it should start from the current time.
+        - `since_seconds` is a relative time in seconds, not an absolute timestamp.
         """
         pass
 

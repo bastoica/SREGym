@@ -7,7 +7,7 @@ from pydantic.dataclasses import dataclass
 from aiopslab.generators.workload.base import WorkloadManager
 
 STREAM_WORKLOAD_TIMEOUT = 60 * 1.5  # 1.5 minutes
-STREAM_WORKLOAD_EPS = 5  # 5 seconds
+STREAM_WORKLOAD_EPS = 10  # 5 seconds
 
 
 @dataclass
@@ -24,6 +24,7 @@ class StreamWorkloadManager(WorkloadManager):
     """
 
     log_history: list[WorkloadEntry] = []
+    last_log_time: float | None = None  # The timestamp inside the pod
 
     def __init__(self):
         super().__init__()
@@ -53,41 +54,50 @@ class StreamWorkloadManager(WorkloadManager):
                 raise ValueError("Logs are not sorted by time.")
 
             first_greater = 0
-            while first_greater < len(new_logs) and new_logs[first_greater].time <= self.last_log_time:
-                first_greater += 1
+            if self.last_log_time is not None:
+                while first_greater < len(new_logs) and new_logs[first_greater].time <= self.last_log_time:
+                    first_greater += 1
 
             if first_greater < len(new_logs):
                 self.log_history.extend(new_logs[first_greater:])
                 self.last_log_time = new_logs[-1].time
 
-    def collect(self, number=100, start_time=None):
+    def collect(self, number=100, since_seconds=None):
         """
         Run the workload generator until collected data is sufficient.
         """
-        current_time = time.time()
-        if start_time is None:
-            start_time = current_time
-        if start_time > current_time:
-            raise ValueError("start_time cannot be in the future")
-        if current_time - start_time > STREAM_WORKLOAD_TIMEOUT:
-            raise ValueError("start_time is too far in the past")
+        if since_seconds is not None:
+            if not isinstance(since_seconds, (int, float)):
+                raise TypeError("since_seconds must be a int or float")
+            if since_seconds > STREAM_WORKLOAD_TIMEOUT:
+                raise ValueError(f"since_seconds is too large (> {STREAM_WORKLOAD_TIMEOUT} seconds)")
 
-        start_entry = bisect_left(
-            self.log_history,
-            start_time,
-            key=lambda x: x.time if isinstance(x, WorkloadEntry) else x,
-        )
+        # I put it here becuase the first run of it may be very late
+        self._extractlog()
+
+        collect_start_time = time.time()
+
+        if since_seconds is None or self.last_log_time is None:
+            start_entry = len(self.log_history)
+        else:
+            start_entry = bisect_left(
+                self.log_history,
+                self.last_log_time - since_seconds,
+                key=lambda x: x.time if isinstance(x, WorkloadEntry) else x,
+            )
+
         end_entry = start_entry
+
         accumulated_logs = 0
 
-        while time.time() - start_time < STREAM_WORKLOAD_TIMEOUT:
-            self._extractlog()
+        while time.time() - collect_start_time < STREAM_WORKLOAD_TIMEOUT:
             while end_entry < len(self.log_history):
-                accumulated_logs += len(self.log_history[end_entry])
+                accumulated_logs += self.log_history[end_entry].number
                 end_entry += 1
             if accumulated_logs >= number:
                 return self.log_history[start_entry:end_entry]
-            time.sleep(3)
+            time.sleep(5)
+            self._extractlog()
 
         raise TimeoutError("Workload generator did not collect enough data within the timeout period.")
 
@@ -95,8 +105,8 @@ class StreamWorkloadManager(WorkloadManager):
         """
         Return recently collected data within the given duration (seconds).
         """
-        start_time = time.time() - duration
         self._extractlog()
+        start_time = self.last_log_time - duration
         start_entry = bisect_left(
             self.log_history,
             start_time,
