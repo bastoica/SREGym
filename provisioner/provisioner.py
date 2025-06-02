@@ -226,7 +226,6 @@ class CloudlabProvisioner:
                 return True
             return False
 
-    # TODO: check the return of renewSlice
     def renew_slice(self, slice_name: str, duration: float):
         try:
             new_expiration = datetime.datetime.now() + datetime.timedelta(hours=duration)
@@ -236,7 +235,6 @@ class CloudlabProvisioner:
             logger.error(f"Error: {e}")
             return False
 
-    # TODO: check the return of renewSliver
     def renew_sliver(self, slice_name: str, aggregate_name: str, duration: float):
         try:
             aggregate = self.get_aggregate(aggregate_name)

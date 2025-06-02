@@ -27,10 +27,6 @@ class SSHManager:
         self.timeout = timeout
 
     def _create_ssh_client(self) -> paramiko.SSHClient:
-        """
-        Creates and connects an SSH client.
-        Prioritizes private key authentication if private_key_path is provided.
-        """
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
@@ -74,23 +70,6 @@ class SSHManager:
         self,
         command: str,
     ) -> Tuple[str, str, int]:
-        """
-        Executes a command on a remote server via SSH.
-
-        Args:
-            hostname: The remote server hostname or IP address.
-            username: The username for SSH login.
-            command: The command to execute.
-            private_key_path: Path to the SSH private key file.
-            port: SSH port (default is 22).
-            timeout: Connection and command execution timeout in seconds.
-
-        Returns:
-            A tuple (stdout, stderr, exit_code).
-
-        Raises:
-            SSHUtilError: If connection or command execution fails.
-        """
         client = None
         try:
             client = self._create_ssh_client()
@@ -133,22 +112,6 @@ class SSHManager:
         local_path: str,
         remote_path: str,
     ):
-        """
-        Uploads a local file to a remote server via SCP.
-
-        Args:
-            hostname: The remote server hostname or IP address.
-            username: The username for SSH login.
-            local_path: Path to the local file.
-            remote_path: Path to the destination on the remote server.
-            private_key_path: Path to the SSH private key file.
-            port: SSH port.
-            timeout: Connection timeout.
-
-        Raises:
-            SSHUtilError: If connection or upload fails.
-            FileNotFoundError: If local_path does not exist.
-        """
         local_path = os.path.expanduser(local_path)
         if not os.path.exists(local_path):
             raise FileNotFoundError(f"Local file not found: {local_path}")
@@ -181,21 +144,6 @@ class SSHManager:
         remote_path: str,
         local_path: str,
     ):
-        """
-        Downloads a remote file from a server via SCP.
-
-        Args:
-            hostname: The remote server hostname or IP address.
-            username: The username for SSH login.
-            remote_path: Path to the remote file.
-            local_path: Path to save the file locally.
-            private_key_path: Path to the SSH private key file.
-            port: SSH port.
-            timeout: Connection timeout.
-
-        Raises:
-            SSHUtilError: If connection or download fails.
-        """
         local_path = os.path.expanduser(local_path)
         client = None
         sftp = None
