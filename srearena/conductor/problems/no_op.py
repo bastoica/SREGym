@@ -26,7 +26,7 @@ class NoOp(Problem):
             )
         elif self.app_name == "social_network":
             self.app = SocialNetwork()
-            self.payload_script = TARGET_MICROSERVICES / "socialNetwork/wrk2/scripts/social-network/compose-post.lua"
+            self.payload_script = TARGET_MICROSERVICES / "socialNetwork/wrk2/scripts/social-network/mixed-workload.lua"
         elif self.app_name == "astronomy_shop":
             self.app = AstronomyShop()
         else:

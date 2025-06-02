@@ -25,7 +25,6 @@ class ScalePodSocialNet(Problem):
         # Choose a very front service to test - this will directly cause an exception
         # TODO: We should create more problems with this using different faulty services
         # self.faulty_service = "nginx-thrift"
-        self.payload_script = TARGET_MICROSERVICES / "socialNetwork/wrk2/scripts/social-network/compose-post.lua"
         # === Attach evaluation oracles ===
         self.detection_oracle = DetectionOracle(problem=self, expected="Yes")
 
@@ -34,7 +33,7 @@ class ScalePodSocialNet(Problem):
         self.mitigation_oracle = MitigationOracle(problem=self)
 
         # === Workload setup ===
-        self.payload_script = TARGET_MICROSERVICES / "socialNetwork/wrk2/scripts/social-network/compose-post.lua"
+        self.payload_script = TARGET_MICROSERVICES / "socialNetwork/wrk2/scripts/social-network/mixed-workload.lua"
 
     def start_workload(self):
         print("== Start Workload ==")

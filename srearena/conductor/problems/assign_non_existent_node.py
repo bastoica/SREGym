@@ -22,7 +22,7 @@ class AssignNonExistentNode(Problem):
         self.namespace = self.app.namespace
         self.faulty_service = "user-service"
 
-        self.payload_script = TARGET_MICROSERVICES / "socialNetwork/wrk2/scripts/social-network/compose-post.lua"
+        self.payload_script = TARGET_MICROSERVICES / "socialNetwork/wrk2/scripts/social-network/mixed-workload.lua"
         # === Attach evaluation oracles ===
         self.detection_oracle = DetectionOracle(problem=self, expected="Yes")
 
