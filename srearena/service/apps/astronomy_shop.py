@@ -2,7 +2,7 @@
 
 import time
 
-from srearena.generators.workload.astronomy_shop import AstronomyShopWorkloadManager
+from srearena.generators.workload.locust import LocustWorkloadManager
 from srearena.paths import ASTRONOMY_SHOP_METADATA
 from srearena.service.apps.base import Application
 from srearena.service.helm import Helm
@@ -45,8 +45,9 @@ class AstronomyShop(Application):
         self.wrk.stop()
 
     def create_workload(self):
-        self.wrk = AstronomyShopWorkloadManager(
-            deployment_name="load-generator",
+        self.wrk = LocustWorkloadManager(
+            namespace=self.namespace,
+            locust_url="load-generator:8089",
         )
 
     def start_workload(self):
