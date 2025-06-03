@@ -1,5 +1,6 @@
 import argparse
 import logging
+import os
 from datetime import datetime, timedelta
 from typing import Any, Coroutine
 
@@ -107,16 +108,17 @@ def create_starlette_app(mcp_server: Server, *, debug: bool = False) -> Starlett
 
 if __name__ == "__main__":
     if USE_HTTP:
-        mcp_server = mcp._mcp_server  # noqa: WPS437
+        mcp.run(transport="sse")
+        # mcp_server = mcp._mcp_server  # noqa: WPS437
 
-        parser = argparse.ArgumentParser(description="Run MCP SSE-based server")
-        parser.add_argument("--host", default="127.0.0.1", help="Host to bind to")
-        parser.add_argument("--port", type=int, default=9953, help="Port to listen on")
-        args = parser.parse_args()
+        # parser = argparse.ArgumentParser(description="Run MCP SSE-based server")
+        # parser.add_argument("--host", default="127.0.0.1", help="Host to bind to")
+        # parser.add_argument("--port", type=int, default=9953, help="Port to listen on")
+        # args = parser.parse_args()
 
-        # Bind SSE request handling to MCP server
-        starlette_app = create_starlette_app(mcp_server, debug=True)
+        # # Bind SSE request handling to MCP server
+        # starlette_app = create_starlette_app(mcp_server, debug=True)
 
-        uvicorn.run(starlette_app, host=args.host, port=args.port)
+        # uvicorn.run(starlette_app, host=args.host, port=args.port)
     else:
         mcp.run()
