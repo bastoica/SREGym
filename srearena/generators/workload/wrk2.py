@@ -6,6 +6,7 @@ from pathlib import Path
 
 import yaml
 from kubernetes import client, config, stream
+from rich.console import Console
 
 from srearena.generators.workload.stream import STREAM_WORKLOAD_EPS, StreamWorkloadManager, WorkloadEntry
 from srearena.paths import BASE_DIR
@@ -110,13 +111,11 @@ class Wrk2:
             if existing_job:
                 print(f"Job '{job_name}' already exists. Deleting it...")
                 api_instance.delete_namespaced_job(
-                    name=job_name, namespace=namespace, body=client.V1DeleteOptions(propagation_policy="Foreground")
+                    name=job_name,
+                    namespace=namespace,
+                    body=client.V1DeleteOptions(propagation_policy="Foreground"),
                 )
-                while True:
-                    time.sleep(5)
-                    existing_job = api_instance.read_namespaced_job(name=job_name, namespace=namespace)
-                    if not existing_job:
-                        break
+                self.wait_for_job_deletion(job_name, namespace)
         except client.exceptions.ApiException as e:
             if e.status != 404:
                 print(f"Error checking for existing job: {e}")
@@ -127,20 +126,6 @@ class Wrk2:
             print(f"Job created: {response.metadata.name}")
         except client.exceptions.ApiException as e:
             print(f"Error creating job: {e}")
-            return
-
-        try:
-            while True:
-                job_status = api_instance.read_namespaced_job_status(name=job_name, namespace=namespace)
-                if job_status.status.ready:
-                    print("Job completed successfully.")
-                    break
-                elif job_status.status.failed:
-                    print("Job failed.")
-                    break
-                time.sleep(5)
-        except client.exceptions.ApiException as e:
-            print(f"Error monitoring job: {e}")
 
     def start_workload(self, payload_script, url):
         namespace = "default"
@@ -165,6 +150,28 @@ class Wrk2:
             if e.status != 404:
                 print(f"Error checking for existing job: {e}")
                 return
+
+    def wait_for_job_deletion(self, job_name, namespace, sleep=2, max_wait=60):
+        """Wait for a Kubernetes Job to be deleted before proceeding."""
+        api_instance = client.BatchV1Api()
+        console = Console()
+        waited = 0
+
+        with console.status(f"[bold yellow]Waiting for job '{job_name}' to be deleted..."):
+            while waited < max_wait:
+                try:
+                    api_instance.read_namespaced_job(name=job_name, namespace=namespace)
+                    time.sleep(sleep)
+                    waited += sleep
+                except client.exceptions.ApiException as e:
+                    if e.status == 404:
+                        console.log(f"[bold green]Job '{job_name}' successfully deleted.")
+                        return
+                    else:
+                        console.log(f"[red]Error checking job deletion: {e}")
+                        raise
+
+        raise TimeoutError(f"[red]Timed out waiting for job '{job_name}' to be deleted.")
 
 
 class Wrk2WorkloadManager(StreamWorkloadManager):

@@ -34,6 +34,78 @@ class Conductor:
         self.agent = agent
         self.agent_name = name
 
+    def _get_matching_noop_id(self, problem_id: str) -> str | None:
+        app_name = self.problem.app.__class__.__name__.lower()
+
+        if "hotel" in app_name:
+            return "noop_hotel_reservation"
+        elif "social" in app_name:
+            return "noop_social_network"
+        elif "astronomy" in app_name or "shop" in app_name:
+            return "noop_astronomy_shop"
+        else:
+            print(f"[WARN] No matching noop problem found for app: {app_name}")
+            return None
+
+    async def _run_single_problem(self, problem_id: str, is_noop: bool = False):
+        self.problem = self.problems.get_problem_instance(problem_id)
+        self.problem_id = problem_id
+        self.submission_stage = "detection"
+        self.results = {}
+
+        self.execution_start_time = time.time()
+
+        print(f"[Session Start] Problem ID: {problem_id}")
+        print("Setting up OpenEBS...")
+        self.kubectl.exec_command("kubectl apply -f https://openebs.github.io/charts/openebs-operator.yaml")
+        self.kubectl.exec_command(
+            'kubectl patch storageclass openebs-hostpath -p \'{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}\''
+        )
+        self.kubectl.wait_for_ready("openebs")
+        print("OpenEBS setup completed.")
+
+        self.prometheus.deploy()
+        self.problem.app.delete()
+        self.problem.app.deploy()
+
+        with CriticalSection():
+            self.problem.inject_fault()
+            atexit.register(exit_cleanup_fault, prob=self.problem)
+
+        if inspect.iscoroutinefunction(self.problem.start_workload):
+            asyncio.create_task(self.problem.start_workload())
+        else:
+            self.problem.start_workload()
+
+        # === Run agent loop ===
+        instr = "Please take the next action"
+        try:
+            while self.submission_stage != "done":
+                action = await self.ask_agent(instr)
+                self.sprint.agent(action)
+                env_response = await self.ask_env(action)
+                self.sprint.service(env_response)
+
+        except Exception as e:
+            with CriticalSection():
+                self.problem.recover_fault()
+                atexit.unregister(exit_cleanup_fault)
+            raise e
+
+        self.execution_end_time = time.time()
+
+        with CriticalSection():
+            self.problem.recover_fault()
+            atexit.unregister(exit_cleanup_fault)
+
+        self.problem.app.cleanup()
+        self.prometheus.teardown()
+        self.kubectl.exec_command("kubectl delete sc openebs-hostpath openebs-device --ignore-not-found")
+        self.kubectl.exec_command("kubectl delete -f https://openebs.github.io/charts/openebs-operator.yaml")
+        self.kubectl.wait_for_namespace_deletion("openebs")
+
+        return self.results
+
     def init_problem(self, problem_id: str):
         self.execution_start_time = time.time()
         self.problem_id = problem_id
@@ -148,36 +220,28 @@ class Conductor:
             return "[✅] Problem completed."
 
     async def start_problem(self):
-        instr = "Please take the next action"
-        try:
-            while self.submission_stage != "done":
-                action = await self.ask_agent(instr)
-                self.sprint.agent(action)
-                env_response = await self.ask_env(action)
-                self.sprint.service(env_response)
+        # === Run main problem ===
+        faulty_results = await self._run_single_problem(self.problem_id, is_noop=False)
 
-        except Exception as e:
-            with CriticalSection():
-                self.problem.recover_fault()
-                atexit.unregister(exit_cleanup_fault)
-            raise e
+        # === Get and run noop problem ===
+        noop_id = self._get_matching_noop_id(self.problem_id)
+        if noop_id is not None:
+            print(f"\n[INFO] Running NOOP problem: {noop_id}")
+            noop_results = await self._run_single_problem(noop_id, is_noop=True)
+        else:
+            print(f"[WARN] No matching NOOP found for {self.problem_id}. Skipping NOOP.")
+            noop_results = {}
 
-        self.execution_end_time = time.time()
-
-        with CriticalSection():
-            self.problem.recover_fault()
-            atexit.unregister(exit_cleanup_fault)
-
-        self.problem.app.cleanup()
-        self.prometheus.teardown()
-
-        self.kubectl.exec_command("kubectl delete sc openebs-hostpath openebs-device --ignore-not-found")
-        self.kubectl.exec_command("kubectl delete -f https://openebs.github.io/charts/openebs-operator.yaml")
-        self.kubectl.wait_for_namespace_deletion("openebs")
-
-        return {"results": self.results}
+        # === Return both results ===
+        return {
+            "results": {
+                "faulty": faulty_results,
+                "noop": noop_results,
+            }
+        }
 
 
 def exit_cleanup_fault(prob):
     print("Recovering fault before exit...")
     prob.recover_fault()
+    # TODO: Clean up everything else too
