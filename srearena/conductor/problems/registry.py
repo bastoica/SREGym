@@ -25,6 +25,8 @@ from srearena.conductor.problems.storage_user_unregistered import MongoDBUserUnr
 from srearena.conductor.problems.target_port import K8STargetPortMisconfig
 from srearena.conductor.problems.wrong_bin_usage import WrongBinUsage
 
+# TODO: move noop out of problem registry (https://github.com/xlab-uiuc/SREArena/issues/68)
+
 
 class ProblemRegistry:
     def __init__(self):

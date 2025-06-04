@@ -183,7 +183,7 @@ class Conductor:
         faulty_results = await self.run_problem()
 
         # === NOOP problem run ===
-        noop_id = ProblemRegistry.get_matching_noop_id(self.problem.app)
+        noop_id = self.problems.get_matching_noop_id(self.problem.app)
         if noop_id is not None:
             print(f"\n[INFO] Running NOOP problem: {noop_id}")
             self.init_problem(noop_id, is_noop=True)
