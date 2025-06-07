@@ -110,6 +110,15 @@ sudo ./setup_daemon.sh
 sudo systemctl stop provisioner.service
 ```
 
+### Running the Provisioner as a Program
+
+To run the provisioner as a program, run the following command: 
+
+```bash
+cd provisioner
+python3 daemon.py
+```
+
 ### Configuring the Provisioner
 
 The variables in `config/settings.py` file are used to configure the provisioner. They can be edited to change the provisioner settings.
