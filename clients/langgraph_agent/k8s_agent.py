@@ -7,28 +7,24 @@ from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langchain_core.tools import tool
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.constants import END
-from langgraph.graph import START, StateGraph
+from langgraph.graph import START, StateGraph, add_messages
 from langgraph.prebuilt import ToolNode
 from llm_backend.init_backend import get_llm_backend_for_tools
+from tools.basic_tool_node import BasicToolNode
 from tools.jaeger_tools import *
 from typing_extensions import TypedDict
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
-from tools.basic_tool_node import BasicToolNode
-from tools.text_editing.file_nav import goto_line, open_file
 
 
 class State(TypedDict):
     # Messages have the type "list". The `add_messages` function
     # in the annotation defines how this state key should be updated
     # (in this case, it appends messages to the list, rather than overwriting them)
-    def add_messages(messages: list, message: ToolMessage | AIMessage | HumanMessage):
-        pass
-
     messages: Annotated[list, add_messages]
-    curr_file: Annotated[str, open_file]
-    curr_line: Annotated[int, goto_line]
+    curr_file: str
+    curr_line: int
 
 
 class XAgent:

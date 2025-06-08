@@ -1,17 +1,27 @@
+import logging
+
+from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
+
 from clients.langgraph_agent.k8s_agent import State
 
-
-def open_file(state: State, open_file_path: str):
-    return State(
-        messages=state["messages"],
-        curr_file=open_file_path,
-        curr_line=state["curr_line"],
-    )
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
 
 
-def goto_line(state: State, goto_line_num: int):
-    return State(
-        messages=state["messages"],
-        curr_file=state["curr_file"],
-        curr_line=goto_line_num,
-    )
+def update_file_vars_in_state(state: State, message: ToolMessage | AIMessage | HumanMessage):
+    match message:
+        case ToolMessage():
+            if message.tool_call.function.name == "open_file":
+                return State(
+                    messages=state["messages"] + [message],
+                    curr_file=message.tool_call.arguments["file"],
+                    curr_line=state["curr_line"],
+                )
+            elif message.tool_call.function.name == "goto_line":
+                return State(
+                    messages=state["messages"] + [message],
+                    curr_file=state["curr_file"],
+                    curr_line=message.tool_call.arguments["line"],
+                )
+        case _:
+            logger.info("Not found open_file or goto_line in message: %s", message)
