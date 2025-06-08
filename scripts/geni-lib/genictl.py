@@ -7,6 +7,7 @@ GENI / CloudLab experiment management CLI - Fixed Version
 # ──────────────────────────────────────────────────────────────────────────────
 import sys
 from pathlib import Path
+import warnings
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 if str(ROOT_DIR) not in sys.path:
@@ -25,6 +26,172 @@ import time
 import geni.portal as portal
 import geni.util
 from geni.aggregate.cloudlab import Clemson, Utah, Wisconsin
+from prompt_toolkit import PromptSession
+from prompt_toolkit.completion import WordCompleter
+from prompt_toolkit.enums import EditingMode
+from prompt_toolkit.key_binding import KeyBindings
+
+from provisioner.utils.parser import parse_sliver_info, collect_and_parse_hardware_info
+
+warnings.filterwarnings("ignore")
+
+# List of available OS types
+OS_TYPES = [
+    "UBUNTU22-64-STD",
+    "UBUNTU20-64-STD",
+    "UBUNTU18-64-STD",
+    "UBUNTU16-64-STD",
+    "DEBIAN11-64-STD",
+    "DEBIAN10-64-STD",
+    "FEDORA36-64-STD",
+    "CENTOS7-64-STD",
+    "CENTOS8-64-STD",
+    "RHEL8-64-STD",
+]
+
+
+def validate_hours(value):
+    float_value = float(value)
+    if float_value <= 0:
+        raise argparse.ArgumentTypeError("Hours must be greater than 0")
+    return float_value
+
+
+def create_slice(context, args):
+    try:
+        print(f"Creating slice '{args.slice_name}'...")
+        expiration = datetime.datetime.now() + datetime.timedelta(hours=args.hours)
+        res = context.cf.createSlice(
+            context, args.slice_name, exp=expiration, desc=args.description
+        )
+        print(f"Slice Info: \n{json.dumps(res, indent=2)}")
+        print(f"Slice '{args.slice_name}' created")
+    except Exception as e:
+        print(f"Error: {e}")
+
+
+def create_sliver(context, args):
+    try:
+        print(f"Creating sliver in slice '{args.slice_name}'...")
+        aggregate = get_aggregate(args.site)
+        igm = aggregate.createsliver(context, args.slice_name, args.rspec_file)
+        geni.util.printlogininfo(manifest=igm)
+
+        # Save the login info to a file
+        login_info = geni.util._corelogininfo(igm)
+        if isinstance(login_info, list):
+            login_info = "\n".join(map(str, login_info))
+        with open(f"{args.slice_name}.login.info.txt", "w") as f:
+            f.write(f"Slice name: {args.slice_name}\n")
+            f.write(f"Cluster name: {aggregate.name}\n")
+            f.write(login_info)
+
+        print(f"Sliver '{args.slice_name}' created")
+    except Exception as e:
+        print(f"Error: {e}")
+
+
+def get_sliver_status(context, args):
+    try:
+        print("Checking sliver status...")
+        aggregate = get_aggregate(args.site)
+        status = aggregate.sliverstatus(context, args.slice_name)
+        print(f"Status: {json.dumps(status, indent=2)}")
+    except Exception as e:
+        print(f"Error: {e}")
+
+
+def renew_slice(context, args):
+    try:
+        print("Renewing slice...")
+        new_expiration = datetime.datetime.now() + datetime.timedelta(hours=args.hours)
+        context.cf.renewSlice(context, args.slice_name, new_expiration)
+        print(f"Slice '{args.slice_name}' renewed")
+    except Exception as e:
+        print(f"Error: {e}")
+
+
+def renew_sliver(context, args):
+    try:
+        print("Renewing sliver...")
+        aggregate = get_aggregate(args.site)
+        new_expiration = datetime.datetime.now() + datetime.timedelta(hours=args.hours)
+        aggregate.renewsliver(context, args.slice_name, new_expiration)
+        print(f"Sliver '{args.slice_name}' renewed")
+    except Exception as e:
+        print(f"Error: {e}")
+
+
+def list_slices(context, args):
+    try:
+        print("Listing slices...")
+        res = context.cf.listSlices(context)
+        print(json.dumps(res, indent=2))
+    except Exception as e:
+        print(f"Error: {e}")
+
+
+def list_sliver_spec(context, args):
+    try:
+        print("Listing slivers...")
+        aggregate = get_aggregate(args.site)
+        res = aggregate.listresources(context, args.slice_name, available=True)
+
+        # Parse and display the information
+        sliver_info = parse_sliver_info(res.text)
+
+        print("\nExperiment Information:")
+        print(f"Description: {sliver_info['description']}")
+        print(f"Expiration: {sliver_info['expiration']}")
+
+        print("\nNodes:")
+        for node in sliver_info["nodes"]:
+            print(f"\nNode: {node['client_id']}")
+            print(f"  Hostname: {node['hostname']}")
+            print(f"  Public IP: {node['public_ip']}")
+            print(f"  Internal IP: {node['internal_ip']}")
+            print(f"  Hardware: {node['hardware']}")
+            print(f"  OS Image: {node['os_image']}")
+
+        print("\nLocation:")
+        print(f"  Country: {sliver_info['location']['country']}")
+        print(f"  Latitude: {sliver_info['location']['latitude']}")
+        print(f"  Longitude: {sliver_info['location']['longitude']}")
+    except Exception as e:
+        print(f"Error: {e}")
+
+
+def delete_sliver(context, args):
+    try:
+        print(f"Deleting sliver '{args.slice_name}'...")
+        aggregate = get_aggregate(args.site)
+        aggregate.deletesliver(context, args.slice_name)
+        print(f"Sliver '{args.slice_name}' deleted.")
+    except Exception as e:
+        print(f"Error: {e}")
+
+
+def get_aggregate(site):
+    sites = {"utah": Utah, "clemson": Clemson, "wisconsin": Wisconsin}
+    return sites.get(site.lower(), Utah)
+
+
+def get_hardware_info(context=None, args=None):
+    hardware_info_list = collect_and_parse_hardware_info()
+    if hardware_info_list:
+        print(
+            f"\n{'Hardware Name':<20} | {'Cluster Name':<30} | {'Total':<7} | {'Free':<7}"
+        )
+        print("-" * 100)
+
+        for item in hardware_info_list:
+            if item["total"] > 0 or item["free"] > 0:
+                print(
+                    f"{item['hardware_name']:<20} | {item['cluster_name']:<30} | {item['total']:<7} | {item['free']:<7}"
+                )
+    else:
+        print("No hardware information available")
+
 
 # Kubernetes bootstrapper
 from cluster_setup import setup_cloudlab_cluster
