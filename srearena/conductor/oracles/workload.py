@@ -4,7 +4,8 @@ from srearena.conductor.oracles.base import Oracle
 def truncate(text: str, length: int = 100) -> str:
     """Truncate text to a specified length, adding ellipsis if truncated."""
     if len(text) > length:
-        return text[:length] + "..."
+        text = text[:length] + "..."
+    text = text.encode("unicode_escape").decode("utf-8")
     return text
 
 

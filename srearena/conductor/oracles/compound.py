@@ -12,6 +12,8 @@ class CompoundedOracle(Oracle):
         for key, oracle in kwargs.items():
             if not isinstance(oracle, Oracle):
                 raise TypeError(f"Keyword argument '{key}' is not an instance of Oracle: {oracle}")
+            if key in self.oracles:
+                raise ValueError(f"Duplicate oracle key: {key}")
             self.oracles[key] = oracle
 
     def evaluate(self, *args, **kwargs):
