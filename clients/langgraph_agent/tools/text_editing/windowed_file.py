@@ -145,7 +145,3 @@ class WindowedFile:
             self.first_line += n_lines - self.overlap
         elif n_lines < 0:
             self.first_line += n_lines + self.overlap
-
-    def undo_edit(self):
-        self.text = self._original_text
-        self.first_line = self._original_first_line
