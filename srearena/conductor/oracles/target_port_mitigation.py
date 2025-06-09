@@ -3,6 +3,8 @@ from srearena.conductor.oracles.utils import is_exact_match
 
 
 class TargetPortMisconfigMitigationOracle(Oracle):
+    importance = 1.0
+
     def evaluate(self) -> dict:
         print("== Mitigation Evaluation ==")
 

@@ -2,6 +2,8 @@ from srearena.conductor.oracles.base import Oracle
 
 
 class ScalePodZeroMitigationOracle(Oracle):
+    importance = 1.0
+
     def evaluate(self) -> dict:
         print("== Mitigation Evaluation ==")
 

@@ -10,6 +10,8 @@ def truncate(text: str, length: int = 100) -> str:
 
 
 class WorkloadOracle(Oracle):
+    importance = 3.0
+
     def __init__(self, problem, wrk_manager=None):
         super().__init__(problem)
         self.wrk = wrk_manager

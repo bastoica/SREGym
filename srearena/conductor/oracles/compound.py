@@ -2,6 +2,8 @@ from srearena.conductor.oracles.base import Oracle
 
 
 class CompoundedOracle(Oracle):
+    importance = 1.0
+
     def __init__(self, problem, *args, **kwargs):
         super().__init__(problem)
         self.oracles = dict()
@@ -20,7 +22,11 @@ class CompoundedOracle(Oracle):
         result = {
             "success": True,
             "oracles": [],
+            "accuracy": 0.0,
         }
+
+        total_weight = sum(getattr(oracle, "importance", 1.0) for oracle in self.oracles.values())
+
         for key, oracle in self.oracles.items():
             try:
                 res = oracle.evaluate(*args, **kwargs)
@@ -29,6 +35,14 @@ class CompoundedOracle(Oracle):
 
                 if not res.get("success", False):
                     result["success"] = False
+
+                accuracy_weight = getattr(oracle, "importance", 1.0) / total_weight
+                if "accuracy" in res:
+                    result["accuracy"] += res["accuracy"] * accuracy_weight
+                else:
+                    accuracy = 100.0 if res.get("success", False) else 0.0
+                    result["accuracy"] += accuracy * accuracy_weight
+
             except Exception as e:
                 print(f"[❌] Error during evaluation of oracle '{key}': {e}")
                 result["success"] = False
@@ -38,4 +52,9 @@ class CompoundedOracle(Oracle):
                         "success": False,
                     }
                 )
+
+        if result["accuracy"] > 100.0 - 1e-3:
+            result["accuracy"] = 100.0
+        elif result["accuracy"] < 0.0 + 1e-3:
+            result["accuracy"] = 0.0
         return result
