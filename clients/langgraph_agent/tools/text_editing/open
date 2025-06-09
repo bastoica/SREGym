@@ -40,6 +40,8 @@ def open_file(path: Optional[str] = None, line_number: Optional[str] = None) -> 
     wf.print_window()
 
 
-def main(state: State, path: Optional[str] = None, line_number: Optional[str] = None) -> None:
+def main(state: Optional[State] = None, path: Optional[str] = None, line_number: Optional[str] = None) -> None:
     # langgraph tools should only invoke the tool, not manage langgraph states.
+    if state is not None:
+        raise ValueError("State is None. Have you passed in the state object?")
     open_file(path, line_number)
