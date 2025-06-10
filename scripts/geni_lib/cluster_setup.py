@@ -283,7 +283,7 @@ def deploy_srearena(ex: RemoteExecutor, deploy_key_path: str) -> None:
     # Clone and deploy SREArena
     deploy_cmds = [
         # Use the correct repository URL
-        "ssh-agent bash -c 'ssh-add ~/.ssh/srearena_deploy; git clone git@github.com:xlab-uiuc/SREArena.git /tmp/srearena'",
+        "ssh-agent bash -c 'ssh-add ~/.ssh/srearena_deploy; git clone --recurse-submodules git@github.com:xlab-uiuc/SREArena.git /tmp/srearena'",
         "cd /tmp/srearena",
         # Clean up the private key for security
         "rm -f ~/.ssh/srearena_deploy",
