@@ -6,6 +6,7 @@ from typing import Annotated, Optional
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langchain_core.tools import tool
 from langgraph.prebuilt import InjectedState
+from langgraph.types import Command
 
 from clients.langgraph_agent.k8s_agent import State
 from clients.langgraph_agent.state import State
@@ -15,15 +16,39 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(level
 logger = logging.getLogger(__name__)
 
 
+def update_file_vars_in_state(state: State, message: str | ToolMessage | AIMessage | HumanMessage) -> State:
+    new_state = state
+    match message:
+        case str():
+            logger.info("Not updating state as message is a string")
+            new_state["messages"] = new_state["messages"] + [ToolMessage(message)]
+        case ToolMessage():
+            if message.tool_call.function.name == "open_file":
+                new_state["curr_file"] = message.tool_call.arguments["path"]
+                new_state["curr_line"] = message.tool_call.arguments["line_number"]
+                new_state["messages"] = new_state["messages"] + [message]
+            elif message.tool_call.function.name == "goto_line":
+                new_state["curr_line"] = message.tool_call.arguments["line_number"]
+                new_state["messages"] = new_state["messages"] + [message]
+        case _:
+            logger.info("Not found open_file or goto_line in message: %s", message)
+            logger.info("Not updating state")
+    logger.info("Updated state: %s", new_state)
+    return new_state
+
+
 @tool("open_file", description="open a file")
 def open_file(
     state: Annotated[dict, InjectedState] = None, path: Optional[str] = None, line_number: Optional[str] = None
-) -> str:
+) -> Command:
     # This tool should get both path and line number from the state
     # if the state does not have them, then it means no file has been opened yet.
     if path is None:
-        print('Usage: open "<file>"')
-        sys.exit(1)
+        msg_txt = 'Usage: open "<file>" [<line_number>]'
+        return Command(
+            update=update_file_vars_in_state(state, msg_txt),
+        )
+    logger.info("in open_file, the last msg: %s", state["messages"][-1])
 
     wf = WindowedFile(path=Path(path), exit_on_exception=False)
 
@@ -47,24 +72,7 @@ def open_file(
         line_num = wf.first_line
 
     wf.goto(line_num - 1, mode="top")
-    wf.print_window()
-    return wf.get_window_text(line_numbers=True, status_line=True, pre_post_line=True)
-
-
-def update_file_vars_in_state(state: State, message: ToolMessage | AIMessage | HumanMessage):
-    match message:
-        case ToolMessage():
-            if message.tool_call.function.name == "open_file":
-                return State(
-                    messages=state["messages"] + [message],
-                    curr_file=message.tool_call.arguments["file"],
-                    curr_line=state["curr_line"],
-                )
-            elif message.tool_call.function.name == "goto_line":
-                return State(
-                    messages=state["messages"] + [message],
-                    curr_file=state["curr_file"],
-                    curr_line=message.tool_call.arguments["line"],
-                )
-        case _:
-            logger.info("Not found open_file or goto_line in message: %s", message)
+    msg_txt = wf.get_window_text(line_numbers=True, status_line=True, pre_post_line=True)
+    return Command(
+        update=update_file_vars_in_state(state, state["messages"][-1]),
+    )
