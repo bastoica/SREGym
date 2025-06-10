@@ -103,3 +103,50 @@ def open_file(
             ToolMessage(content=msg_txt, tool_call_id=tool_call_id),
         ),
     )
+
+
+@tool("goto_line", description="goto a line in an opened file, line_number: <line_number>")
+def goto_line(
+    state: Annotated[dict, InjectedState],
+    tool_call_id: Annotated[str, InjectedToolCallId],
+    line_number: Optional[int] = None,
+) -> Command:
+    if state["curr_file"] is None:
+        msg_txt = "Error: No file is open, use open_file to open a file first"
+        return Command(
+            update=update_file_vars_in_state(state, msg_txt, tool_call_id),
+        )
+
+    if line_number is None:
+        msg_txt = "Usage: goto <line_number>"
+        return Command(
+            update=update_file_vars_in_state(state, msg_txt, tool_call_id),
+        )
+
+    try:
+        line_number = int(line_number)
+    except ValueError:
+        msg_txt = "Usage: goto <line>\n" + "Error: <line> must be a number"
+        return Command(
+            update=update_file_vars_in_state(state, msg_txt, tool_call_id),
+        )
+
+    curr_file = str(state["curr_file"])
+    wf = WindowedFile(curr_file)
+
+    if line_number > wf.n_lines:
+        msg_txt = f"Error: <line> must be less than or equal to {wf.n_lines}"
+        return Command(
+            update=update_file_vars_in_state(state, msg_txt, tool_call_id),
+        )
+
+    # Convert from 1-based line numbers (user input) to 0-based (internal representation)
+    wf.goto(line_number - 1, mode="top")
+    wf.print_window()
+    msg_txt = wf.get_window_text(line_numbers=True, status_line=True, pre_post_line=True)
+    return Command(
+        update=update_file_vars_in_state(
+            state,
+            ToolMessage(content=msg_txt, tool_call_id=tool_call_id),
+        )
+    )
