@@ -2,14 +2,16 @@ import os
 from unittest.mock import MagicMock, patch
 
 import pytest
+from langchain.agents.chat.prompt import HUMAN_MESSAGE
+from langchain_core.messages import HumanMessage, ToolMessage
 
 from clients.langgraph_agent.state import State
 from clients.langgraph_agent.tools.text_editing.file_manip import create, edit, goto_line, insert, open_file
 
 
 @pytest.fixture
-def mock_state():
-    return State(messages=[{"role": "user", "content": "Mock"}], curr_file="mock_file.py", curr_line=42)
+def mock_tool_call_id():
+    return "mock_tool_call_id"
 
 
 @pytest.fixture
@@ -20,23 +22,97 @@ def temp_file(tmp_path):
     return str(file_path)
 
 
+@pytest.fixture
+def open_mock_state(temp_file):
+    return State(
+        messages=[
+            HumanMessage(content="hello"),
+            ToolMessage(
+                tool_call_id="abc",
+                content="",
+                additional_kwargs={
+                    "tool_calls": [
+                        {
+                            "id": "call_3vHND9gcYpfAFIHFLO35zX2w",
+                            "function": {
+                                "arguments": f'"path": {temp_file},"line_number":"1"',
+                                "name": "open_file",
+                            },
+                            "type": "function",
+                        }
+                    ],
+                    "refusal": None,
+                },
+                response_metadata={
+                    "token_usage": {
+                        "completion_tokens": 36,
+                        "prompt_tokens": 653,
+                        "total_tokens": 689,
+                        "completion_tokens_details": {
+                            "accepted_prediction_tokens": 0,
+                            "audio_tokens": 0,
+                            "reasoning_tokens": 0,
+                            "rejected_prediction_tokens": 0,
+                        },
+                        "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0},
+                    },
+                    "model_name": "gpt-4o-2024-08-06",
+                    "system_fingerprint": "fp_07871e2ad8",
+                    "id": "chatcmpl-BhMroSwI7MlaCBHBmELAyM1nlT7H1",
+                    "service_tier": "default",
+                    "finish_reason": "tool_calls",
+                    "logprobs": None,
+                },
+                id="run--80b17920-4e5e-427a-b953-c283a0ab98d7-0",
+                tool_calls=[
+                    {
+                        "name": "open_file",
+                        "args": {
+                            "path": f"{temp_file}",
+                            "line_number": "1",
+                        },
+                        "id": "call_3vHND9gcYpfAFIHFLO35zX2w",
+                        "type": "tool_call",
+                    }
+                ],
+                usage_metadata={
+                    "input_tokens": 653,
+                    "output_tokens": 36,
+                    "total_tokens": 689,
+                    "input_token_details": {"audio": 0, "cache_read": 0},
+                    "output_token_details": {"audio": 0, "reasoning": 0},
+                },
+            ),
+        ],
+        curr_file="mock_file.py",
+        curr_line=42,
+    )
+
+
 class TestOpenFile:
     @patch("os.path.exists")
     @patch("os.path.isfile")
-    def test_open_file_success(self, mock_isfile, mock_exists, mock_state, temp_file):
+    def test_open_file_success(self, mock_isfile, mock_exists, open_mock_state, temp_file, mock_tool_call_id):
         mock_exists.return_value = True
         mock_isfile.return_value = True
 
-        result = open_file(mock_state, path=temp_file)
+        tool_args = {
+            "args": {"state": open_mock_state, "path": temp_file},
+            "name": "open",
+            "type": "tool_call",
+            "id": mock_tool_call_id,
+        }
 
-        assert result.curr_file == temp_file
+        result = open_file.invoke(tool_args)
+
+        assert "Line 1" in result
         assert "Successfully opened" in result.messages[-1]["content"]
 
     @patch("os.path.exists")
     def test_open_file_not_exists(self, mock_exists, mock_state):
         mock_exists.return_value = False
 
-        result = open_file(mock_state, path="/nonexistent/file.txt")
+        result = open_file.invoke(mock_state, path="/nonexistent/file.txt")
 
         assert "does not exist" in result.messages[-1]["content"]
 
@@ -46,15 +122,15 @@ class TestOpenFile:
         mock_exists.return_value = True
         mock_isfile.return_value = False
 
-        result = open_file(mock_state, path="/some/directory")
+        result = open_file.invoke(mock_state, path="/some/directory")
 
-        assert "is not a file" in result.messages[-1]["content"]
+        assert "is not a file" in mock_state["messages"][-1]["content"]
 
     def test_open_file_with_line_number(self, mock_state, temp_file):
-        result = open_file(mock_state, path=temp_file, line_number=3)
+        result = open_file.invoke(mock_state, path=temp_file, line_number=3)
 
-        assert result.curr_file == temp_file
-        assert result.curr_line == 3
+        assert mock_state["curr_file"] == temp_file
+        assert mock_state["curr_line"] == 3
         assert "Successfully opened" in result.messages[-1]["content"]
 
 
