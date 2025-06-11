@@ -1,6 +1,14 @@
 #!/usr/bin/env python3
 
 import argparse
+from typing import Annotated
+
+from langchain_core.tools import InjectedToolCallId, tool
+from langgraph.prebuilt import InjectedState
+from langgraph.types import Command
+from numba.scripts.generate_lower_listing import description
+
+from clients.langgraph_agent.tools.text_editing.file_manip import update_file_vars_in_state
 
 try:
     from sweagent import TOOLS_DIR
@@ -84,20 +92,59 @@ def get_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(search: str, replace: str, replace_all: bool):
-    try:
-        wf = WindowedFile(exit_on_exception=False)
-    except FileNotOpened:
-        print("No file opened. Either `open` or `create` a file first.")
+@tool("edit")
+def main(
+    state: Annotated[dict, InjectedState] = None,
+    tool_call_id: Annotated[str, InjectedToolCallId] = "",
+    search: str = "",
+    replace: str = "",
+    replace_all: bool = "",
+) -> Command:
+    """
+    Replace first occurrence of <search> with <replace> in the currently displayed lines.
+    If replace-all is True , replace all occurrences of <search> with <replace>.
+
+    For example, if you are looking at this file:
+
+    def fct():
+        print("Hello world")
+
+    and you want to edit the file to read:
+
+    def fct():
+        print("Hello")
+        print("world")
+
+    you can search for `Hello world` and replace with `"Hello"\n    print("world")`
+    (note the extra spaces before the print statement!).
+
+    Tips:
+
+    1. Always include proper whitespace/indentation
+    2. When you are adding an if/with/try statement, you need to INDENT the block that follows, so make sure to include it in both your search and replace strings!
+    3. If you are wrapping code in a try statement, make sure to also add an 'except' or 'finally' block.
+
+    Before every edit, please
+
+    1. Explain the code you want to edit and why it is causing the problem
+    2. Explain the edit you want to make and how it fixes the problem
+    3. Explain how the edit does not break existing functionality
+    """
+    if not isinstance(state["curr_file"], str):
+        logger.error("INTERNAL: state curr file should be a string")
         exit(1)
+    if len(state["curr_file"]) == 0:
+        msg_txt = "No file opened. Either `open` or `create` a file first."
+        return Command(update=update_file_vars_in_state(state, msg_txt, tool_call_id))
+
+    wf = WindowedFile(path=state["curr_file"])
 
     # Turn \\n into \n etc., i.e., undo the escaping
     # args.replace = args.replace.encode("utf8").decode("unicode_escape")
 
     if search == replace:
-        print(_NO_CHANGES_MADE_MSG)
-        print(RETRY_WITH_OUTPUT_TOKEN)
-        exit(2)
+        msg_txt = _NO_CHANGES_MADE_MSG + "\n" + RETRY_WITH_OUTPUT_TOKEN
+        return Command(update=update_file_vars_in_state(state, msg_txt, tool_call_id))
 
     pre_edit_lint = flake8(wf.path)
 
@@ -105,9 +152,8 @@ def main(search: str, replace: str, replace_all: bool):
         if not replace_all:
             window_text = wf.get_window_text()
             if window_text.count(search) > 1:
-                print(_MULTIPLE_OCCURRENCES_MSG.format(search=search))
-                print(RETRY_WITH_OUTPUT_TOKEN)
-                exit(4)
+                msg_txt = _MULTIPLE_OCCURRENCES_MSG.format(search=search) + "\n" + RETRY_WITH_OUTPUT_TOKEN
+                return Command(update=update_file_vars_in_state(state, msg_txt, tool_call_id))
             replacement_info = wf.replace_in_window(search, replace)
             # todo: Should warn if more than one occurrence was found?
         else:
@@ -116,15 +162,13 @@ def main(search: str, replace: str, replace_all: bool):
     except TextNotFound:
         line_no_founds = wf.find_all_occurrences(search, zero_based=False)
         if line_no_founds:
-            print(
-                _NOT_FOUND_IN_WINDOW_MSG.format(
-                    search=search, occurrences="\n".join([f"- line {line_no}" for line_no in line_no_founds])
-                )
+            msg_txt = _NOT_FOUND_IN_WINDOW_MSG.format(
+                search=search, occurrences="\n".join([f"- line {line_no}" for line_no in line_no_founds])
             )
         else:
-            print(_NOT_FOUND.format(search=search))
-        print(RETRY_WITH_OUTPUT_TOKEN)
-        exit(3)
+            msg_txt = _NOT_FOUND.format(search=search)
+        msg_txt = msg_txt + "\n" + RETRY_WITH_OUTPUT_TOKEN
+        return Command(update=update_file_vars_in_state(state, msg_txt, tool_call_id))
 
     post_edit_lint = flake8(wf.path)
 
@@ -134,10 +178,6 @@ def main(search: str, replace: str, replace_all: bool):
             replacement_info.first_replaced_line,
             replacement_info.first_replaced_line + replacement_info.n_search_lines - 1,
         )
-        # print(f"{replacement_info=}")
-        # print(f"{replacement_window=}")
-        # print(f"{pre_edit_lint=}")
-        # print(f"{post_edit_lint=}")
         new_flake8_output = format_flake8_output(
             post_edit_lint,
             previous_errors_string=pre_edit_lint,
@@ -153,22 +193,17 @@ def main(search: str, replace: str, replace_all: bool):
         with_edits = wf.get_window_text(line_numbers=True, status_line=True, pre_post_line=True)
         wf.undo_edit()
         without_edits = wf.get_window_text(line_numbers=True, status_line=True, pre_post_line=True)
-        print(
-            _LINT_ERROR_TEMPLATE.format(
-                errors=new_flake8_output,
-                window_applied=with_edits,
-                window_original=without_edits,
-            )
+        msg_txt = _LINT_ERROR_TEMPLATE.format(
+            errors=new_flake8_output,
+            window_applied=with_edits,
+            window_original=without_edits,
         )
-        print(RETRY_WITH_OUTPUT_TOKEN)
-        exit(4)
+        msg_txt = msg_txt + "\n" + RETRY_WITH_OUTPUT_TOKEN
+        return Command(update=update_file_vars_in_state(state, msg_txt, tool_call_id))
     if not replace_all:
-        print(_SINGLE_EDIT_SUCCESS_MSG)
+        msg_txt = _SINGLE_EDIT_SUCCESS_MSG
     else:
-        print(_MULTIPLE_EDITS_SUCCESS_MSG.format(n_replacements=replacement_info.n_replacements))
+        msg_txt = _MULTIPLE_EDITS_SUCCESS_MSG.format(n_replacements=replacement_info.n_replacements)
 
-    wf.print_window()
-
-
-if __name__ == "__main__":
-    main(**vars(get_parser().parse_args()))
+    msg_txt = msg_txt + "\n\n" + wf.get_window_text(line_numbers=True, status_line=True, pre_post_line=True)
+    return Command(update=update_file_vars_in_state(state, msg_txt, tool_call_id))
