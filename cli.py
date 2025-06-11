@@ -1,7 +1,6 @@
 """SREArena CLI client."""
 
 import asyncio
-import atexit
 
 from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import WordCompleter
