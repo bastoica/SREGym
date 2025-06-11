@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 
 import argparse
-from typing import Union
+from typing import Annotated, Union
 
-from flake8_utils import flake8, format_flake8_output  # type: ignore
-from windowed_file import FileNotOpened, WindowedFile  # type: ignore
+from langchain_core.tools import InjectedToolCallId, tool
+from langgraph.prebuilt import InjectedState
+from langgraph.types import Command
+
+from clients.langgraph_agent.tools.text_editing.file_manip import update_file_vars_in_state
 
 RETRY_WITH_OUTPUT_TOKEN = "###SWE-AGENT-RETRY-WITH-OUTPUT###"
 
@@ -37,13 +40,20 @@ def get_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(text: str, line: Union[int, None] = None):
-    try:
-        wf = WindowedFile(exit_on_exception=False)
-    except FileNotOpened:
-        print("No file opened. Use the `create` or `open` command first.")
-        print(RETRY_WITH_OUTPUT_TOKEN)
-        exit(1)
+@tool("insert")
+def insert(
+    state: Annotated[dict, InjectedState],
+    tool_call_id: Annotated[str, InjectedToolCallId],
+    text: str,
+    line: Union[int, None] = None,
+):
+    """
+    Insert <text> at the end of the currently opened file or after <line> if specified.
+    """
+    if len(state["curr_file"]) == 0:
+        msg_txt = "No file opened. Either `open` or `create` a file first."
+        return Command(update=update_file_vars_in_state(state, msg_txt, tool_call_id))
+    wf = WindowedFile(state["curr_file"])
 
     pre_edit_lint = flake8(wf.path)
     insert_info = wf.insert(text, line=line - 1 if line is not None else None)
@@ -62,16 +72,10 @@ def main(text: str, line: Union[int, None] = None):
         with_edits = wf.get_window_text(line_numbers=True, status_line=True, pre_post_line=True)
         wf.undo_edit()
         without_edits = wf.get_window_text(line_numbers=True, status_line=True, pre_post_line=True)
-        print(
-            _LINT_ERROR_TEMPLATE.format(
-                errors=new_flake8_output, window_applied=with_edits, window_original=without_edits
-            )
+        msg_txt = _LINT_ERROR_TEMPLATE.format(
+            errors=new_flake8_output, window_applied=with_edits, window_original=without_edits
         )
-        print(RETRY_WITH_OUTPUT_TOKEN)
-        exit(4)
+        return Command(update=update_file_vars_in_state(state, msg_txt, tool_call_id))
 
-    wf.print_window()
-
-
-if __name__ == "__main__":
-    main(**vars(get_parser().parse_args()))
+    msg_txt = wf.get_window_text(line_numbers=True, status_line=True, pre_post_line=True)
+    return Command(update=update_file_vars_in_state(state, msg_txt, tool_call_id))
