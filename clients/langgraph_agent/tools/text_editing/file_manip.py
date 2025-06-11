@@ -44,14 +44,14 @@ def update_file_vars_in_state(
             if tool_name == "open_file":
                 new_state["curr_file"] = tool_args["path"]
                 new_state["curr_line"] = tool_args["line_number"]
-            elif message.tool_call.function.name == "goto_line":
+            elif tool_name == "goto_line":
                 new_state["curr_line"] = tool_args["line_number"]
-            elif message.tool_call.function.name == "create":
+            elif tool_name == "create":
                 new_state["curr_file"] = tool_args["path"]
-            elif message.tool_call.function.name == "edit":
+            elif tool_name == "edit":
                 # Explicitly pointing out as this tool does not modify agent state
                 pass
-            elif message.tool_call.function.name == "insert":
+            elif tool_name == "insert":
                 # Explicitly pointing out as this tool does not modify agent state
                 pass
 
@@ -182,7 +182,7 @@ def create(state: Annotated[dict, InjectedState], tool_call_id: Annotated[str, I
     wf = WindowedFile(path=path)
     wf.first_line = 0
     wf.print_window()
-    msg_txt = wf.get_window_text(line_numbers=True, status_line=True, pre_post_line=True)
+    msg_txt = "File created successfully."
     return Command(
         update=update_file_vars_in_state(
             state,

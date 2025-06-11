@@ -53,7 +53,7 @@ class XAgent:
         if hasattr(ai_message, "tool_calls") and len(ai_message.tool_calls) > 0:
             tool_name = ai_message.tool_calls[0]["name"]
             match tool_name:
-                case "open_file" | "goto_line":
+                case "open_file" | "goto_line" | "create" | "edit" | "insert":
                     logger.info("invoking tool node: file tool")
                     return "file_editing_tool_node"
                 case "get_traces" | "get_services" | "get_operations":
