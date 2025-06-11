@@ -261,6 +261,56 @@ class KubeCtl:
             print(f"Exception when retrieving node architectures: {e}\n")
         return architectures
 
+    def get_node_memory_capacity(self):
+        max_capacity = 0
+        try:
+            nodes = self.core_v1_api.list_node()
+            for node in nodes.items:
+                capacity = node.status.capacity.get("memory")
+                capacity = self.parse_k8s_quantity(capacity) if capacity else 0
+                max_capacity = max(max_capacity, capacity)
+            return max_capacity
+        except ApiException as e:
+            print(f"Exception when retrieving node memory capacity: {e}\n")
+            return {}
+
+    def parse_k8s_quantity(self, mem_str):
+        mem_str = mem_str.strip()
+        unit_multipliers = {
+            "Ki": 1,
+            "Mi": 1024**1,
+            "Gi": 1024**2,
+            "Ti": 1024**3,
+            "Pi": 1024**4,
+            "Ei": 1024**5,
+            "K": 1,
+            "M": 1000**1,
+            "G": 1000**2,
+            "T": 1000**3,
+            "P": 1000**4,
+            "E": 1000**5,
+        }
+
+        import re
+
+        match = re.match(r"^([0-9.]+)([a-zA-Z]+)?$", mem_str)
+        if not match:
+            raise ValueError(f"Invalid Kubernetes quantity: {mem_str}")
+
+        number, unit = match.groups()
+        number = float(number)
+        multiplier = unit_multipliers.get(unit, 1)  # default to 1 if no unit
+        return int(number * multiplier)
+
+    def format_k8s_memory(self, bytes_value):
+        units = ["Ki", "Mi", "Gi", "Ti", "Pi", "Ei"]
+        value = bytes_value
+        for unit in units:
+            if value < 1024:
+                return f"{round(value, 2)}{unit}"
+            value /= 1024
+        return f"{round(value, 2)}Ei"
+
 
 # Example usage:
 if __name__ == "__main__":

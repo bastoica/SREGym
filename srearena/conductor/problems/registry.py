@@ -20,6 +20,7 @@ from srearena.conductor.problems.pod_kill import ChaosMeshPodKill
 from srearena.conductor.problems.product_catalog_failure import ProductCatalogServiceFailure
 from srearena.conductor.problems.recommendation_service_cache_failure import RecommendationServiceCacheFailure
 from srearena.conductor.problems.redeploy_without_pv import RedeployWithoutPV
+from srearena.conductor.problems.resource_request import ResourceRequestTooLarge, ResourceRequestTooSmall
 from srearena.conductor.problems.revoke_auth import MongoDBRevokeAuth
 from srearena.conductor.problems.scale_pod import ScalePodSocialNet
 from srearena.conductor.problems.storage_user_unregistered import MongoDBUserUnregistered
@@ -67,6 +68,12 @@ class ProblemRegistry:
             ),
             "missing_service_social_network": lambda: MissingService(
                 app_name="social_network", faulty_service="user-service"
+            ),
+            "resource_request_too_large": lambda: ResourceRequestTooLarge(
+                app_name="hotel_reservation", faulty_service="mongodb-rate"
+            ),
+            "resource_request_too_small": lambda: ResourceRequestTooSmall(
+                app_name="hotel_reservation", faulty_service="mongodb-rate"
             ),
             # "missing_service_astronomy_shop": lambda: MissingService(app_name="astronomy_shop", faulty_service="ad"),
             # K8S operator misoperation -> Refactor later, not sure if they're working
