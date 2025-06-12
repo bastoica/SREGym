@@ -3,12 +3,14 @@ import atexit
 import inspect
 import os
 import time
+from json.decoder import JSONDecodeError
 
 from srearena.conductor.parser import ResponseParser
 from srearena.conductor.problems.registry import ProblemRegistry
 from srearena.service.kubectl import KubeCtl
 from srearena.service.telemetry.prometheus import Prometheus
 from srearena.utils.critical_section import CriticalSection
+from srearena.utils.sigint_aware_section import SigintAwareSection
 from srearena.utils.status import SessionPrint, SubmissionStatus
 
 
@@ -45,14 +47,14 @@ class Conductor:
         except Exception as e:
             with CriticalSection():
                 self.problem.recover_fault()
-                atexit.unregister(exit_cleanup_fault)
+                atexit.unregister(self.exit_cleanup_and_recover_fault)
             raise e
 
         self.execution_end_time = time.time()
 
         with CriticalSection():
             self.problem.recover_fault()
-            atexit.unregister(exit_cleanup_fault)
+            atexit.unregister(self.exit_cleanup_and_recover_fault)
 
         self.problem.app.cleanup()
         self.prometheus.teardown()
@@ -63,28 +65,35 @@ class Conductor:
         return self.results
 
     def init_problem(self, problem_id: str, is_noop: bool = False):
-        self.execution_start_time = time.time()
-        self.problem_id = problem_id
-        self.problem = self.problems.get_problem_instance(problem_id)
-        self.submission_stage = "detection"
-        self.results = {}
+        try:
+            with SigintAwareSection():
+                self.execution_start_time = time.time()
+                self.problem_id = problem_id
+                self.problem = self.problems.get_problem_instance(problem_id)
+                self.submission_stage = "detection"
+                self.results = {}
 
-        print(f"[Session Start] Problem ID: {problem_id}")
-        print("Setting up OpenEBS...")
-        self.kubectl.exec_command("kubectl apply -f https://openebs.github.io/charts/openebs-operator.yaml")
-        self.kubectl.exec_command(
-            'kubectl patch storageclass openebs-hostpath -p \'{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}\''
-        )
-        self.kubectl.wait_for_ready("openebs")
-        print("OpenEBS setup completed.")
+                print(f"[Session Start] Problem ID: {problem_id}")
+                print("Setting up OpenEBS...")
+                self.kubectl.exec_command("kubectl apply -f https://openebs.github.io/charts/openebs-operator.yaml")
+                self.kubectl.exec_command(
+                    'kubectl patch storageclass openebs-hostpath -p \'{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}\''
+                )
+                self.kubectl.wait_for_ready("openebs")
+                print("OpenEBS setup completed.")
 
-        self.prometheus.deploy()
-        self.problem.app.delete()
-        self.problem.app.deploy()
+                self.prometheus.deploy()
+
+                self.problem.app.delete()
+                self.problem.app.deploy()
+        except KeyboardInterrupt:
+            print("\nImmediately terminating and Cleaning up...")
+            self.exit_cleanup_and_recover_fault()
+            raise SystemExit from None
 
         with CriticalSection():
             self.problem.inject_fault()
-            atexit.register(exit_cleanup_fault, prob=self.problem)
+            atexit.register(self.exit_cleanup_and_recover_fault)
 
         self.problem.app.start_workload()
 
@@ -195,8 +204,27 @@ class Conductor:
             }
         }
 
+    def exit_cleanup_and_recover_fault(self):
+        if self.problem:
+            print("Recovering fault before exit...")
+            try:
+                self.problem.recover_fault()
+            except JSONDecodeError:
+                # CTRL+C before service is set up results in a JSONDecodeError
+                print("Service has not been set up. Skipping fault recovery.")
+            except RuntimeError:
+                # When waiting for namespace deletion, console.status() is called and results in a RuntimeError
+                pass
 
-def exit_cleanup_fault(prob):
-    print("Recovering fault before exit...")
-    prob.recover_fault()
-    # TODO: Clean up everything else too
+            self.problem.app.cleanup()
+
+        self.prometheus.teardown()
+
+        self.kubectl.exec_command("kubectl delete sc openebs-hostpath openebs-device --ignore-not-found")
+        self.kubectl.exec_command("kubectl delete -f https://openebs.github.io/charts/openebs-operator.yaml")
+
+        print("\nCleanup complete!")
+
+
+def exit_cleanup_fault(conductor):
+    conductor.exit_cleanup_and_recover_fault()
