@@ -25,6 +25,7 @@ from srearena.conductor.problems.scale_pod import ScalePodSocialNet
 from srearena.conductor.problems.storage_user_unregistered import MongoDBUserUnregistered
 from srearena.conductor.problems.target_port import K8STargetPortMisconfig
 from srearena.conductor.problems.wrong_bin_usage import WrongBinUsage
+from srearena.conductor.problems.wrong_service_selector import WrongServiceSelector
 
 
 class ProblemRegistry:
@@ -68,6 +69,15 @@ class ProblemRegistry:
             ),
             "resource_request_too_small": lambda: ResourceRequestTooSmall(
                 app_name="hotel_reservation", faulty_service="mongodb-rate"
+            ),
+            "wrong_service_selector_astronomy_shop": lambda: WrongServiceSelector(
+                app_name="astronomy_shop", faulty_service="frontend"
+            ),
+            "wrong_service_selector_hotel_reservation": lambda: WrongServiceSelector(
+                app_name="hotel_reservation", faulty_service="frontend"
+            ),
+            "wrong_service_selector_social_network": lambda: WrongServiceSelector(
+                app_name="social_network", faulty_service=""
             ),
             # "missing_service_astronomy_shop": lambda: MissingService(app_name="astronomy_shop", faulty_service="ad"),
             # K8S operator misoperation -> Refactor later, not sure if they're working
