@@ -129,20 +129,25 @@ class Conductor:
         self.detection_oracle = DetectionOracle(self.problem)
         self.results = {}
 
-        # Common setup
-        print(f"[Session Start] Problem ID: {self.problem_id}")
-        print("Setting up OpenEBS...")
-        self.kubectl.exec_command("kubectl apply -f https://openebs.github.io/charts/openebs-operator.yaml")
-        self.kubectl.exec_command(
-            'kubectl patch storageclass openebs-hostpath -p \'{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}\''
-        )
-        self.kubectl.wait_for_ready("openebs")
-        print("OpenEBS setup completed.")
+        try:
+            with SigintAwareSection():
+                print(f"[Session Start] Problem ID: {self.problem_id}")
+                print("Setting up OpenEBS...")
+                self.kubectl.exec_command("kubectl apply -f https://openebs.github.io/charts/openebs-operator.yaml")
+                self.kubectl.exec_command(
+                    'kubectl patch storageclass openebs-hostpath -p \'{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}\''
+                )
+                self.kubectl.wait_for_ready("openebs")
+                print("OpenEBS setup completed.")
 
-        self.prometheus.deploy()
-        self.problem.app.delete()
-        self.problem.app.deploy()
-        self.problem.app.start_workload()
+                self.prometheus.deploy()
+
+                self.problem.app.delete()
+                self.problem.app.deploy()
+        except KeyboardInterrupt:
+            print("\nImmediately terminating and Cleaning up...")
+            self.exit_cleanup_and_recover_fault()
+            raise SystemExit from None
 
         # Phase 1: NO OP
         print("\n[NO OP Evaluation] System is healthy. Agent should detect no issue.")
