@@ -1,6 +1,7 @@
 """SREArena CLI client."""
 
 import asyncio
+import atexit
 
 from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import WordCompleter
@@ -11,7 +12,7 @@ from rich.markdown import Markdown
 from rich.panel import Panel
 
 from srearena.conductor import Conductor, exit_cleanup_fault
-from srearena.service.shell import Shell 
+from srearena.service.shell import Shell
 
 WELCOME = """
 # SREArena
@@ -111,6 +112,7 @@ class HumanAgent:
                 )
 
                 if input.lower() == "exit":
+                    atexit.register(exit_cleanup_fault, conductor=self.conductor)
                     raise SystemExit
 
                 return input
