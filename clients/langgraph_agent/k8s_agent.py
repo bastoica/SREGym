@@ -16,7 +16,7 @@ from clients.langgraph_agent.tools.text_editing.file_manip import create, edit, 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-REPO_ROOT_PATH = "/Users/yms/tianyins_group/srearena"
+ROOT_REPO_PATH = "/Users/yms/tianyins_group/srearena"
 
 
 class XAgent:
@@ -141,10 +141,11 @@ class XAgent:
             ai_message_template.additional_kwargs["tool_calls"][0]["function"]["name"] = function_name
             ai_message_template.tool_calls[0]["name"] = function_name
             ai_message_template.tool_calls[0]["args"] = function_args
-            logger.info("[mock llm] ai message returned: %s", ai_message_template)
+            logger.info("[mock llm] type: %s, ai message returned: %s", type(ai_message_template), ai_message_template)
+            logger.info("[mock llm] messages returns: %s", [state["messages"] + [ai_message_template]])
 
             yield {
-                "messages": [state["messages"] + [ai_message_template]],
+                "messages": state["messages"] + [ai_message_template],
                 "curr_file": state["curr_file"],
                 "curr_line": state["curr_line"],
             }
@@ -251,7 +252,8 @@ class XAgent:
 if __name__ == "__main__":
     llm = get_llm_backend_for_tools()
     xagent = XAgent(llm)
-    xagent.build_agent()
+    xagent.build_agent(mock=True)
+    xagent.test_campaign_setter(f"{ROOT_REPO_PATH}/tests/file_editing/open_1.yaml")
     xagent.save_agent_graph_to_png()
     # a short chatbot loop to demonstrate the workflow.
     # TODO: make a real file-editing agent to test both state & memory mgmt and file editing tools

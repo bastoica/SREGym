@@ -27,6 +27,8 @@ def feed_input_to_agent(xagent: XAgent, input_text: list[str]):
         xagent.graph_step(user_input)
 
 
+ROOT_REPO_PATH = "/Users/yms/tianyins_group/srearena"
+
 USER_INPUTS = [
     (
         [
@@ -42,6 +44,7 @@ USER_INPUTS = [
 class TestOpenFile:
     def test_open_file_success(self, test_tuple: list[str], expected_result: str):
         xagent = get_agent()
+        xagent.test_campaign_setter(f"{ROOT_REPO_PATH}/tests/file_editing/open_1.yaml")
         feed_input_to_agent(xagent, test_tuple)
         assert (
             xagent.graph.get_state().values["curr_file"]
