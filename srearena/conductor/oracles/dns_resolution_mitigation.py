@@ -1,3 +1,5 @@
+import random
+
 from srearena.conductor.oracles.base import Oracle
 
 
@@ -11,6 +13,11 @@ class DNSResolutionMitigationOracle(Oracle):
         kubectl = self.problem.kubectl
         namespace = self.problem.namespace
         faulty_service = self.problem.faulty_service
+
+        service_names = [svc.metadata.name for svc in kubectl.list_services(namespace).items]
+
+        if faulty_service == None:
+            faulty_service = random.choice(service_names)
 
         # Get the service's selector
         command = f"kubectl get service {faulty_service} -n {namespace} -o jsonpath='{{.spec.selector}}'"
@@ -31,7 +38,6 @@ class DNSResolutionMitigationOracle(Oracle):
             return {"success": False}
         else:
 
-            service_names = [svc.metadata.name for svc in kubectl.list_services(namespace).items]
             failing = []
 
             for svc in service_names:
