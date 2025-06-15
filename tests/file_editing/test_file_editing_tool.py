@@ -58,7 +58,10 @@ class TestOpenFile:
         test_user_inputs = test_campaign["user_inputs"]
         feed_input_to_agent(xagent, test_user_inputs)
         config = {"configurable": {"thread_id": "1"}}
-        assert xagent.graph.get_state(config).values["curr_file"] == test_campaign["expected_curr_file"]
+        assert (
+            xagent.graph.get_state(config).values["curr_file"]
+            == ROOT_REPO_PATH + "/" + test_campaign["expected_curr_file"]
+        )
         assert xagent.graph.get_state(config).values["curr_line"] == str(test_campaign["expected_curr_line"])
         assert test_campaign["expected_output"] in xagent.graph.get_state(config).values["messages"][-2].content
         git_restore_repo()
