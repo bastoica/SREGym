@@ -1,4 +1,5 @@
 import json
+import os
 
 import yaml
 from langchain_core.messages import AIMessage
@@ -16,7 +17,7 @@ from clients.langgraph_agent.tools.text_editing.file_manip import create, edit, 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-ROOT_REPO_PATH = "/Users/yms/tianyins_group/srearena"
+ROOT_REPO_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 
 class XAgent:
@@ -147,6 +148,9 @@ class XAgent:
             tool_call = test_campaign["tool_calls"][self.test_tool_call_idx]
             function_name = tool_call["name"]
             function_args = {key: value for key, value in tool_call.items() if key != "name"}
+            for key, value in function_args.items():
+                if key == "path":
+                    function_args[key] = ROOT_REPO_PATH + "/" + value
             function_args_str = json.dumps(function_args)
             ai_message_template.additional_kwargs["tool_calls"][0]["function"]["arguments"] = function_args_str
             ai_message_template.additional_kwargs["tool_calls"][0]["function"]["name"] = function_name
