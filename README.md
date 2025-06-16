@@ -91,7 +91,7 @@ Human as the agent:
 
 ```bash
 python3 cli.py
-(srearena) $ start misconfig_app_hotel_res-detection-1 # or choose any problem you want to solve
+(srearena) $ start k8s_target_port-misconfig # or choose any problem you want to solve
 # ... wait for the setup ...
 (srearena) $ submit("Yes") # submit solution
 ```
