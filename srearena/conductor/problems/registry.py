@@ -7,6 +7,7 @@ from srearena.conductor.problems.cart_service_failure import CartServiceFailure
 from srearena.conductor.problems.container_kill import ChaosMeshContainerKill
 from srearena.conductor.problems.image_slow_load import ImageSlowLoad
 from srearena.conductor.problems.kafka_queue_problems import KafkaQueueProblems
+from srearena.conductor.problems.liveness_probe_too_aggressive import LivenessProbeTooAggressive
 from srearena.conductor.problems.loadgenerator_flood_homepage import LoadGeneratorFloodHomepage
 from srearena.conductor.problems.misconfig_app import MisconfigAppHotelRes
 from srearena.conductor.problems.missing_service import MissingService
@@ -109,6 +110,9 @@ class ProblemRegistry:
             "sidecar_port_conflict_hotel_reservation": lambda: SidecarPortConflict(
                 app_name="hotel_reservation", faulty_service="frontend"
             ),
+            "liveness_probe_too_aggressive_astronomy_shop": lambda: LivenessProbeTooAggressive(
+                app_name="astronomy_shop", faulty_service="grafana"
+            )
             # "missing_service_astronomy_shop": lambda: MissingService(app_name="astronomy_shop", faulty_service="ad"),
             # K8S operator misoperation -> Refactor later, not sure if they're working
             # They will also need to be updated to the new problem format.

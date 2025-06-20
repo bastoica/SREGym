@@ -636,6 +636,60 @@ class VirtualizationFaultInjector(FaultInjector):
 
             print(f"Recovered from sidecar port conflict fault for service: {service}")
 
+    # Inject a liveness probe too aggressive fault
+    def inject_liveness_probe_too_aggressive(self, microservices: list[str]):
+        for service in microservices:
+
+            deployment_yaml = self._get_deployment_yaml(service)
+            original_deployment_yaml = copy.deepcopy(deployment_yaml)
+
+            containers = deployment_yaml["spec"]["template"]["spec"]["containers"]
+
+            for container in containers:
+                probe = container.get("livenessProbe")
+                if probe:
+                    probe["initialDelaySeconds"] = 1
+                    probe["periodSeconds"]       = 1
+                    probe["failureThreshold"]    = 1
+
+            deployment_yaml["spec"]["template"]["spec"]["terminationGracePeriodSeconds"] = 0
+
+            modified_yaml_path = self._write_yaml_to_file(service, deployment_yaml)
+
+            delete_command = f"kubectl delete deployment {service} -n {self.namespace}"
+            apply_command = f"kubectl apply -f {modified_yaml_path} -n {self.namespace}"
+
+            delete_result = self.kubectl.exec_command(delete_command)
+            print(f"Delete result for {service}: {delete_result}")
+
+            apply_result = self.kubectl.exec_command(apply_command)
+            print(f"Apply result for {service}: {apply_result}")
+
+            # Save the *original* deployment YAML for recovery
+            self._write_yaml_to_file(service, original_deployment_yaml)
+
+            self.kubectl.wait_for_stable(self.namespace)
+
+            print(f"Injected liveness probe too aggressive fault for service: {service}")
+
+    def recover_liveness_probe_too_aggressive(self, microservices: list[str]):
+        for service in microservices:
+            original_yaml_path = f"/tmp/{service}_modified.yaml"
+
+            delete_command = f"kubectl delete deployment {service} -n {self.namespace}"
+            apply_command = f"kubectl apply -f {original_yaml_path} -n {self.namespace}"
+
+            delete_result = self.kubectl.exec_command(delete_command)
+            print(f"Delete result for {service}: {delete_result}")
+
+            apply_result = self.kubectl.exec_command(apply_command)
+            print(f"Apply result for {service}: {apply_result}")
+
+            self.kubectl.wait_for_ready(self.namespace)
+
+            print(f"Recovered from liveness probe too aggressive fault for service: {service}")
+
+
     ############# HELPER FUNCTIONS ################
     def _wait_for_pods_ready(self, microservices: list[str], timeout: int = 30):
         for service in microservices:
