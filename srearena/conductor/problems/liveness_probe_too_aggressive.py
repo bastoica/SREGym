@@ -36,7 +36,7 @@ class LivenessProbeTooAggressive(Problem):
         self.mitigation_oracle = CompoundedOracle(
             self,
             MitigationOracle(problem=self),
-            # WorkloadOracle(problem=self, wrk_manager=self.app.wrk),
+            WorkloadOracle(problem=self, wrk_manager=self.app.wrk),
         )
 
     @mark_fault_injected
