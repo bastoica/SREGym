@@ -669,10 +669,6 @@ class VirtualizationFaultInjector(FaultInjector):
             create_cm_cmd = f"kubectl create configmap {configmap_name} --from-file=config.json={temp_config_path} -n {self.namespace} --dry-run=client -o yaml | kubectl apply -f -"
             self.kubectl.exec_command(create_cm_cmd)
             
-            # Remove the last-applied-configuration annotation to hide history
-            remove_annotation_cmd = f"kubectl annotate configmap {configmap_name} -n {self.namespace} kubectl.kubernetes.io/last-applied-configuration-"
-            self.kubectl.exec_command(remove_annotation_cmd)
-            
             print(f"Created ConfigMap {configmap_name} with {key_to_remove} removed")
             
             json_patch = [
@@ -745,11 +741,7 @@ class VirtualizationFaultInjector(FaultInjector):
             
             update_cm_cmd = f"kubectl create configmap {configmap_name} --from-file=config.json={temp_config_path} -n {self.namespace} --dry-run=client -o yaml | kubectl apply -f -"
             self.kubectl.exec_command(update_cm_cmd)
-            
-            # Remove the last-applied-configuration annotation to hide history
-            remove_annotation_cmd = f"kubectl annotate configmap {configmap_name} -n {self.namespace} kubectl.kubernetes.io/last-applied-configuration-"
-            self.kubectl.exec_command(remove_annotation_cmd)
-            
+                
             print(f"Updated ConfigMap {configmap_name} with complete configuration")
             
             self.kubectl.exec_command(f"kubectl rollout restart deployment/{service} -n {self.namespace}")
