@@ -13,16 +13,10 @@ from srearena.utils.decorators import mark_fault_injected
 
 
 class ConfigMapDrift(Problem):
-    def __init__(self, app_name: str = "hotel_reservation", faulty_service: str = "mongodb-geo"):
-        self.app_name = app_name
+    def __init__(self, faulty_service: str = "geo"):
         self.faulty_service = faulty_service
 
-        if app_name == "social_network":
-            self.app = SocialNetwork()
-        elif app_name == "hotel_reservation":
-            self.app = HotelReservation()
-        else:
-            raise ValueError(f"Unsupported app name: {app_name}")
+        self.app = HotelReservation()
 
         super().__init__(app=self.app, namespace=self.app.namespace)
 
