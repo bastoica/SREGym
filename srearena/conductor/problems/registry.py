@@ -111,7 +111,7 @@ class ProblemRegistry:
                 app_name="hotel_reservation", faulty_service="frontend"
             ),
 
-            "configmap_drift_hotel_reservation": lambda: ConfigMapDrift(app_name="hotel_reservation", faulty_service="mongodb-geo"),
+            "configmap_drift_hotel_reservation": lambda: ConfigMapDrift(faulty_service="geo"),
 
             # "missing_service_astronomy_shop": lambda: MissingService(app_name="astronomy_shop", faulty_service="ad"),
             # K8S operator misoperation -> Refactor later, not sure if they're working

@@ -637,52 +637,125 @@ class VirtualizationFaultInjector(FaultInjector):
 
             print(f"Recovered from sidecar port conflict fault for service: {service}")
 
-    # Inject ConfigMap drift by removing critical keys
+    # V.14 - Inject ConfigMap drift by removing critical keys
     def inject_configmap_drift(self, microservices: list[str]):
+
         for service in microservices:
 
-            configmap_name, keys_to_remove = self._get_configmap_name(service)
+            # Read the actual config.json from the running pod
+            read_config_cmd = f"kubectl exec deployment/{service} -n {self.namespace} -- cat /go/src/github.com/harlow/go-micro-services/config.json"
+            config_json_str = self.kubectl.exec_command(read_config_cmd)
+            original_config = json.loads(config_json_str)
+            print(f"Read original config from {service} pod")
+            
+            # Create a copy and remove the critical key
+            fault_config = copy.deepcopy(original_config)
+            key_to_remove = None
+            
+            if service == "geo" and "GeoMongoAddress" in fault_config:
+                del fault_config["GeoMongoAddress"]
+                key_to_remove = "GeoMongoAddress"
+            else:
+                print(f"Service {service} not supported for ConfigMap drift fault")
+                continue
+                
+            configmap_name = f"{service}-config"
+            fault_config_json = json.dumps(fault_config, indent=2)
+        
+            temp_config_path = f"/tmp/{service}-config-fault.json"
+            with open(temp_config_path, "w") as f:
+                f.write(fault_config_json)
+            
+            create_cm_cmd = f"kubectl create configmap {configmap_name} --from-file=config.json={temp_config_path} -n {self.namespace} --dry-run=client -o yaml | kubectl apply -f -"
+            self.kubectl.exec_command(create_cm_cmd)
+            
+            # Remove the last-applied-configuration annotation to hide history
+            remove_annotation_cmd = f"kubectl annotate configmap {configmap_name} -n {self.namespace} kubectl.kubernetes.io/last-applied-configuration-"
+            self.kubectl.exec_command(remove_annotation_cmd)
+            
+            print(f"Created ConfigMap {configmap_name} with {key_to_remove} removed")
+            
+            json_patch = [
+                {
+                    "op": "add",
+                    "path": "/spec/template/spec/volumes/-",
+                    "value": {
+                        "name": "config-volume",
+                        "configMap": {
+                            "name": configmap_name
+                        }
+                    }
+                },
+                {
+                    "op": "add",
+                    "path": "/spec/template/spec/containers/0/volumeMounts/-",
+                    "value": {
+                        "name": "config-volume",
+                        "mountPath": "/go/src/github.com/harlow/go-micro-services/config.json",
+                        "subPath": "config.json"
+                    }
+                }
+            ]
+            
+            # Check if volumes array exists, if not create it
+            check_volumes_cmd = f"kubectl get deployment {service} -n {self.namespace} -o jsonpath='{{.spec.template.spec.volumes}}'"
+            volumes_exist = self.kubectl.exec_command(check_volumes_cmd).strip()
+            
+            if not volumes_exist or volumes_exist == "[]":
+                # Need to create the volumes array first
+                json_patch[0]["op"] = "add"
+                json_patch[0]["path"] = "/spec/template/spec/volumes"
+                json_patch[0]["value"] = [json_patch[0]["value"]]
+            
+            # Check if volumeMounts array exists
+            check_mounts_cmd = f"kubectl get deployment {service} -n {self.namespace} -o jsonpath='{{.spec.template.spec.containers[0].volumeMounts}}'"
+            mounts_exist = self.kubectl.exec_command(check_mounts_cmd).strip()
+            
+            if not mounts_exist or mounts_exist == "[]":
+                # Need to create the volumeMounts array first
+                json_patch[1]["op"] = "add"
+                json_patch[1]["path"] = "/spec/template/spec/containers/0/volumeMounts"
+                json_patch[1]["value"] = [json_patch[1]["value"]]
+            
 
-            cm_data = self._get_configmap_yaml(configmap_name)
-            original_cm_data = copy.deepcopy(cm_data)
+            patch_json_str = json.dumps(json_patch)
+            patch_cmd = f"kubectl patch deployment {service} -n {self.namespace} --type='json' -p='{patch_json_str}'"
+            patch_result = self.kubectl.exec_command(patch_cmd)
+            print(f"Patch result for {service}: {patch_result}")
+            
+            self.kubectl.exec_command(f"kubectl rollout status deployment/{service} -n {self.namespace} --timeout=30s")
+            
+            print(f"Injected ConfigMap drift fault for service: {service} - removed {key_to_remove}")
 
-            for key in keys_to_remove:
-                if key in cm_data.get("data", {}):
-                    patch = f'[{{"op":"remove","path":"/data/{key}"}}]'
-                    self.kubectl.exec_command(
-                        f"kubectl patch configmap {configmap_name} -n {self.namespace} --type json -p '{patch}'"
-                    )
-                    print(f"[Drift] Removed '{key}' from {configmap_name}")
-                else:
-                    print(f"[Drift] Key '{key}' not present in {configmap_name}")
-
-
-            self.kubectl.exec_command(
-                f"kubectl rollout restart deployment {service} -n {self.namespace}"
-            )
-            self.kubectl.exec_command(
-                f"kubectl rollout status deployment {service} -n {self.namespace}"
-            )
-
-            # Save the *original* configmap YAML for recovery
-            self._write_yaml_to_file(configmap_name, original_cm_data)
-
-            print(f"Injected ConfigMap drift fault for service: {service} on '{configmap_name}'.")
 
     def recover_configmap_drift(self, microservices: list[str]):
+            
         for service in microservices:
-            configmap_name, _ = self._get_configmap_name(service)
-
-            self.kubectl.exec_command(
-                f"kubectl apply -f /tmp/{configmap_name}_modified.yaml -n {self.namespace}"
-            )
-            self.kubectl.exec_command(
-                f"kubectl rollout restart deployment {service} -n {self.namespace}"
-            )
-
-            self.kubectl.wait_for_ready(self.namespace)
-
-            print(f"Recovered ConfigMap drift fault for service: {service} on '{configmap_name}'.")
+            configmap_name = f"{service}-config"
+            
+            # Read the actual config.json from the running pod
+            read_config_cmd = f"kubectl exec deployment/profile -n {self.namespace} -- cat /go/src/github.com/harlow/go-micro-services/config.json 2>/dev/null || kubectl exec deployment/rate -n {self.namespace} -- cat /go/src/github.com/harlow/go-micro-services/config.json"
+            config_json_str = self.kubectl.exec_command(read_config_cmd)
+            original_config = json.loads(config_json_str)
+            print(f"Read original config from {service} pod")
+            
+            temp_config_path = f"/tmp/{service}-config-original.json"
+            with open(temp_config_path, "w") as f:
+                json.dump(original_config, f, indent=2)
+            
+            update_cm_cmd = f"kubectl create configmap {configmap_name} --from-file=config.json={temp_config_path} -n {self.namespace} --dry-run=client -o yaml | kubectl apply -f -"
+            self.kubectl.exec_command(update_cm_cmd)
+            
+            # Remove the last-applied-configuration annotation to hide history
+            remove_annotation_cmd = f"kubectl annotate configmap {configmap_name} -n {self.namespace} kubectl.kubernetes.io/last-applied-configuration-"
+            self.kubectl.exec_command(remove_annotation_cmd)
+            
+            print(f"Updated ConfigMap {configmap_name} with complete configuration")
+            
+            self.kubectl.exec_command(f"kubectl rollout restart deployment/{service} -n {self.namespace}")
+            self.kubectl.exec_command(f"kubectl rollout status deployment/{service} -n {self.namespace} --timeout=30s")
+            
+            print(f"Recovered ConfigMap drift fault for service: {service}")
 
     ############# HELPER FUNCTIONS ################
     def _wait_for_pods_ready(self, microservices: list[str], timeout: int = 30):
@@ -800,24 +873,6 @@ class VirtualizationFaultInjector(FaultInjector):
             waited += sleep
 
         print(f"DNS policy propagation check for service '{service}' failed after {max_wait}s.")
-
-    def _get_configmap_name(self, service: str) -> tuple[str, list[str]]:
-        """Get the configmap name and key for a given service."""
-
-        if self.namespace == "test-hotel-reservation": # HotelReservation
-            svc_map = {
-                "mongodb-geo": ("mongo-geo-script", ["k8s-geo-mongo.sh"]),
-                "mongodb-rate": ("mongo-rate-script", ["k8s-rate-mongo.sh"]),
-            }
-        elif self.namespace == "test-social-network": # SocialNetwork
-            svc_map = {
-                "media-mongodb": ("media-mongodb", ["mongod.conf"]),
-                "user-mongodb": ("user-mongodb", ["mongod.conf"]),
-            }
-        else:
-            raise ValueError(f"Unsupported namespace: {self.namespace}")
-        
-        return svc_map[service]
 
 if __name__ == "__main__":
     namespace = "test-social-network"
