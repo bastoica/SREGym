@@ -25,7 +25,7 @@ class NetworkPolicyBlock(Problem):
         config.load_kube_config()
         self.networking_v1 = client.NetworkingV1Api()
 
-        self.localization_oracle = LocalizationOracle(problem=self, expected=[self.faulty_service, "NetworkPolicy"])
+        self.localization_oracle = LocalizationOracle(problem=self, expected=[self.faulty_service])
         self.mitigation_oracle = MitigationOracle(problem=self)
 
     def inject_fault(self):
