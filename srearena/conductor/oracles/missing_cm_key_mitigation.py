@@ -40,10 +40,10 @@ class MissingCmKeyMitigationOracle(Oracle):
                     missing_keys.append(key)
             
             if missing_keys:
-                print(f"❌ ConfigMap drift still present - Missing keys: {missing_keys}")
+                print(f"❌ Missing ConfigMap keys: {missing_keys}")
                 return {"success": False}
             else:
-                print(f"✅ ConfigMap drift mitigated - All expected keys present.")
+                print(f"✅ All expected ConfigMap keys present.")
                 return {"success": True}
                     
         except Exception as e:
