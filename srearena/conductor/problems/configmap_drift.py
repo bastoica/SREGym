@@ -2,7 +2,7 @@
 
 from srearena.conductor.oracles.compound import CompoundedOracle
 from srearena.conductor.oracles.localization import LocalizationOracle
-from srearena.conductor.oracles.mitigation import MitigationOracle
+from srearena.conductor.oracles.missing_cm_key_mitigation import MissingCmKeyMitigationOracle
 from srearena.conductor.oracles.workload import WorkloadOracle
 from srearena.conductor.problems.base import Problem
 from srearena.generators.fault.inject_virtual import VirtualizationFaultInjector
@@ -22,11 +22,33 @@ class ConfigMapDrift(Problem):
 
         self.kubectl = KubeCtl()
         self.localization_oracle = LocalizationOracle(problem=self, expected=[self.faulty_service])
+        self.configmap_name = f"{self.faulty_service}-config"
 
         self.app.create_workload()
         self.mitigation_oracle = CompoundedOracle(
             self,
-            MitigationOracle(problem=self),
+            MissingCmKeyMitigationOracle(problem=self, configmap_name=self.configmap_name, expected_keys=[
+                "consulAddress",
+                "jaegerAddress",
+                "FrontendPort",
+                "GeoPort",
+                "GeoMongoAddress",
+                "ProfilePort",
+                "ProfileMongoAddress",
+                "ProfileMemcAddress",
+                "RatePort",
+                "RateMongoAddress",
+                "RateMemcAddress",
+                "RecommendPort",
+                "RecommendMongoAddress",
+                "ReservePort",
+                "ReserveMongoAddress",
+                "ReserveMemcAddress",
+                "SearchPort",
+                "UserPort",
+                "UserMongoAddress",
+                "KnativeDomainName"
+            ]),
             WorkloadOracle(problem=self, wrk_manager=self.app.wrk),
         )
 
