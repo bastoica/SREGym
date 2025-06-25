@@ -9,10 +9,10 @@ class MissingCmKeyMitigationOracle(Oracle):
 
     importance = 1.0
 
-    def __init__(self, problem, configmap_name: str, expected_keys: Optional[list[str]] = None):
+    def __init__(self, problem, configmap_name: str, expected_keys: list[str]):
 
         super().__init__(problem)
-        self.expected_keys = expected_keys or []
+        self.expected_keys = expected_keys
         self.configmap_name = configmap_name
 
     def evaluate(self) -> dict:
