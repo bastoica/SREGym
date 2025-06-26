@@ -27,7 +27,7 @@ Moreover, SREArena provides a built-in benchmark suite with a set of problems to
 
 Recommended installation:
 ```bash
-brew install python@3.12 uv
+brew install python@3.12 uv kubectl
 ```
 https://github.com/astral-sh/uv
 We recommend [uv](https://github.com/astral-sh/uv) for managing dependencies. You can also use a standard `pip install -e .` to install the dependencies.
