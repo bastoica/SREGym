@@ -34,8 +34,7 @@ class Conductor:
         self.submission_stage = None  # "noop", "detection", "localization", "mitigation", "done"
         self.results = {}
 
-    # Check for dependencies
-    def check_required_binaries(self, binaries: list[str]):
+    def dependency_check(self, binaries: list[str]):
         for binary in binaries:
             if shutil.which(binary) is None:
                 raise RuntimeError(f"[❌] Required dependency '{binary}' not found. Please install {binary}.")
@@ -136,8 +135,8 @@ class Conductor:
         self.detection_oracle = DetectionOracle(self.problem)
         self.results = {}
 
-        # Check for required binaries
-        self.check_required_binaries(["kubectl", "helm"])
+        # Dependency check
+        self.dependency_check(["kubectl", "helm"])
 
         try:
             with SigintAwareSection():
