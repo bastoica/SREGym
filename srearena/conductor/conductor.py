@@ -38,9 +38,7 @@ class Conductor:
     def _check_required_binaries(self, binaries: list[str]):
         for binary in binaries:
             if shutil.which(binary) is None:
-                raise RuntimeError(
-                    f"[❌] Required dependency '{binary}' not found in $PATH. " f"Please install {binary}."
-                )
+                raise RuntimeError(f"[❌] Required dependency '{binary}' not found. Please install {binary}.")
 
     def register_agent(self, agent, name="agent"):
         self.agent = agent
