@@ -114,14 +114,12 @@ class ProblemRegistry:
             "sidecar_port_conflict_hotel_reservation": lambda: SidecarPortConflict(
                 app_name="hotel_reservation", faulty_service="frontend"
             ),
-            "liveness_probe_too_aggressive_astronomy_shop": lambda: LivenessProbeTooAggressive(
-                app_name="astronomy_shop", faulty_service="grafana"
-            ),
             "env_variable_leak_social_network": lambda: EnvVariableLeak(
                 app_name="social_network" , faulty_service="media-mongodb"
             ),
             "env_variable_leak_hotel_reservation": lambda: EnvVariableLeak(
                 app_name="hotel_reservation" , faulty_service="mongodb-geo"
+            ),
             "configmap_drift_hotel_reservation": lambda: ConfigMapDrift(faulty_service="geo"),
             "readiness_probe_misconfiguration_astronomy_shop": lambda: ReadinessProbeMisconfiguration(
                 app_name="astronomy_shop", faulty_service="frontend"
@@ -140,6 +138,15 @@ class ProblemRegistry:
             ),
             "liveness_probe_misconfiguration_hotel_reservation": lambda: LivenessProbeMisconfiguration(
                 app_name="hotel_reservation", faulty_service="recommendation"
+            ),
+            "liveness_probe_too_aggressive_astronomy_shop": lambda: LivenessProbeTooAggressive(
+                app_name="astronomy_shop"
+            ),
+            "liveness_probe_too_aggressive_social_network": lambda: LivenessProbeTooAggressive(
+                app_name="social_network"
+            ),
+            "liveness_probe_too_aggressive_hotel_reservation": lambda: LivenessProbeTooAggressive(
+                app_name="hotel_reservation"
             ),
             # "missing_service_astronomy_shop": lambda: MissingService(app_name="astronomy_shop", faulty_service="ad"),
             # K8S operator misoperation -> Refactor later, not sure if they're working

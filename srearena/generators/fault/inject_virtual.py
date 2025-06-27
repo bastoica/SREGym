@@ -1,6 +1,7 @@
 """Inject faults at the virtualization layer: K8S, Docker, etc."""
 
 import copy
+from pathlib import Path
 import json
 import time
 
@@ -641,6 +642,9 @@ class VirtualizationFaultInjector(FaultInjector):
     def inject_liveness_probe_too_aggressive(self, microservices: list[str]):
         for service in microservices:
 
+            script_path = Path(__file__).parent / "custom" / f"slow_service.py"
+            self.deploy_service(service, script_path)
+
             deployment_yaml = self._get_deployment_yaml(service)
             original_deployment_yaml = copy.deepcopy(deployment_yaml)
 
@@ -1051,6 +1055,108 @@ class VirtualizationFaultInjector(FaultInjector):
             waited += sleep
 
         print(f"DNS policy propagation check for service '{service}' failed after {max_wait}s.")
+    
+    def deploy_service(self, service_name: str, script_path: str):
+        print(f"Deploying {service_name} Service...................................")
+        import tempfile
+        import yaml
+
+        with open(script_path, "r") as sf:
+            script_body = sf.read()
+
+        script_filename = "service.py"
+
+        configmap = {
+            "apiVersion": "v1",
+            "kind": "ConfigMap",
+            "metadata": {
+                "name": f"{service_name}-script",
+                "namespace": self.namespace,
+            },
+            "data": {script_filename: script_body},
+        }
+
+        self.kubectl.exec_command(
+            f"kubectl apply -f - <<'CM'\n{yaml.dump(configmap)}\nCM"
+        )
+
+        deployment = {
+            "apiVersion": "apps/v1",
+            "kind": "Deployment",
+            "metadata": {
+                "name": service_name,
+                "namespace": self.namespace,
+                "labels": {"app": service_name},
+            },
+            "spec": {
+                "replicas": 1,
+                "selector": {"matchLabels": {"app": service_name}},
+                "template": {
+                    "metadata": {"labels": {"app": service_name}},
+                    "spec": {
+                        "containers": [
+                            {
+                                "name": f"{service_name}-container",
+                                "image": "python:3.9-slim",
+                                "command": ["python", "/app/service.py"],
+                                "ports": [{"containerPort": 8080, "name": "http"}],
+                                "volumeMounts": [
+                                    {
+                                        "name": "script-vol",
+                                        "mountPath": "/app/service.py",
+                                        "subPath": "service.py",
+                                    }
+                                ],
+                                "livenessProbe": {
+                                    "httpGet": {"path": "/health", "port": 8080},
+                                    "initialDelaySeconds": 60,
+                                    "periodSeconds": 10,
+                                    "failureThreshold": 3,
+                                },
+                                "resources": {"requests": {"cpu": "50m", "memory": "64Mi"}},
+                            }
+                        ],
+                        "volumes": [
+                            {
+                                "name": "script-vol",
+                                "configMap": {"name": f"{service_name}-script"},
+                            }
+                        ]
+                    },
+                },
+            },
+        }
+
+        service = {
+            "apiVersion": "v1",
+            "kind": "Service",
+            "metadata": {
+                "name": service_name,
+                "namespace": self.namespace,
+                "labels": {"app": service_name},
+            },
+            "spec": {
+                "selector": {"app": service_name},
+                "ports": [
+                    {
+                        "port": 8080,
+                        "targetPort": 8080,
+                        "protocol": "TCP",
+                        "name": "http",
+                    }
+                ],
+                "type": "ClusterIP",
+            },
+        }
+
+        with tempfile.NamedTemporaryFile("w", delete=False, suffix=".yaml") as tmp:
+            yaml.dump_all([deployment, service], tmp)
+            tmp_path = tmp.name
+
+        self.kubectl.exec_command(f"kubectl apply -f {tmp_path}")
+        self.kubectl.wait_for_ready(namespace=self.namespace)
+
+        print(f"Deployed {service_name} Service...................................")
 
 if __name__ == "__main__":
     namespace = "test-social-network"

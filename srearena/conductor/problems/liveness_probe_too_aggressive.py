@@ -11,9 +11,9 @@ from srearena.utils.decorators import mark_fault_injected
 
 
 class LivenessProbeTooAggressive(Problem):
-    def __init__(self, app_name: str = "social_network", faulty_service: str = "user-service"):
+    def __init__(self, app_name: str = "social_network"):
         self.app_name = app_name
-        self.faulty_service = faulty_service
+        self.faulty_service = "aux-service"
 
         if app_name == "social_network":
             self.app = SocialNetwork()
@@ -28,6 +28,7 @@ class LivenessProbeTooAggressive(Problem):
 
         self.kubectl = KubeCtl()
         self.injector = VirtualizationFaultInjector(namespace=self.app.namespace)
+
 
         self.localization_oracle = LocalizationOracle(problem=self, expected=[self.faulty_service])
 
