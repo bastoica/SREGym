@@ -31,8 +31,7 @@ class TrainTicket(Application):
             self.kubectl.create_namespace_if_not_exist(self.namespace)
 
         Helm.install(**self.helm_configs)
-        Helm.assert_if_deployed(self.helm_configs["namespace"])
-        self.kubectl.wait_for_job_completion("train-ticket-deploy")
+        self.kubectl.wait_for_job_completion(name="train-ticket-deploy", namespace="train-ticket")
 
         self._deploy_flagd_infrastructure()
         self._deploy_locust()
