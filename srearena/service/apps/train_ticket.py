@@ -32,6 +32,7 @@ class TrainTicket(Application):
 
         Helm.install(**self.helm_configs)
         Helm.assert_if_deployed(self.helm_configs["namespace"])
+        self.kubectl.wait_for_job_completion("train-ticket-deploy")
 
         self._deploy_flagd_infrastructure()
         self._deploy_locust()
