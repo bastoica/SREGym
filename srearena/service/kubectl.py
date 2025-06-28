@@ -4,7 +4,11 @@ import json
 import subprocess
 import time
 
-from kubernetes import client, config
+try:
+    from kubernetes import client, config
+except ModuleNotFoundError as e: 
+    print("Your Kubeconfig is missing. Please set up a cluster.")
+    exit(1) 
 from kubernetes.client.rest import ApiException
 from rich.console import Console
 
@@ -12,7 +16,11 @@ from rich.console import Console
 class KubeCtl:
     def __init__(self):
         """Initialize the KubeCtl object and load the Kubernetes configuration."""
-        config.load_kube_config()
+        try:
+            config.load_kube_config()
+        except Exception as e:
+            print("Missing kubeconfig. Please set up a cluster.")
+            exit(1)
         self.core_v1_api = client.CoreV1Api()
         self.apps_v1_api = client.AppsV1Api()
 

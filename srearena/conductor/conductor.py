@@ -1,6 +1,7 @@
 import asyncio
 import atexit
 import os
+import shutil
 import time
 from json.decoder import JSONDecodeError
 
@@ -32,6 +33,11 @@ class Conductor:
         self.problem_id = None
         self.submission_stage = None  # "noop", "detection", "localization", "mitigation", "done"
         self.results = {}
+
+    def dependency_check(self, binaries: list[str]):
+        for binary in binaries:
+            if shutil.which(binary) is None:
+                raise RuntimeError(f"[❌] Required dependency '{binary}' not found. Please install {binary}.")
 
     def register_agent(self, agent, name="agent"):
         self.agent = agent
@@ -129,13 +135,33 @@ class Conductor:
         self.detection_oracle = DetectionOracle(self.problem)
         self.results = {}
 
+        # Dependency check
+        self.dependency_check(["kubectl", "helm"])
+
         try:
             with SigintAwareSection():
                 print(f"[Session Start] Problem ID: {self.problem_id}")
+
+                print("Setting up metrics-server...")
+                self.kubectl.exec_command(
+                    "kubectl apply -f "
+                    "https://github.com/kubernetes-sigs/metrics-server/"
+                    "releases/latest/download/components.yaml"
+                )
+                self.kubectl.exec_command(
+                    "kubectl -n kube-system patch deployment metrics-server "
+                    "--type=json -p='["
+                    '{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"},'
+                    '{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-preferred-address-types=InternalIP"}'
+                    "]'"
+                )
+                self.kubectl.wait_for_ready("kube-system")  # metrics-server is deployed in kube-system
+
                 print("Setting up OpenEBS...")
                 self.kubectl.exec_command("kubectl apply -f https://openebs.github.io/charts/openebs-operator.yaml")
                 self.kubectl.exec_command(
-                    'kubectl patch storageclass openebs-hostpath -p \'{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}\''
+                    "kubectl patch storageclass openebs-hostpath "
+                    '-p \'{"metadata":{"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}\''
                 )
                 self.kubectl.wait_for_ready("openebs")
                 print("OpenEBS setup completed.")
@@ -147,7 +173,7 @@ class Conductor:
                 self.problem.app.start_workload()
         except KeyboardInterrupt:
             print("\nImmediately terminating and Cleaning up...")
-            self.exit_cleanup_and_recover_fault()
+            atexit.register(self.exit_cleanup_and_recover_fault)
             raise SystemExit from None
 
         # Phase 1: NO OP
