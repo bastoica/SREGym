@@ -81,33 +81,21 @@ class ProblemRegistry:
             "k8s_wrong_service_selector": WrongServiceSelector,
         }
 
-    def list_problems(self) -> List[str]:
-        """List all available problem IDs.
-
-        Returns:
-            List[str]: List of problem IDs
-        """
-        return list(self.PROBLEM_REGISTRY.keys())
-
-    def get_problem_instance(self, problem_id: str) -> Problem:
-        """Get an instance of a problem by ID.
-
-        Args:
-            problem_id: The ID of the problem to instantiate
-
-        Returns:
-            Problem: An instance of the requested problem
-
-        Raises:
-            ValueError: If the problem ID is not found in the registry
-        """
+    def get_problem_instance(self, problem_id: str):
         if problem_id not in self.PROBLEM_REGISTRY:
             raise ValueError(f"Problem ID {problem_id} not found in registry.")
 
-        problem_class_or_factory = self.PROBLEM_REGISTRY.get(problem_id)
+        return self.PROBLEM_REGISTRY.get(problem_id)()
 
-        # Check if it's a lambda (factory function) or a class
-        if callable(problem_class_or_factory):
-            return problem_class_or_factory()
-        else:
-            return problem_class_or_factory()
+    def get_problem(self, problem_id: str):
+        return self.PROBLEM_REGISTRY.get(problem_id)
+
+    def get_problem_ids(self, task_type: str = None):
+        if task_type:
+            return [k for k in self.PROBLEM_REGISTRY.keys() if task_type in k]
+        return list(self.PROBLEM_REGISTRY.keys())
+
+    def get_problem_count(self, task_type: str = None):
+        if task_type:
+            return len([k for k in self.PROBLEM_REGISTRY.keys() if task_type in k])
+        return len(self.PROBLEM_REGISTRY)
