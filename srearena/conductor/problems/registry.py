@@ -19,7 +19,6 @@ from srearena.conductor.problems.payment_service_failure import PaymentServiceFa
 from srearena.conductor.problems.payment_service_unreachable import PaymentServiceUnreachable
 from srearena.conductor.problems.pod_failure import ChaosMeshPodFailure
 from srearena.conductor.problems.pod_kill import ChaosMeshPodKill
-from srearena.conductor.problems.port_misconfiguration import PortMisconfiguration
 from srearena.conductor.problems.product_catalog_failure import ProductCatalogServiceFailure
 from srearena.conductor.problems.recommendation_service_cache_failure import RecommendationServiceCacheFailure
 from srearena.conductor.problems.redeploy_without_pv import RedeployWithoutPV
@@ -59,7 +58,6 @@ class ProblemRegistry:
             "astronomy_shop_ad_service_manual_gc": AdServiceManualGc,
             "astronomy_shop_cart_service_failure": CartServiceFailure,
             "astronomy_shop_ad_service_image_slow_load": ImageSlowLoad,
-            "astronomy_shop_port_misconfiguration": PortMisconfiguration,
             "astronomy_shop_payment_service_failure": PaymentServiceFailure,
             "astronomy_shop_payment_service_unreachable": PaymentServiceUnreachable,
             "astronomy_shop_product_catalog_service_failure": ProductCatalogServiceFailure,
@@ -85,7 +83,7 @@ class ProblemRegistry:
 
     def list_problems(self) -> List[str]:
         """List all available problem IDs.
-        
+
         Returns:
             List[str]: List of problem IDs
         """
@@ -93,21 +91,21 @@ class ProblemRegistry:
 
     def get_problem_instance(self, problem_id: str) -> Problem:
         """Get an instance of a problem by ID.
-        
+
         Args:
             problem_id: The ID of the problem to instantiate
-            
+
         Returns:
             Problem: An instance of the requested problem
-            
+
         Raises:
             ValueError: If the problem ID is not found in the registry
         """
         if problem_id not in self.PROBLEM_REGISTRY:
             raise ValueError(f"Problem ID {problem_id} not found in registry.")
-        
+
         problem_class_or_factory = self.PROBLEM_REGISTRY.get(problem_id)
-        
+
         # Check if it's a lambda (factory function) or a class
         if callable(problem_class_or_factory):
             return problem_class_or_factory()
