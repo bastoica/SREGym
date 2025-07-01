@@ -89,7 +89,7 @@ class HotelReservation(Application):
     def cleanup(self):
         """Delete the entire namespace for the hotel reservation application."""
         self.kubectl.delete_namespace(self.namespace)
-        time.sleep(10)
+        self.kubectl.wait_for_namespace_deletion(self.namespace)
         pvs = self.kubectl.exec_command(
             "kubectl get pv --no-headers | grep 'test-hotel-reservation' | awk '{print $1}'"
         ).splitlines()

@@ -215,8 +215,28 @@ class GetOperations(BaseTool):
             "get_operations",
             arguments={"service": service},
         )
-        
+
+        summary = self._summarize_traces(result)
         await exit_stack.aclose()
-        return result
+        return summary
 
 
+def _summarize_traces(self, traces):
+    system_prompt = """
+    You are a tool for a Site Reliability Engineering team. Currently, the team faces an incident in the cluster and needs to fix it ASAP.
+        Your job is to analyze and summarize given microservice traces, given in format of dictionaries.
+        Read the given traces. Summarize the traces. Analyze what could be the root cause of the incident.
+        Be succinct and concise. Include important traces that reflects the root cause of the incident in format of raw traces as strings, no need to prettify the json.
+        DO NOT truncate the traces.
+
+        Return your response in this format:
+        SERVICE NAME: <insert service name>
+        SUMMARY: <insert summary of traces>
+
+        """
+    logger.info(f"raw traces received: {traces}")
+    llm = get_llm_backend_for_tools()
+        # then use this `llm` for inference 
+    traces_summary = llm.inference(messages=traces.content[0].text, system_prompt=system_prompt)
+    logger.info(f"Traces summary: {traces_summary}")
+    return traces_summary

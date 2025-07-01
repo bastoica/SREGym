@@ -6,9 +6,11 @@ from srearena.conductor.problems.auth_miss_mongodb import MongoDBAuthMissing
 from srearena.conductor.problems.cart_service_failure import CartServiceFailure
 from srearena.conductor.problems.configmap_drift import ConfigMapDrift
 from srearena.conductor.problems.container_kill import ChaosMeshContainerKill
+from srearena.conductor.problems.env_variable_leak import EnvVariableLeak
 from srearena.conductor.problems.image_slow_load import ImageSlowLoad
 from srearena.conductor.problems.kafka_queue_problems import KafkaQueueProblems
 from srearena.conductor.problems.liveness_probe_misconfiguration import LivenessProbeMisconfiguration
+from srearena.conductor.problems.liveness_probe_too_aggressive import LivenessProbeTooAggressive
 from srearena.conductor.problems.loadgenerator_flood_homepage import LoadGeneratorFloodHomepage
 from srearena.conductor.problems.misconfig_app import MisconfigAppHotelRes
 from srearena.conductor.problems.missing_service import MissingService
@@ -33,6 +35,7 @@ from srearena.conductor.problems.target_port import K8STargetPortMisconfig
 from srearena.conductor.problems.wrong_bin_usage import WrongBinUsage
 from srearena.conductor.problems.wrong_dns_policy import WrongDNSPolicy
 from srearena.conductor.problems.wrong_service_selector import WrongServiceSelector
+from srearena.conductor.problems.taint_no_toleration import TaintNoToleration
 
 
 class ProblemRegistry:
@@ -65,6 +68,7 @@ class ProblemRegistry:
             "astronomy_shop_recommendation_service_cache_failure": RecommendationServiceCacheFailure,
             "redeploy_without_PV": RedeployWithoutPV,
             "wrong_bin_usage": WrongBinUsage,
+            "taint_no_toleration_social_network": lambda: TaintNoToleration(),
             "missing_service_hotel_reservation": lambda: MissingService(
                 app_name="hotel_reservation", faulty_service="mongodb-rate"
             ),
@@ -112,6 +116,12 @@ class ProblemRegistry:
             "sidecar_port_conflict_hotel_reservation": lambda: SidecarPortConflict(
                 app_name="hotel_reservation", faulty_service="frontend"
             ),
+            "env_variable_leak_social_network": lambda: EnvVariableLeak(
+                app_name="social_network", faulty_service="media-mongodb"
+            ),
+            "env_variable_leak_hotel_reservation": lambda: EnvVariableLeak(
+                app_name="hotel_reservation", faulty_service="mongodb-geo"
+            ),
             "configmap_drift_hotel_reservation": lambda: ConfigMapDrift(faulty_service="geo"),
             "readiness_probe_misconfiguration_astronomy_shop": lambda: ReadinessProbeMisconfiguration(
                 app_name="astronomy_shop", faulty_service="frontend"
@@ -130,6 +140,15 @@ class ProblemRegistry:
             ),
             "liveness_probe_misconfiguration_hotel_reservation": lambda: LivenessProbeMisconfiguration(
                 app_name="hotel_reservation", faulty_service="recommendation"
+            ),
+            "liveness_probe_too_aggressive_astronomy_shop": lambda: LivenessProbeTooAggressive(
+                app_name="astronomy_shop"
+            ),
+            "liveness_probe_too_aggressive_social_network": lambda: LivenessProbeTooAggressive(
+                app_name="social_network"
+            ),
+            "liveness_probe_too_aggressive_hotel_reservation": lambda: LivenessProbeTooAggressive(
+                app_name="hotel_reservation"
             ),
             # "missing_service_astronomy_shop": lambda: MissingService(app_name="astronomy_shop", faulty_service="ad"),
             # K8S operator misoperation -> Refactor later, not sure if they're working
