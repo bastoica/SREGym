@@ -5,14 +5,11 @@ from contextlib import AsyncExitStack
 from typing import Optional
 
 from langchain_core.callbacks import CallbackManagerForToolRun
+from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.tools.base import ArgsSchema, BaseTool
 from mcp import ClientSession, StdioServerParameters, stdio_client
 from mcp.client.sse import sse_client
 from pydantic import BaseModel, Field
-from langchain_core.messages import  HumanMessage, SystemMessage
-
-from clients.langgraph_agent.llm_backend.init_backend import get_llm_backend_for_tools
-
 
 from clients.langgraph_agent.llm_backend.init_backend import get_llm_backend_for_tools
 
@@ -65,12 +62,11 @@ If you do not have enough data to determine root cause, state 'Insufficient data
         llm = get_llm_backend_for_tools()
         # then use this `llm` for inference
         messages = [
-                SystemMessage(content=system_prompt),
-                HumanMessage(content=metrics.content[0].text),
+            SystemMessage(content=system_prompt),
+            HumanMessage(content=metrics.content[0].text),
         ]
 
-        metrics_summary =  llm.inference(messages=messages)
-        #metrics_summary = llm.inference(messages=metrics.content[0].text, system_prompt=system_prompt)
+        metrics_summary = llm.inference(messages=messages)
         logger.info(f"Traces summary: {metrics_summary}")
         return metrics_summary
 
@@ -84,7 +80,7 @@ If you do not have enough data to determine root cause, state 'Insufficient data
         server_name = "prometheus"
         if USE_HTTP:
             logger.info("Using HTTP, connecting to server.")
-           #server_url = "http://127.0.0.1:9953/sse"
+            # server_url = "http://127.0.0.1:9953/sse"
             server_url = "http://127.0.0.1:8000/sse"
             # Register both the SSE client and session with an async exit stack so they will automatically clean up when you're done (e.g. close connections properly
 

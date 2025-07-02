@@ -33,17 +33,17 @@ class GetTraces(BaseTool):
         logger.info("=== _summarize_traces called ===")
 
         system_prompt = """
-        You are a tool for a Site Reliability Engineering team. Currently, the team faces an incident in the cluster and needs to fix it ASAP.
-            Your job is to analyze and summarize given microservice traces, given in format of dictionaries.
-            Read the given traces. Summarize the traces. Analyze what could be the root cause of the incident.
-            Be succinct and concise. Include important traces that reflects the root cause of the incident in format of raw traces as strings, no need to prettify the json.
-            DO NOT truncate the traces.
+You are a tool for a Site Reliability Engineering team. Currently, the team faces an incident in the cluster and needs to fix it ASAP.
+Your job is to analyze and summarize given microservice traces, given in format of dictionaries.
+Read the given traces. Summarize the traces. Analyze what could be the root cause of the incident.
+Be succinct and concise. Include important traces that reflects the root cause of the incident in format of raw traces as strings, no need to prettify the json.
+DO NOT truncate the traces.
 
-            Return your response in this format:
-            SERVICE NAME: <insert service name>
-            SUMMARY: <insert summary of traces>
+Return your response in this format:
+SERVICE NAME: <insert service name>
+SUMMARY: <insert summary of traces>
 
-            STRICTLY FOLLOW THIS FORMAT
+STRICTLY FOLLOW THIS FORMAT
             """
         logger.info(f"raw traces received: {traces}")
         llm = get_llm_backend_for_tools()
