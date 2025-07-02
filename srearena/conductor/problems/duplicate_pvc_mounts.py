@@ -31,7 +31,7 @@ class DuplicatePVCMounts(Problem):
         self.namespace = self.app.namespace
 
         self.localization_oracle = LocalizationOracle(problem=self, expected=[self.faulty_service])
-        self.mitigation_oracle = MitigationOracle()
+        self.mitigation_oracle = MitigationOracle(problem=self)
 
         self.app.create_workload()
 
