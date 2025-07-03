@@ -36,7 +36,7 @@ from srearena.conductor.problems.wrong_bin_usage import WrongBinUsage
 from srearena.conductor.problems.wrong_dns_policy import WrongDNSPolicy
 from srearena.conductor.problems.wrong_service_selector import WrongServiceSelector
 from srearena.conductor.problems.taint_no_toleration import TaintNoToleration
-from srearena.conductor.problems.traffic_spike import TrafficSpike
+from srearena.conductor.problems.ddos import TrafficSpike
 
 class ProblemRegistry:
     def __init__(self):

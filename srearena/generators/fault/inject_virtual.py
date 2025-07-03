@@ -13,7 +13,7 @@ from srearena.paths import TARGET_MICROSERVICES
 from srearena.service.apps.base import Application
 from srearena.service.helm import Helm
 from srearena.service.kubectl import KubeCtl
-
+import requests
 
 class VirtualizationFaultInjector(FaultInjector):
     def __init__(self, namespace: str):
