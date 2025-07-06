@@ -1082,6 +1082,80 @@ class VirtualizationFaultInjector(FaultInjector):
 
             print(f"Converted {service} to StatefulSet with unique PVC per replica and scaled to {replicas}")
 
+    # Inject environment variable shadowing fault
+    def inject_env_variable_shadowing(self, microservices: list[str]):
+        for service in microservices:
+            deployment_yaml = self._get_deployment_yaml(service)
+            original_deployment_yaml = copy.deepcopy(deployment_yaml)
+            
+            containers = deployment_yaml["spec"]["template"]["spec"]["containers"]
+            
+            shadow_vars = None
+            
+            if self.namespace == "astronomy-shop":
+                if service == "frontend-proxy":
+                    shadow_vars = {
+                        "FRONTEND_HOST": "localhost"
+                    }
+            
+            for container in containers:
+                if "env" not in container:
+                    container["env"] = []
+            
+                for env_var, value in shadow_vars.items():
+                    env_exists = False
+                    for existing_env in container["env"]:
+                        if existing_env.get("name") == env_var:
+                            existing_env["value"] = value
+                            env_exists = True
+                            break
+                    
+                    if not env_exists:
+                        container["env"].append({
+                            "name": env_var,
+                            "value": value
+                        })
+                        
+                print(f"Added shadowing environment variables to container {container.get('name', 'unnamed')}: {list(shadow_vars.keys())}")
+            
+            modified_yaml_path = self._write_yaml_to_file(service, deployment_yaml)
+            
+            # Delete and reapply the deployment
+            delete_command = f"kubectl delete deployment {service} -n {self.namespace}"
+            apply_command = f"kubectl apply -f {modified_yaml_path} -n {self.namespace}"
+            
+            delete_result = self.kubectl.exec_command(delete_command)
+            print(f"Delete result for {service}: {delete_result}")
+            
+            apply_result = self.kubectl.exec_command(apply_command)
+            print(f"Apply result for {service}: {apply_result}")
+            
+            # Save the *original* deployment YAML for recovery
+            self._write_yaml_to_file(service, original_deployment_yaml)
+            
+            print(f"Injected environment variable shadowing fault for service: {service}")
+
+    def recover_env_variable_shadowing(self, microservices: list[str]):
+        """Recover from environment variable shadowing fault by restoring original deployment."""
+        for service in microservices:
+            original_yaml_path = f"/tmp/{service}_modified.yaml"
+            
+            delete_command = f"kubectl delete deployment {service} -n {self.namespace}"
+            apply_command = f"kubectl apply -f {original_yaml_path} -n {self.namespace}"
+            
+            delete_result = self.kubectl.exec_command(delete_command)
+            print(f"Delete result for {service}: {delete_result}")
+            
+            apply_result = self.kubectl.exec_command(apply_command)
+            print(f"Apply result for {service}: {apply_result}")
+            
+            self.kubectl.exec_command(f"kubectl rollout restart deployment/load-generator -n {self.namespace}")
+            self.kubectl.exec_command(f"kubectl rollout status deployment/load-generator -n {self.namespace} --timeout=60s")
+        
+            self.kubectl.wait_for_ready(self.namespace)
+            
+            print(f"Recovered from environment variable shadowing fault for service: {service}")
+
     ############# HELPER FUNCTIONS ################
     def _wait_for_pods_ready(self, microservices: list[str], timeout: int = 30):
         for service in microservices:

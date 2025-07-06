@@ -8,6 +8,7 @@ from srearena.conductor.problems.configmap_drift import ConfigMapDrift
 from srearena.conductor.problems.container_kill import ChaosMeshContainerKill
 from srearena.conductor.problems.duplicate_pvc_mounts import DuplicatePVCMounts
 from srearena.conductor.problems.env_variable_leak import EnvVariableLeak
+from srearena.conductor.problems.env_variable_shadowing import EnvVariableShadowing
 from srearena.conductor.problems.image_slow_load import ImageSlowLoad
 from srearena.conductor.problems.kafka_queue_problems import KafkaQueueProblems
 from srearena.conductor.problems.liveness_probe_misconfiguration import LivenessProbeMisconfiguration
@@ -160,6 +161,7 @@ class ProblemRegistry:
             "duplicate_pvc_mounts_hotel_reservation": lambda: DuplicatePVCMounts(
                 app_name="hotel_reservation", faulty_service="frontend"
             ),
+            "env_variable_shadowing_astronomy_shop": lambda: EnvVariableShadowing(),
             # "missing_service_astronomy_shop": lambda: MissingService(app_name="astronomy_shop", faulty_service="ad"),
             # K8S operator misoperation -> Refactor later, not sure if they're working
             # They will also need to be updated to the new problem format.
