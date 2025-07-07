@@ -32,14 +32,14 @@ class XAgent:
     def __init__(self, llm):
         self.graph_builder = StateGraph(State)
         self.graph = None
-        get_traces_tool = StructuredTool.from_function(
-            name="get_traces",
-            func=lambda x: "Not implemented sync version of tool",
-            coroutine=get_traces,
-            description="get_traces",
-            args_schema=GetTracesInput,
-        )
-        self.observability_tools = [get_traces_tool, get_services, get_operations]
+        # get_traces_tool = StructuredTool.from_function(
+        #     name="get_traces",
+        #     func=lambda x: "Not implemented sync version of tool",
+        #     coroutine=get_traces,
+        #     description="get_traces",
+        #     args_schema=GetTracesInput,
+        # )
+        self.observability_tools = [get_traces, get_services, get_operations]
 
         self.file_editing_tools = [open_file, goto_line, create, edit, insert]
         self.llm = llm
@@ -209,7 +209,7 @@ class XAgent:
         # we also have a tool node. this tool node connects to a jaeger MCP server
         # and allows you to query any jaeger information
 
-        observability_tool_node = BasicToolNode(self.observability_tools)
+        observability_tool_node = BasicToolNode(self.observability_tools, is_async=True)
         file_editing_tool_node = ToolNode(self.file_editing_tools)
 
         # we add the node to the graph

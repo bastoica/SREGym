@@ -36,6 +36,7 @@ class GetTracesInput(BaseModel):
     last_n_minutes: int = Field(description="last n minutes of traces")
 
 
+@tool("get_traces", description="get traces")
 async def get_traces(
     service: str,
     last_n_minutes: int,
