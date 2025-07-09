@@ -1,7 +1,5 @@
-import asyncio
 import atexit
 import os
-import shutil
 import time
 from json.decoder import JSONDecodeError
 
@@ -13,7 +11,7 @@ from srearena.service.telemetry.prometheus import Prometheus
 from srearena.utils.critical_section import CriticalSection
 from srearena.utils.sigint_aware_section import SigintAwareSection
 from srearena.utils.status import SessionPrint, SubmissionStatus
-
+from srearena.utils.dependency_check import dependency_check
 
 class Conductor:
     def __init__(self):
@@ -33,11 +31,6 @@ class Conductor:
         self.problem_id = None
         self.submission_stage = None  # "noop", "detection", "localization", "mitigation", "done"
         self.results = {}
-
-    def dependency_check(self, binaries: list[str]):
-        for binary in binaries:
-            if shutil.which(binary) is None:
-                raise RuntimeError(f"[❌] Required dependency '{binary}' not found. Please install {binary}.")
 
     def register_agent(self, agent, name="agent"):
         self.agent = agent
@@ -136,7 +129,7 @@ class Conductor:
         self.results = {}
 
         # Dependency check
-        self.dependency_check(["kubectl", "helm"])
+        dependency_check(["kubectl", "helm"])
 
         try:
             with SigintAwareSection():
