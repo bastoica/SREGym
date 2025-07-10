@@ -169,8 +169,10 @@ class ProblemRegistry:
                 app_name="hotel_reservation", faulty_service="frontend"
             ),
             "env_variable_shadowing_astronomy_shop": lambda: EnvVariableShadowing(),
-            "rolling_update_misconfigured": lambda: RollingUpdateMisconfigured(
-                app_name="social_network", faulty_service="user-service"),
+            "rolling_update_misconfigured_social_network": lambda: RollingUpdateMisconfigured(
+                app_name="social_network"),
+            "rolling_update_misconfigured_hotel_reservation": lambda: RollingUpdateMisconfigured(
+                app_name="hotel_reservation"),
             # "missing_service_astronomy_shop": lambda: MissingService(app_name="astronomy_shop", faulty_service="ad"),
             # K8S operator misoperation -> Refactor later, not sure if they're working
             # They will also need to be updated to the new problem format.

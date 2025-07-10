@@ -13,8 +13,8 @@ from srearena.conductor.oracles.rolling_update_misconfiguration_mitigation impor
 
 
 class RollingUpdateMisconfigured(Problem):
-    def __init__(self, app_name: str = "social_network", faulty_service: str="media-mongodb"):
-        self.faulty_service = faulty_service
+    def __init__(self, app_name: str = "social_network"):
+        self.faulty_service = "custom-service"
         self.app_name = app_name
         
         if self.app_name == "social_network":
@@ -32,7 +32,7 @@ class RollingUpdateMisconfigured(Problem):
         self.app.create_workload()
         self.mitigation_oracle = CompoundedOracle(
             self,
-            RollingUpdateMitigationOracle(problem=self,deployment_name=faulty_service),
+            RollingUpdateMitigationOracle(problem=self,deployment_name=self.faulty_service),
             WorkloadOracle(problem=self,wrk_manager=self.app.wrk)
         )
                 

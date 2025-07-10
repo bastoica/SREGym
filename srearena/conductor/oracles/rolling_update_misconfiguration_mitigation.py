@@ -1,4 +1,6 @@
+import json
 import yaml
+import tempfile
 from srearena.conductor.oracles.base import Oracle
 
 class RollingUpdateMitigationOracle(Oracle):
@@ -17,29 +19,37 @@ class RollingUpdateMitigationOracle(Oracle):
             )
             deployment = yaml.safe_load(output)
 
-            containers = deployment["spec"]["template"]["spec"]["containers"]
-            has_readiness_probe = any("readinessProbe" in container for container in containers)
+            new_init = [ {"name":    "hang-init", "image":   "busybox", "command": ["/bin/sh", "-c", "sleep 15"]}]
 
-            strategy = deployment["spec"].get("strategy", {})
-            rolling_update = strategy.get("rollingUpdate", {})
-            max_unavailable = rolling_update.get("maxUnavailable", "25%")
+            deployment["spec"]["template"]["spec"]["initContainers"] = new_init
+            with tempfile.NamedTemporaryFile("w", suffix=".yaml", delete=False) as tmp:
+                yaml.dump(deployment, tmp)
+                tmp_path = tmp.name
+            patch_cmd = (
+                f"kubectl patch deployment {self.deployment_name} -n {self.namespace} --patch-file {tmp_path}"
+            )
+            patch_out = self.kubectl.exec_command(patch_cmd)
+            print(f"Patched initContainers: {patch_out}")
+            
+            self.kubectl.wait_for_ready(self.namespace)
 
-            if isinstance(max_unavailable, str) and max_unavailable.endswith("%"):
-                max_unavailable_value = int(max_unavailable.strip('%'))
-            else:
-                max_unavailable_value = int(max_unavailable)
+            print("🔄 Triggering test rollout…")
+            self.kubectl.exec_command(
+                f"kubectl rollout restart deployment {self.deployment_name} -n {self.namespace}"
+            )
 
-            is_safe_unavailability = max_unavailable_value < 100
+            deploy_json = self.kubectl.exec_command(
+                f"kubectl get deployment {self.deployment_name}"
+                f" -n {self.namespace} -o json"
+            )
+            deploy = json.loads(deploy_json)
+            avail = deploy["status"].get("availableReplicas", 0)
 
-            if has_readiness_probe or is_safe_unavailability:
-                print("✅ Mitigation successful:")
-                if has_readiness_probe:
-                    print("   - Readiness probe is configured.")
-                if is_safe_unavailability:
-                    print("   - maxUnavailable is set to a safe value (< 100%).")
+            if avail > 0:
+                print("✅ Mitigation successful: deployment reports availableReplicas >", avail)
                 return {"success": True}
             else:
-                print("❌ Mitigation failed: neither readiness probe nor safe rolling update configuration")
+                print("❌ Mitigation failed: No pods available")
                 return {"success": False}
 
         except Exception as e:

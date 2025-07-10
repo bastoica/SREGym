@@ -1153,41 +1153,70 @@ class VirtualizationFaultInjector(FaultInjector):
 
             print(f"Recovered from environment variable shadowing fault for service: {service}")
 
+    # Inject Rolling Update Misconfiguration 
     def inject_rolling_update_misconfigured(self, microservices: list[str]):
+        import tempfile
         for service in microservices:
-            deployment_yaml = self._get_deployment_yaml(service)
-            original_deployment_yaml = copy.deepcopy(deployment_yaml)
-
-            deployment_yaml["spec"]["strategy"] = {
-                "type": "RollingUpdate",
-                "rollingUpdate": {
-                    "maxUnavailable": "100%",
-                    "maxSurge": "0%"
-                }
+            base_dep = {
+                "apiVersion": "apps/v1",
+                "kind":       "Deployment",
+                "metadata": {
+                    "name":      service,
+                    "namespace": self.namespace,
+                    "labels":    {"app": service},
+                },
+                "spec": {
+                    "replicas": 3,
+                    "selector": {"matchLabels": {"app": service}},
+                    "template": {
+                        "metadata": {"labels": {"app": service}},
+                        "spec": {
+                            "containers": [
+                                {
+                                    "name":  f"{service}-main",
+                                    "image": "python:3.9-slim",
+                                    "command": ["python3", "-m", "http.server", "8080"],
+                                    "ports": [{"containerPort": 8080}],
+                                }
+                            ]
+                        },
+                    },
+                },
             }
+            print(f"➡️ Deploying {service}")
+            with tempfile.NamedTemporaryFile("w", suffix=".yaml", delete=False) as tmp:
+                yaml.safe_dump(base_dep, tmp)
+                path0 = tmp.name
+            self.kubectl.exec_command(f"kubectl apply -f {path0} -n {self.namespace}")
 
-            containers = deployment_yaml["spec"]["template"]["spec"]["containers"]
-            for container in containers:
-                container["lifecycle"] = {
-                    "postStart": {
-                        "exec": {
-                            "command": ["/bin/sh", "-c", "sleep 100"]  
-                        }
-                    }
-                }
-                
-            modified_yaml_path = self._write_yaml_to_file(service, deployment_yaml)
-            patch_command = f"kubectl patch deployment {service} -n {self.namespace} --patch-file {modified_yaml_path}"
-            patch_result = self.kubectl.exec_command(patch_command)
-            print(f"Patched deployment {service}: {patch_result}")
+            orig_path = f"/tmp/{service}-orig.yaml"
+            with open(orig_path, "w") as f:
+                yaml.safe_dump(base_dep, f)
 
-            rollout_command = f"kubectl rollout restart deployment {service} -n {self.namespace}"
-            rollout_result = self.kubectl.exec_command(rollout_command)
-            print(f"Triggered rollout for {service}: {rollout_result}")
+            dep = copy.deepcopy(base_dep)
+            dep["spec"]["strategy"] = {
+                "type": "RollingUpdate",
+                "rollingUpdate": {"maxUnavailable": "100%", "maxSurge": "0%"},
+            }
+            init = {
+                "name":    "hang-init",
+                "image":   "busybox",
+                "command": ["/bin/sh", "-c", "sleep infinity"],
+            }
+            dep.setdefault("spec", {}).setdefault("template", {}).setdefault("spec", {}).setdefault("initContainers", []).append(init)
 
-            self._write_yaml_to_file(f"{service}-original", original_deployment_yaml)
-            print(f"Injected maxUnavailable fault with startup delay for {service}")
-    
+            with tempfile.NamedTemporaryFile("w", suffix=".yaml", delete=False) as tmp2:
+                yaml.safe_dump(dep, tmp2)
+                path1 = tmp2.name
+
+            self.kubectl.exec_command(
+                f"kubectl patch deployment {service} -n {self.namespace} --patch-file {path1}"
+            )
+            self.kubectl.exec_command(
+                f"kubectl rollout restart deployment {service} -n {self.namespace}"
+            )
+            print(f"⚠️ Injected Rolling Update Misconfiguration fault into `{service}`")
+
     def recover_rolling_update_misconfigured(self, microservices: list[str]):
         for service in microservices:
             original_yaml_path = f"/tmp/{service}_modified.yaml"
