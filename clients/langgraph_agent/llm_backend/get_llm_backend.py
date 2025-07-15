@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_core.tools import BaseTool
 from langchain_openai import ChatOpenAI
+from langchain_litellm import ChatLiteLLM 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -84,11 +85,19 @@ class LiteLLMBackend:
             raise ValueError(f"messages must be either a string or a list of dicts, but got {type(messages)}")
         logger.info(f"prompting llm with messages: {prompt_messages}")
 
-        llm = ChatOpenAI(
-            model=self.model_name,
+        # llm = ChatOpenAI(
+        #     model=self.model_name,
+        #     temperature=self.temperature,
+        #     top_p=self.top_p,
+        # )
+        llm = ChatLiteLLM(
+            model = self.model_name,
+            api_key=self.api_key,
             temperature=self.temperature,
-            top_p=self.top_p,
+            custom_llm_provider = self.provider,   
         )
+        
+       
 
         if tools:
             logger.info(f"binding tools to llm: {tools}")
