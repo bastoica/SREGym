@@ -8,11 +8,18 @@ logger.info("Starting Prometheus MCP Server")
 # Here, I initialize the FastMCP server with the name "Prometheus MCP Server
 mcp = FastMCP("Prometheus MCP Server")
 
-USE_HTTP = True
-
 
 @mcp.tool(name="get_metrics")
-def get_metrics(query: str):
+def get_metrics(query: str) -> str:
+    """Query real-time metrics data from the Prometheus instance.
+
+        Args:
+            query (str): A Prometheus Query Language (PromQL) expression used to fetch metric values.
+
+        Returns:
+            str: String of metric results, including timestamps, values, and labels or error information.
+    """
+
     logger.info("[prom_mcp] get_metrics called, getting prometheus metrics")
     prometheus_url = "http://localhost:32000"
     observability_client = ObservabilityClient(prometheus_url)
@@ -32,10 +39,3 @@ def get_metrics(query: str):
         err_str = f"[prom_mcp] Error querying get_metrics: {str(e)}"
         logger.error(err_str)
         return err_str
-
-
-if __name__ == "__main__":
-    if USE_HTTP:
-        mcp.run(transport="sse")
-    else:
-        mcp.run()
