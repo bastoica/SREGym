@@ -13,11 +13,11 @@ class ValkeyAuthDisruption(Problem):
         app = AstronomyShop()
         super().__init__(app=app, namespace=app.namespace)
 
-        self.faulty_service = "valkey"
+        self.faulty_service = "valkey-cart"
         self.kubectl = KubeCtl()
 
         # === Attach evaluation oracles ===
-        self.localization_oracle = LocalizationOracle(problem=self, expected="valkey")
+        self.localization_oracle = LocalizationOracle(problem=self, expected=self.faulty_service)
         self.mitigation_oracle = ValkeyAuthMitigation(problem=self)
 
         self.app.create_workload()
