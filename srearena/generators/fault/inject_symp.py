@@ -1,7 +1,3 @@
-import os
-import subprocess
-import threading
-import time
 from typing import List
 
 import yaml
@@ -36,6 +32,13 @@ class SymptomFaultInjector(FaultInjector):
             ]
         else:
             raise ValueError(f"Unsupported container runtime: {container_runtime}")
+
+        # Disable security for the dashboard
+        if chaos_configs.get("extra_args"):
+            chaos_configs["extra_args"].append("--set dashboard.securityMode=false")
+        else:
+            # create as a list (install expects a list)
+            chaos_configs["extra_args"] = ["--set dashboard.securityMode=false"]
 
         Helm.install(**chaos_configs)
 
