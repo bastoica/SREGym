@@ -71,6 +71,10 @@ class KubeCtl:
         """Fetch the deployment configuration."""
         return self.apps_v1_api.read_namespaced_deployment(name, namespace)
 
+    def get_service(self, name: str, namespace: str):
+        """Fetch the service configuration."""
+        return client.CoreV1Api().read_namespaced_service(name=name, namespace=namespace)
+
     def wait_for_ready(self, namespace, sleep=2, max_wait=500):
         """Wait for all pods in a namespace to be in a Ready state before proceeding."""
 
