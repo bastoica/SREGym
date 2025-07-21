@@ -638,14 +638,6 @@ class VirtualizationFaultInjector(FaultInjector):
 
             print(f"Recovered from sidecar port conflict fault for service: {service}")
 
-<<<<<<< HEAD
-    # V.16 - Inject a persistent volume affinity violation/ conflict
-    def inject_persistent_volume_affinity_violation(self, microservices: list[str]):
-        pass
-
-    def recover_persistent_volume_affinity_violation(self, microservices: list[str]):
-        pass
-=======
     # Inject a liveness probe too aggressive fault
     def inject_liveness_probe_too_aggressive(self, microservices: list[str]):
         for service in microservices:
@@ -1236,7 +1228,6 @@ class VirtualizationFaultInjector(FaultInjector):
             apply_command = f"kubectl apply -f {original_yaml_path} -n {self.namespace}"
             apply_result = self.kubectl.exec_command(apply_command)
             print(f"Restored original deployment {service}: {apply_result}")
->>>>>>> origin/main
 
     ############# HELPER FUNCTIONS ################
     def _wait_for_pods_ready(self, microservices: list[str], timeout: int = 30):
@@ -1484,6 +1475,11 @@ class VirtualizationFaultInjector(FaultInjector):
             self.kubectl.exec_command(f"kubectl rollout restart deployment {svc} -n {self.namespace}")
         self.kubectl.wait_for_stable(self.namespace)
         print(f"Pods for {microservices} are back to Running")
+
+    def inject_persistent_volume_affinity_violation(self, microservices: list[str]):
+        
+
+    def recover_persistent_volume_affinity_violation(self, microservices: list[str]):
 
 
 if __name__ == "__main__":
