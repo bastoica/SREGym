@@ -1,6 +1,5 @@
 from srearena.conductor.oracles.localization import LocalizationOracle
-from srearena.conductor.oracles.mitigation import MitigationOracle
-from srearena.conductor.oracles.workload import WorkloadOracle
+from srearena.conductor.oracles.valkey_auth_mitigation import ValkeyAuthMitigation
 from srearena.conductor.problems.base import Problem
 from srearena.generators.fault.inject_app import ApplicationFaultInjector
 from srearena.paths import TARGET_MICROSERVICES
@@ -15,10 +14,11 @@ class ValkeyAuthDisruption(Problem):
         super().__init__(app=app, namespace=app.namespace)
 
         self.faulty_service = "valkey"
+        self.kubectl = KubeCtl()
 
         # === Attach evaluation oracles ===
         self.localization_oracle = LocalizationOracle(problem=self, expected="valkey")
-        self.mitigation_oracle = MitigationOracle(problem=self)
+        self.mitigation_oracle = ValkeyAuthMitigation(problem=self)
 
         self.app.create_workload()
 
