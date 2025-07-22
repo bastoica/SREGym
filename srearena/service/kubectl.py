@@ -450,6 +450,14 @@ class KubeCtl:
         except client.exceptions.ApiException as e:
             raise RuntimeError(f"❌ Failed to delete resource quota '{name}' in namespace '{namespace}': {e}")
 
+    def scale_deployment(self, name: str, namespace: str, replicas: int):
+        try:
+            body = {"spec": {"replicas": replicas}}
+            self.apps_v1_api.patch_namespaced_deployment(name=name, namespace=namespace, body=body)
+            print(f"✅ Scaled deployment '{name}' in namespace '{namespace}' to {replicas} replicas.")
+        except client.exceptions.ApiException as e:
+            raise RuntimeError(f"❌ Failed to scale deployment '{name}' in namespace '{namespace}': {e}")
+
 
 # Example usage:
 if __name__ == "__main__":
