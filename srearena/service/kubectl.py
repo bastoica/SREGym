@@ -5,10 +5,11 @@ import subprocess
 import time
 
 try:
-    from kubernetes import client, config
+    from kubernetes import client, config, dynamic
 except ModuleNotFoundError as e:
     print("Your Kubeconfig is missing. Please set up a cluster.")
     exit(1)
+from kubernetes.client import api_client
 from kubernetes.client.rest import ApiException
 from rich.console import Console
 
@@ -395,6 +396,50 @@ class KubeCtl:
                         break
 
         return matching_rs
+
+    def delete_replicaset(self, name: str, namespace: str):
+        body = client.V1DeleteOptions(propagation_policy="Foreground")
+        try:
+            self.apps_v1_api.delete_namespaced_replica_set(
+                name=name,
+                namespace=namespace,
+                body=body,
+            )
+            print(f"✅ Deleted ReplicaSet '{name}' in namespace '{namespace}'")
+        except client.exceptions.ApiException as e:
+            raise RuntimeError(f"Failed to delete ReplicaSet {name} in {namespace}: {e}")
+
+    def apply_resource(self, manifest: dict):
+
+        dyn_client = dynamic.DynamicClient(api_client.ApiClient())
+
+        gvk = {
+            ("v1", "ResourceQuota"): dyn_client.resources.get(api_version="v1", kind="ResourceQuota"),
+            # Add more mappings here if needed in the future
+        }
+
+        key = (manifest["apiVersion"], manifest["kind"])
+        if key not in gvk:
+            raise ValueError(f"Unsupported resource type: {key}")
+
+        resource = gvk[key]
+        namespace = manifest["metadata"].get("namespace")
+
+        try:
+            existing = resource.get(name=manifest["metadata"]["name"], namespace=namespace)
+            # If exists, patch it
+            resource.patch(body=manifest, name=manifest["metadata"]["name"], namespace=namespace)
+            print(f"✅ Patched existing {manifest['kind']} '{manifest['metadata']['name']}'")
+        except dynamic.exceptions.NotFoundError:
+            resource.create(body=manifest, namespace=namespace)
+            print(f"✅ Created new {manifest['kind']} '{manifest['metadata']['name']}'")
+
+    def get_resource_quotas(self, namespace: str) -> list:
+        try:
+            response = self.core_v1_api.list_namespaced_resource_quota(namespace=namespace)
+            return response.items
+        except client.exceptions.ApiException as e:
+            raise RuntimeError(f"Failed to get resource quotas in namespace '{namespace}': {e}")
 
 
 # Example usage:
