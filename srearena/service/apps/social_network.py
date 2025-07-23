@@ -72,7 +72,9 @@ class SocialNetwork(Application):
             self.wrk.stop()
         self.kubectl.delete_namespace(self.namespace)
 
-    def create_workload(self, rate: int = 100, dist: str = "exp", connections: int = 3, duration: int = 10, threads: int = 3):
+    def create_workload(
+        self, rate: int = 100, dist: str = "exp", connections: int = 3, duration: int = 10, threads: int = 3
+    ):
         self.wrk = Wrk2WorkloadManager(
             wrk=Wrk2(rate=rate, dist=dist, connections=connections, duration=duration, threads=threads),
             payload_script=self.payload_script,

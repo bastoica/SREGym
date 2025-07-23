@@ -47,10 +47,12 @@ def update_file_vars_in_state(
             if tool_name == "open_file":
                 new_state["curr_file"] = tool_args["path"]
                 new_state["curr_line"] = tool_args["line_number"]
+                new_state["workdir"] = str(Path(tool_args["path"]).parent)
             elif tool_name == "goto_line":
                 new_state["curr_line"] = tool_args["line_number"]
             elif tool_name == "create":
                 new_state["curr_file"] = tool_args["path"]
+                new_state["workdir"] = str(Path(tool_args["path"]).parent)
             elif tool_name == "edit":
                 # Explicitly pointing out as this tool does not modify agent state
                 pass
