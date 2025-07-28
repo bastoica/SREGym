@@ -1,4 +1,4 @@
-"""SREArena CLI client."""
+"""SREArena CLI client. Use this for debugging and platform development work, otherwise use main.py"""
 
 import asyncio
 import atexit
@@ -129,6 +129,7 @@ class HumanAgent:
     def _filter_dict(self, dictionary, filter_func):
         return {k: v for k, v in dictionary.items() if filter_func(k, v)}
 
+
 async def main():
     conductor = Conductor()
     agent = HumanAgent(conductor)
@@ -139,6 +140,7 @@ async def main():
 
     results = await conductor.start_problem()
     print(results)
+
 
 if __name__ == "__main__":
     asyncio.run(main())
