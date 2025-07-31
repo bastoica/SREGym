@@ -28,27 +28,26 @@ class BaseAgent:
 
         # self.llm = llm.bind_tools(self.sync_tools + self.async_tools, tool_choice="required")
 
-    def llm_inference_step(self, state: State):
-        return {
-            # "messages": [self.llm.invoke(state["messages"])]
-            "messages": [self.llm.inference(messages=state["messages"],
-                                            tools=self.async_tools + self.sync_tools)],
-        }
-
     def llm_explanation_step(self, state: State):
         state["messages"].append(
             HumanMessage(content="You are now in explanation stage; "
                                  "please briefly explain why you want to call the tools with the arguments next; "
                                  "the tools you mentioned must be available to you at first.")
         )
-        return self.llm_inference_step(state)
+        return {
+            "messages": [self.llm.inference(messages=state["messages"])],
+        }
 
     def llm_tool_call_step(self, state: State):
         state["messages"].append(
             HumanMessage(content="You are now in tool-call stage; "
                                  "please make tool calls consistent with your explanation")
         )
-        return self.llm_inference_step(state)
+        return {
+            # "messages": [self.llm.invoke(state["messages"])]
+            "messages": [self.llm.inference(messages=state["messages"],
+                                            tools=self.async_tools + self.sync_tools)],
+        }
 
     def post_tool_route(self, state: State):
         """
