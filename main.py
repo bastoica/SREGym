@@ -5,8 +5,8 @@ import threading
 
 from rich.console import Console
 
-from api import run_api
 from srearena.conductor.conductor import Conductor
+from srearena.conductor.conductor_api import run_api
 
 
 def driver_loop(conductor: Conductor):
