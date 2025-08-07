@@ -698,9 +698,9 @@ class VirtualizationFaultInjector(FaultInjector):
     def inject_env_variable_leak(self, microservices: list[str]):
         for microservice in microservices:
             configmap_name = None
-            if self.namespace == "test-social-network":
+            if self.namespace == "social-network":
                 configmap_name = "media-mongodb"
-            elif self.namespace == "test-hotel-reservation":
+            elif self.namespace == "hotel-reservation":
                 configmap_name = "mongo-geo-script"
             else:
                 raise ValueError(f"Unknown namespace: {self.namespace}")
@@ -1398,7 +1398,7 @@ class VirtualizationFaultInjector(FaultInjector):
 
         if len(nodes) < 2:
             raise RuntimeError("Need 2 worker nodes for this fault to be injected.")
-        
+
         nodeA, nodeB = nodes[0], nodes[1]
 
         for service in microservices:
@@ -1431,10 +1431,7 @@ class VirtualizationFaultInjector(FaultInjector):
                             ]
                         }
                     },
-                    "claimRef": {
-                        "name": "temp-pvc",
-                        "namespace": self.namespace
-                    }
+                    "claimRef": {"name": "temp-pvc", "namespace": self.namespace},
                 },
             }
 
@@ -1451,11 +1448,7 @@ class VirtualizationFaultInjector(FaultInjector):
                     "storageClassName": "",
                     "volumeName": "temp-pv",
                     "accessModes": ["ReadWriteOnce"],
-                    "resources": {
-                        "requests": {
-                            "storage": "1Gi"
-                        }
-                    }
+                    "resources": {"requests": {"storage": "1Gi"}},
                 },
             }
 
@@ -1464,7 +1457,7 @@ class VirtualizationFaultInjector(FaultInjector):
             print(f"Created PVC temp-pvc for fault injection")
 
             pod_spec = deployment_yaml.get("spec", {}).get("template", {}).get("spec", {})
-            
+
             self._change_node_selector(deployment_yaml=deployment_yaml, node_name=nodeB)
 
             if "volumes" not in pod_spec:
@@ -1498,7 +1491,6 @@ class VirtualizationFaultInjector(FaultInjector):
             self._write_yaml_to_file(service, original_deployment_yaml)
 
             print(f"Injected persistent volume affinity conflict fault for {service}")
-            
 
     def recover_persistent_volume_affinity_violation(self, microservices: list[str]):
         for service in microservices:
@@ -1719,7 +1711,7 @@ class VirtualizationFaultInjector(FaultInjector):
 
 
 if __name__ == "__main__":
-    namespace = "test-social-network"
+    namespace = "social-network"
     microservices = ["mongodb-geo"]
     # microservices = ["geo"]
     fault_type = "auth_miss_mongodb"
