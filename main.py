@@ -4,6 +4,7 @@ import sys
 import threading
 
 from rich.console import Console
+from rich.prompt import Prompt
 
 from srearena.conductor.conductor import Conductor
 from srearena.conductor.conductor_api import run_api
@@ -53,7 +54,9 @@ def driver_loop(conductor: Conductor):
 
 
 def main():
+    agent_name = Prompt.ask("[bold cyan]What would you like to call your agent?[/]", default="arena")
     conductor = Conductor()
+    conductor.register_agent(agent_name)
 
     # -- 1) kick off the driver in a background thread --
     #    it will deploy each problem and then wait for your HTTP POSTs to /submit
@@ -71,7 +74,7 @@ def main():
     # -- 3) Write out a CSV --
     if results:
         fieldnames = sorted({key for row in results for key in row.keys()})
-        csv_path = "srea_results.csv"
+        csv_path = f"{agent_name}_results.csv"
         with open(csv_path, "w", newline="") as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()

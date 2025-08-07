@@ -21,6 +21,7 @@ class Conductor:
         self.kubectl = KubeCtl()
         self.prometheus = Prometheus()
         self.apps = AppRegistry()
+        self.agent_name = None
 
         # runtime state
         self.problem_id = None
@@ -33,8 +34,7 @@ class Conductor:
         self.results = {}
 
     def register_agent(self, name="agent"):
-        # no-op for HTTP/CLI‐driven flow
-        pass
+        self.agent_name = name
 
     def dependency_check(self, binaries: list[str]):
         for b in binaries:
