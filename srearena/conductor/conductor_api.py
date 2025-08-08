@@ -22,8 +22,9 @@ class SubmitRequest(BaseModel):
 
 @app.post("/submit")
 async def submit_solution(req: SubmitRequest):
-    if _conductor is None or _conductor.submission_stage is None:
-        raise HTTPException(400, "No problem has been started")
+    allowed = {"noop", "detection", "localization", "mitigation"}
+    if _conductor is None or _conductor.submission_stage not in allowed:
+        raise HTTPException(status_code=400, detail=f"Cannot submit at stage: {_conductor.submission_stage!r}")
 
     wrapped = f"```\nsubmit({req.solution})\n```"
     try:
