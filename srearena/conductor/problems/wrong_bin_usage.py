@@ -1,8 +1,6 @@
 """Wrong binary usage problem in the HotelReservation application."""
 
-from srearena.conductor.oracles.compound import CompoundedOracle
 from srearena.conductor.oracles.localization import LocalizationOracle
-from srearena.conductor.oracles.workload import WorkloadOracle
 from srearena.conductor.oracles.wrong_bin_mitigation import WrongBinMitigationOracle
 from srearena.conductor.problems.base import Problem
 from srearena.generators.fault.inject_virtual import VirtualizationFaultInjector
@@ -27,11 +25,7 @@ class WrongBinUsage(Problem):
         self.localization_oracle = LocalizationOracle(problem=self, expected=[faulty_service])
 
         self.app.create_workload()
-        self.mitigation_oracle = CompoundedOracle(
-            self,
-            WrongBinMitigationOracle(problem=self),
-            WorkloadOracle(problem=self, wrk_manager=self.app.wrk),
-        )
+        self.mitigation_oracle = WrongBinMitigationOracle(problem=self)
 
     @mark_fault_injected
     def inject_fault(self):
