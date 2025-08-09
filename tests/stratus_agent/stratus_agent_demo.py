@@ -1,3 +1,4 @@
+import asyncio
 import atexit
 import logging
 import socket
@@ -104,7 +105,7 @@ def setup_port_forwarding():
     return [pf_jaeger, pf_prometheus]
 
 
-if __name__ == "__main__":
+async def main():
     llm = get_llm_backend_for_tools()
 
     # NOTE: Some of the tools are stateful. If you want to start a new session,
@@ -166,7 +167,7 @@ if __name__ == "__main__":
         atexit.register(conductor.exit_cleanup_and_recover_fault)
 
     # Phase 3: Faulty system
-    final_state = diagnosis_agent.run({"app_summary": problem.app.get_app_summary()})
+    final_state = await diagnosis_agent.arun({"app_summary": problem.app.get_app_summary()})
     logger.info(f"Normal diagnosis final state: {final_state}")
     if "detection" in final_state["ans"] and isinstance(final_state["ans"]["detection"], bool):
         print(f"Faulty Result: {'✅' if final_state['ans']['detection'] else '❌'}")
@@ -195,7 +196,7 @@ if __name__ == "__main__":
     demo_cfg = StratusAgentDemoCfg()
 
     while True:
-        final_state = mitigation_agent.run(
+        final_state = await mitigation_agent.arun(
             {
                 "app_summary": problem.app.get_app_summary(),
                 "faults_info": faults_info,
@@ -214,7 +215,7 @@ if __name__ == "__main__":
             break
         logger.info("Mitigation failed, retrying...")
         retry_cnt += 1
-        logger.info(f"Rollback final state: {rollback_agent.run({})}")
+        logger.info(f"Rollback final state: {await rollback_agent.arun({})}")
         last_result = result
         reflections.append(generate_reflection(final_state["messages"], llm))
 
@@ -236,3 +237,7 @@ if __name__ == "__main__":
     conductor.kubectl.exec_command("kubectl delete sc openebs-hostpath openebs-device --ignore-not-found")
     conductor.kubectl.exec_command("kubectl delete -f https://openebs.github.io/charts/openebs-operator.yaml")
     conductor.kubectl.wait_for_namespace_deletion("openebs")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
