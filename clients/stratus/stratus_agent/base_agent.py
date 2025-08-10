@@ -53,11 +53,11 @@ class BaseAgent:
         with open("./agent_graph.png", "wb") as png:
             png.write(self.graph.get_graph().draw_mermaid_png())
 
-    def run(self, data_for_prompts: dict):
+    def run(self, starting_prompts):
         """Running an agent
 
         Args:
-            data_for_prompts (dict): The data inside the dict will be filled into the prompts.
+            starting_prompts (list[SystemMessage | HumanMessage]): The data inside the dict will be filled into the prompts.
 
         Returns:
             final state of the agent running, including messages and other state values.
@@ -65,12 +65,11 @@ class BaseAgent:
         if not self.graph:
             raise ValueError("Agent graph is None. Have you built the agent?")
 
-        prompts = get_init_prompts(data_for_prompts)
-        if len(prompts) == 0:
+        if len(starting_prompts) == 0:
             raise ValueError("No prompts used to start the conversation!")
 
         state = {
-            "messages": prompts,
+            "messages": starting_prompts,
             "num_steps": 0,
             "submitted": False,
         }
@@ -84,25 +83,25 @@ class BaseAgent:
             )
         )[-1]
 
-    async def arun(self, data_for_prompts: dict):
+    async def arun(self, starting_prompts):
         """
-        Async running an agent
+                Async running an agent
 
-        Args:
-            data_for_prompts (dict): The data inside the dict will be filled into the prompts.
+                Args:
+                    starting_prompts (dict): The data inside the dict will be filled into the prompts.
+        :w
 
-        Returns:
-            final state of the agent running, including messages and other state values.
+                Returns:
+                    final state of the agent running, including messages and other state values.
         """
         if not self.graph:
             raise ValueError("Agent graph is None. Have you built the agent?")
 
-        prompts = get_init_prompts(data_for_prompts)
-        if len(prompts) == 0:
+        if len(starting_prompts) == 0:
             raise ValueError("No prompts used to start the conversation!")
 
         state = {
-            "messages": prompts,
+            "messages": starting_prompts,
             "workdir": "",
             "curr_file": "",
             "curr_line": 0,
