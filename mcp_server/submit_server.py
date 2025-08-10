@@ -1,12 +1,9 @@
-import json
 import logging
-import urllib
-from datetime import datetime, timedelta
 
 import requests
 from fastmcp import FastMCP
 
-from clients.configs.langgraph_tool_configs import LanggraphToolConfig
+from clients.stratus.configs.langgraph_tool_configs import LanggraphToolConfig
 
 logger = logging.getLogger("Submission MCP Server")
 logger.info("Starting Submission MCP Server")
@@ -29,7 +26,7 @@ def submit(ans: str) -> str:
 
     logger.info("[submit_mcp] submit mcp called")
     # FIXME: reference url from config file, remove hard coding
-    url = langgraph_tool_config.jaeger_mcp_url
+    url = "http://localhost:8000/submit"
     headers = {"Content-Type": "application/json"}
     # Match curl behavior: send "\"yes\"" when ans is "yes"
     payload = {"solution": f'"{ans}"'}

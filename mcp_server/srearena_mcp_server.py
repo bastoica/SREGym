@@ -19,7 +19,7 @@ app = Starlette(
         Mount("/kubectl_mcp_tools", app=create_sse_app(kubectl_mcp, "/messages/", "/sse")),
         Mount("/jaeger", app=create_sse_app(observability_mcp, "/messages/", "/sse")),
         Mount("/prometheus", app=create_sse_app(prometheus_mcp, "/messages/", "/sse")),
-        Mount("/submit", app=create_sse_app(prometheus_mcp, "/messages/", "/sse")),
+        Mount("/submit", app=create_sse_app(submit_mcp, "/messages/", "/sse")),
     ]
 )
 

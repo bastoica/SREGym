@@ -8,10 +8,10 @@ from langchain.agents.chat.prompt import HUMAN_MESSAGE
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 from pydantic import BaseModel
 
-from clients.langgraph_agent.k8s_agent import XAgent
-from clients.langgraph_agent.llm_backend.init_backend import get_llm_backend_for_tools
-from clients.langgraph_agent.state import State
-from clients.langgraph_agent.tools.text_editing.file_manip import create, edit, goto_line, insert, open_file
+from clients.stratus.k8s_agent import XAgent
+from clients.stratus.llm_backend.init_backend import get_llm_backend_for_tools
+from clients.stratus.state import State
+from clients.stratus.tools.text_editing.file_manip import create, edit, goto_line, insert, open_file
 
 
 def get_agent():

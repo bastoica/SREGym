@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from clients.langgraph_agent.nl2kubectl_agent import NL2KubectlAgent
+from clients.stratus.nl2kubectl_agent import NL2KubectlAgent
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -41,7 +41,8 @@ def get_agent(is_mock):
     if is_mock:
         llm = None
     else:
-        from clients.langgraph_agent.llm_backend.init_backend import get_llm_backend_for_tools
+        from clients.stratus.llm_backend.init_backend import get_llm_backend_for_tools
+
         llm = get_llm_backend_for_tools()
 
     agent = NL2KubectlAgent(llm)
@@ -64,10 +65,9 @@ def set_up_preconditions(preconditions):
             fixed = False
             total_slept_time = 0
             while True:
-                is_valid = validate_condition(condition_set["validate_cmd"],
-                                              condition_set["validator"])
+                is_valid = validate_condition(condition_set["validate_cmd"], condition_set["validator"])
                 if not is_valid and not fixed:
-                    logger.info(f"Precondition \"{precondition}\" is not met. Setting up precondition...")
+                    logger.info(f'Precondition "{precondition}" is not met. Setting up precondition...')
                     exec_shell_cmd(condition_set["fix"])
                     fixed = True
                 elif not is_valid and fixed:
@@ -77,7 +77,7 @@ def set_up_preconditions(preconditions):
                     time.sleep(to_sleep)
                     total_slept_time += to_sleep
                 else:
-                    logger.info(f"Precondition \"{precondition}\" is met now.")
+                    logger.info(f'Precondition "{precondition}" is met now.')
                     break
 
 
@@ -89,8 +89,7 @@ def running_test(test_rounds, agent):
             total_slept_time = 0
             logger.info("Validating agent's tool call...")
             while True:
-                is_valid = validate_condition(one_round["validate_cmd"],
-                                              one_round["validator"])
+                is_valid = validate_condition(one_round["validate_cmd"], one_round["validator"])
                 if not is_valid:
                     if total_slept_time > (TIME_OUT - 1e-2):
                         raise Exception(f"Fail to validate (timeout). user_input: {one_round['user_input']}")
@@ -115,9 +114,11 @@ class TestKubectlTools:
 
 
 if __name__ == "__main__":
-    pytest.main([
-        "-v",  # Verbose output
-        "--maxfail=1",  # Stop after first failure
-        "-s",  # Show print output
-        f"{__file__}::TestKubectlTools::test_kubectl_tools_success"  # Specific test
-    ])
+    pytest.main(
+        [
+            "-v",  # Verbose output
+            "--maxfail=1",  # Stop after first failure
+            "-s",  # Show print output
+            f"{__file__}::TestKubectlTools::test_kubectl_tools_success",  # Specific test
+        ]
+    )
