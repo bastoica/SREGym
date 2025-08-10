@@ -69,7 +69,7 @@ class ProblemRegistry:
             "misconfig_app_hotel_res": MisconfigAppHotelRes,
             "scale_pod_zero_social_net": ScalePodSocialNet,
             "assign_to_non_existent_node": AssignNonExistentNode,
-	        "pod_anti_affinity_deadlock": PodAntiAffinityDeadlock,
+            "pod_anti_affinity_deadlock": PodAntiAffinityDeadlock,
             "chaos_mesh_container_kill": ChaosMeshContainerKill,
             "chaos_mesh_pod_failure": ChaosMeshPodFailure,
             "chaos_mesh_pod_kill": ChaosMeshPodKill,

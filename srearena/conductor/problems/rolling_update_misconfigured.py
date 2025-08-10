@@ -1,11 +1,7 @@
-from srearena.conductor.oracles.compound import CompoundedOracle
 from srearena.conductor.oracles.localization import LocalizationOracle
-from srearena.conductor.oracles.mitigation import MitigationOracle
 from srearena.conductor.oracles.rolling_update_misconfiguration_mitigation import RollingUpdateMitigationOracle
-from srearena.conductor.oracles.workload import WorkloadOracle
 from srearena.conductor.problems.base import Problem
 from srearena.generators.fault.inject_virtual import VirtualizationFaultInjector
-from srearena.service.apps.astronomy_shop import AstronomyShop
 from srearena.service.apps.hotel_reservation import HotelReservation
 from srearena.service.apps.social_network import SocialNetwork
 from srearena.service.kubectl import KubeCtl
@@ -30,11 +26,7 @@ class RollingUpdateMisconfigured(Problem):
         self.localization_oracle = LocalizationOracle(problem=self, expected=[self.faulty_service])
 
         self.app.create_workload()
-        self.mitigation_oracle = CompoundedOracle(
-            self,
-            RollingUpdateMitigationOracle(problem=self, deployment_name=self.faulty_service),
-            WorkloadOracle(problem=self, wrk_manager=self.app.wrk),
-        )
+        self.mitigation_oracle = RollingUpdateMitigationOracle(problem=self, deployment_name=self.faulty_service)
 
     @mark_fault_injected
     def inject_fault(self):

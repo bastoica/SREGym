@@ -761,7 +761,7 @@ class SymptomFaultInjector(FaultInjector):
 
 
 if __name__ == "__main__":
-    namespace = "test-hotel-reservation"
+    namespace = "hotel-reservation"
     microservices = ["geo"]
     fault_type = "pod_failure"
     injector = SymptomFaultInjector(namespace)

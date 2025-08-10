@@ -1,4 +1,3 @@
-from srearena.conductor.oracles.compound import CompoundedOracle
 from srearena.conductor.oracles.localization import LocalizationOracle
 from srearena.conductor.oracles.sustained_readiness import SustainedReadinessOracle
 from srearena.conductor.problems.base import Problem
@@ -32,10 +31,7 @@ class LivenessProbeTooAggressive(Problem):
         self.localization_oracle = LocalizationOracle(problem=self, expected=[self.faulty_service])
 
         self.app.create_workload()
-        self.mitigation_oracle = CompoundedOracle(
-            self,
-            SustainedReadinessOracle(problem=self, sustained_period=30),
-        )
+        self.mitigation_oracle = SustainedReadinessOracle(problem=self, sustained_period=30)
 
     @mark_fault_injected
     def inject_fault(self):

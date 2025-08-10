@@ -15,8 +15,6 @@ class HotelReservation(Application):
         self.helm_deploy = False
 
         self.load_app_json()
-        self.create_namespace()
-        self.create_configmaps()
 
         self.payload_script = (
             TARGET_MICROSERVICES / "hotelReservation/wrk2/scripts/hotel-reservation/mixed-workload_type_1.lua"
@@ -71,6 +69,8 @@ class HotelReservation(Application):
     def deploy(self):
         """Deploy the Kubernetes configurations."""
         print(f"Deploying Kubernetes configurations in namespace: {self.namespace}")
+        self.create_namespace()
+        self.create_configmaps()
         self.kubectl.apply_configs(self.namespace, self.k8s_deploy_path)
         self.kubectl.wait_for_ready(self.namespace)
 
@@ -91,7 +91,7 @@ class HotelReservation(Application):
         self.kubectl.delete_namespace(self.namespace)
         self.kubectl.wait_for_namespace_deletion(self.namespace)
         pvs = self.kubectl.exec_command(
-            "kubectl get pv --no-headers | grep 'test-hotel-reservation' | awk '{print $1}'"
+            "kubectl get pv --no-headers | grep 'hotel-reservation' | awk '{print $1}'"
         ).splitlines()
 
         for pv in pvs:

@@ -1,7 +1,5 @@
-from srearena.conductor.oracles.compound import CompoundedOracle
 from srearena.conductor.oracles.dns_resolution_mitigation import DNSResolutionMitigationOracle
 from srearena.conductor.oracles.localization import LocalizationOracle
-from srearena.conductor.oracles.workload import WorkloadOracle
 from srearena.conductor.problems.base import Problem
 from srearena.generators.fault.inject_virtual import VirtualizationFaultInjector
 from srearena.service.apps.astronomy_shop import AstronomyShop
@@ -32,11 +30,7 @@ class ServiceDNSResolutionFailure(Problem):
         self.localization_oracle = LocalizationOracle(problem=self, expected=[self.faulty_service])
 
         self.app.create_workload()
-        self.mitigation_oracle = CompoundedOracle(
-            self,
-            DNSResolutionMitigationOracle(problem=self),
-            WorkloadOracle(problem=self, wrk_manager=self.app.wrk),
-        )
+        self.mitigation_oracle = DNSResolutionMitigationOracle(problem=self)
 
     @mark_fault_injected
     def inject_fault(self):

@@ -36,7 +36,7 @@ class KubeCtl:
     def list_services(self, namespace):
         """Return a list of all services within a specified namespace."""
         return self.core_v1_api.list_namespaced_service(namespace)
-    
+
     def list_nodes(self):
         """Return a list of all running nodes."""
         return self.core_v1_api.list_node()
@@ -75,7 +75,7 @@ class KubeCtl:
     def get_deployment(self, name: str, namespace: str):
         """Fetch the deployment configuration."""
         return self.apps_v1_api.read_namespaced_deployment(name, namespace)
-    
+
     def get_namespace_deployment_status(self, namespace: str):
         """Return the deployment status of an app within a namespace."""
         try:
@@ -87,7 +87,7 @@ class KubeCtl:
                 return False
             else:
                 raise e
-            
+
     def get_service_deployment_status(self, service: str, namespace: str):
         """Return the deployment status of a single service within a namespace."""
         try:
@@ -489,7 +489,7 @@ class KubeCtl:
 # Example usage:
 if __name__ == "__main__":
     kubectl = KubeCtl()
-    namespace = "test-social-network"
+    namespace = "social-network"
     frontend_service = "nginx-thrift"
     user_service = "user-service"
 

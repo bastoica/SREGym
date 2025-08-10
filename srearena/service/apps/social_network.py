@@ -16,8 +16,6 @@ class SocialNetwork(Application):
         self.load_app_json()
         self.kubectl = KubeCtl()
         self.local_tls_path = TARGET_MICROSERVICES / "socialNetwork/helm-chart/socialnetwork"
-        self.create_namespace()
-        self.create_tls_secret()
 
         self.payload_script = TARGET_MICROSERVICES / "socialNetwork/wrk2/scripts/social-network/mixed-workload.lua"
 
@@ -44,6 +42,8 @@ class SocialNetwork(Application):
 
     def deploy(self):
         """Deploy the Helm configurations with architecture-aware image selection."""
+        self.create_namespace()
+        self.create_tls_secret()
         node_architectures = self.kubectl.get_node_architectures()
         is_arm = any(arch in ["arm64", "aarch64"] for arch in node_architectures)
 
