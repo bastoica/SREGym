@@ -54,6 +54,7 @@ class Conductor:
         self.deploy_app()
 
         self.submission_stage = "noop"
+        print("✅ Deployment complete. Ready for submission.")
 
     async def submit(self, wrapped_cmd: str) -> dict:
         """
