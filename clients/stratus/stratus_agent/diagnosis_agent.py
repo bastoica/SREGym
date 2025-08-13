@@ -27,18 +27,6 @@ class DiagnosisAgent(BaseAgent):
         self.process_tool_call_node = "process_tool_call"
         self.post_round_process_node = "post_round_process"
 
-    def should_submit_router(self, state: State):
-        should_submit = state["num_steps"] == self.max_step and state["submitted"] == False
-        logger.info("Should the agent submit?" + "Yes!" if should_submit else "No!")
-        return self.force_submit_node if should_submit else self.post_round_process_node
-
-    def post_round_process(self, state: State):
-        logger.info("agent finished a round")
-        logger.info("currently only incrementing step")
-        return {
-            "num_steps": state["num_steps"] + 1,
-        }
-
     def build_agent(self):
         self.tool_node = StratusToolNode(async_tools=self.async_tools, sync_tools=self.sync_tools)
 
@@ -140,11 +128,11 @@ class DiagnosisAgent(BaseAgent):
                 graph_events.append(event)
                 event["messages"][-1].pretty_print()
             last_state = self.graph.get_state(config=graph_config)
-            if last_state.values["num_steps"] == 20:
-                logger.info("Agent did not converge.")
+            if last_state.values["submitted"]:
+                logger.info("agent submitted, breaking loop.")
                 break
 
-        return graph_events[-1]
+        return last_state
 
 
 def main():

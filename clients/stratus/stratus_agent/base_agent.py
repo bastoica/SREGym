@@ -51,8 +51,20 @@ class BaseAgent:
         human_prompt = HumanMessage(content="Now generate a tool call according to your last chosen tool.")
         return {
             "messages": self.llm_inference_step(
-                state["messages"] + [human_prompt], tools=self.sync_tools + self.async_tools
+                state["messages"] + [human_prompt], tools=[self.sync_tools + self.async_tools]
             ),
+        }
+
+    def should_submit_router(self, state: State):
+        should_submit = state["num_steps"] == self.max_step and state["submitted"] == False
+        logger.info(f"Should the agent submit? {"Yes!" if should_submit else "No!"}")
+        return self.force_submit_node if should_submit else self.post_round_process_node
+
+    def post_round_process(self, state: State):
+        logger.info("agent finished a round")
+        logger.info("currently only incrementing step")
+        return {
+            "num_steps": state["num_steps"] + 1,
         }
 
     def llm_force_submit_thinking_step(self, state: State):
