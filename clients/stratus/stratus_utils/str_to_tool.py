@@ -5,6 +5,7 @@ import uuid
 
 from fastmcp import Client
 from fastmcp.client import SSETransport
+from langchain_core.tools import BaseTool
 
 from clients.stratus.tools.jaeger_tools import get_operations, get_services, get_traces
 from clients.stratus.tools.kubectl_tools import (
@@ -28,32 +29,32 @@ def get_client():
     return client
 
 
-def str_to_tool(tool_name: str):
-    if tool_name == "get_traces":
+def str_to_tool(tool_struct: BaseTool):
+    if tool_struct.name == "get_traces":
         return get_traces
-    elif tool_name == "get_services":
+    elif tool_struct.name == "get_services":
         return get_services
-    elif tool_name == "get_operations":
+    elif tool_struct.name == "get_operations":
         return get_operations
-    elif tool_name == "get_metrics":
+    elif tool_struct.name == "get_metrics":
         return get_metrics
-    elif tool_name == "submit_tool":
+    elif tool_struct.name == "submit_tool":
         return submit_tool
-    elif tool_name == "wait_tool":
+    elif tool_struct.name == "wait_tool":
         return wait_tool
-    elif tool_name == "exec_read_only_kubectl_cmd":
+    elif tool_struct.name == "exec_read_only_kubectl_cmd":
         client = get_client()
         exec_read_only_kubectl_cmd = ExecReadOnlyKubectlCmd(client)
         return exec_read_only_kubectl_cmd
-    elif tool_name == "exec_kubectl_cmd_safely":
+    elif tool_struct.name == "exec_kubectl_cmd_safely":
         client = get_client()
         exec_kubectl_cmd_safely = ExecKubectlCmdSafely(client)
         return exec_kubectl_cmd_safely
-    elif tool_name == "rollback_command":
+    elif tool_struct.name == "rollback_command":
         client = get_client()
         rollback_command = RollbackCommand(client)
         return rollback_command
-    elif tool_name == "get_previous_rollbackable_cmd":
+    elif tool_struct.name == "get_previous_rollbackable_cmd":
         client = get_client()
         get_previous_rollbackable_cmd = GetPreviousRollbackableCmd(client)
         return get_previous_rollbackable_cmd
