@@ -165,7 +165,6 @@ class Conductor:
         """Teardown problem.app and, if no other apps running, OpenEBS/Prometheus."""
         if self.problem:
             self.problem.app.cleanup()
-        self.prometheus.teardown()
 
     def get_deployed_apps(self):
         deployed_apps = []
