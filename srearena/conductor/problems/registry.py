@@ -47,7 +47,6 @@ from srearena.conductor.problems.scale_pod import ScalePodSocialNet
 from srearena.conductor.problems.service_dns_resolution_failure import ServiceDNSResolutionFailure
 from srearena.conductor.problems.sidecar_port_conflict import SidecarPortConflict
 from srearena.conductor.problems.stale_coredns_config import StaleCoreDNSConfig
-from srearena.conductor.problems.storage_provisioner_outage import StorageProvisionerOutage
 from srearena.conductor.problems.storage_user_unregistered import MongoDBUserUnregistered
 from srearena.conductor.problems.taint_no_toleration import TaintNoToleration
 from srearena.conductor.problems.target_port import K8STargetPortMisconfig

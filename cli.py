@@ -7,7 +7,6 @@ setup and grading, but still gives you the PromptToolkit+Rich UI.
 """
 
 import asyncio
-import atexit
 import json
 import sys
 
