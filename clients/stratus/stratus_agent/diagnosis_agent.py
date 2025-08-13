@@ -8,6 +8,7 @@ from langgraph.constants import END, START
 
 from clients.stratus.llm_backend.init_backend import get_llm_backend_for_tools
 from clients.stratus.stratus_agent.base_agent import BaseAgent
+from clients.stratus.stratus_agent.state import State
 from clients.stratus.stratus_utils.get_logger import get_logger
 from clients.stratus.stratus_utils.get_starting_prompt import get_starting_prompts
 from clients.stratus.stratus_utils.str_to_tool import str_to_tool
@@ -21,15 +22,22 @@ class DiagnosisAgent(BaseAgent):
         super().__init__(**kwargs)
         self.tool_node = None
 
+    def post_round_process(self, state: State):
+        return {
+            "num_steps": state["num_steps"] + 1,
+        }
+
     def build_agent(self):
         self.tool_node = StratusToolNode(async_tools=self.async_tools, sync_tools=self.sync_tools)
         thinking_node = "thinking_step"
         tool_calling_node = "tool_calling_step"
         process_tool_call_node = "process_tool_call"
+        post_round_process_node = "post_round_process"
         # we add the node to the graph
         self.graph_builder.add_node(thinking_node, self.llm_thinking_step)
         self.graph_builder.add_node(tool_calling_node, self.llm_tool_call_step)
         self.graph_builder.add_node(process_tool_call_node, self.tool_node)
+        self.graph_builder.add_node(post_round_process_node, self.post_round_process)
 
         # commenting these out first, focusing on basic diagnosis capability
         # self.graph_builder.add_node("post_tool_hook", self.post_tool_hook)
@@ -38,7 +46,8 @@ class DiagnosisAgent(BaseAgent):
         self.graph_builder.add_edge(START, thinking_node)
         self.graph_builder.add_edge(thinking_node, tool_calling_node)
         self.graph_builder.add_edge(tool_calling_node, process_tool_call_node)
-        self.graph_builder.add_edge(process_tool_call_node, END)
+        self.graph_builder.add_edge(process_tool_call_node, post_round_process_node)
+        self.graph_builder.add_edge(post_round_process_node, END)
 
         #     self.graph_builder.add_conditional_edges(
         #     "explanation_agent",
