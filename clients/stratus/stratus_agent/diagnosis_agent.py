@@ -156,9 +156,18 @@ def main():
             tool_descriptions += async_tool_struct["description"] + "\n\n"
     else:
         async_tools = None
-    logger.info("in main thread, sync tools: {}, async tools: {}".format(sync_tools, async_tools))
 
-    submit_tool = str_to_tool("submit_tool")
+    submit_tool = str_to_tool(
+        {
+            "name": "submit_tool",
+            "description": """
+                The tool to submit benchmark results
+          
+                    Args:
+                        ans (str): the answer you would like to submit to the benchmark
+        """,
+        }
+    )
 
     agent = DiagnosisAgent(
         llm=get_llm_backend_for_tools(),
