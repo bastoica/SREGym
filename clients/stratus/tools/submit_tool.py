@@ -30,7 +30,7 @@ async def submit_tool(ans: str, tool_call_id: Annotated[str, InjectedToolCallId]
 
     exit_stack = AsyncExitStack()
     logger.info("Using HTTP, connecting to server.")
-    server_url = langgraph_tool_config.jaeger_mcp_url
+    server_url = langgraph_tool_config.submit_mcp_url
     http_transport = await exit_stack.enter_async_context(sse_client(url=server_url))
     session = await exit_stack.enter_async_context(ClientSession(*http_transport))
 
