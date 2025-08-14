@@ -1,0 +1,18 @@
+# each step is defined as one tool call
+max_step: 20
+sync_tools: [wait_tool]
+async_tools:
+  - name: rollback_command
+    description: |
+      Use this function to roll back the last kubectl command you observed
+      When you call this tool multiple times, you will roll-back previous commands in the reverse order of their prior execution."
+  - name: get_previous_rollbackable_cmd
+    description: |
+      Use this function to get a list of commands you previously executed that could be roll-backed.
+  - name: submit_tool
+    description: |
+      The tool to submit benchmark results
+          
+          Args:
+              ans (str): the answer you would like to submit to the benchmark
+prompts_path: rollback_agent_prompts.yaml
