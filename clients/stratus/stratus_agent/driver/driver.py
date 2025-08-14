@@ -6,10 +6,14 @@ import yaml
 
 from clients.stratus.stratus_agent.diagnosis_agent import main as diagnosis_task_main
 from clients.stratus.stratus_agent.localization_agent import main as localization_task_main
-from clients.stratus.stratus_agent.mitigation_agent import main as mitigation_agent_main
+from clients.stratus.stratus_agent.mitigation_agent import retry_run_with_feedback as mitigation_agent_retry_run
+from clients.stratus.stratus_agent.mitigation_agent import (
+    single_run_with_predefined_prompts as mitigation_agent_single_run,
+)
 from clients.stratus.stratus_agent.rollback_agent import main as rollback_agent_main
 from clients.stratus.stratus_utils.get_logger import get_logger
 from clients.stratus.weak_oracles.base_oracle import BaseOracle, OracleResult
+from clients.stratus.weak_oracles.cluster_state_oracle import ClusterStateOracle
 
 logger = get_logger()
 
@@ -49,16 +53,27 @@ async def mitigation_task_main():
     rollback_agent_max_step = rollback_agent_config["max_step"]
     rollback_agent_prompt_path = file_parent_dir.parent / "configs" / rollback_agent_config["prompts_path"]
 
+    # oracle
+    cluster_state_oracle = ClusterStateOracle()
+    oracles = [cluster_state_oracle]
+
     # mitigation task in plain English:
     if mitigation_agent_retry_mode == "none":
         # if the retry mode is none, just run mitigation agent once.
-        await mitigation_agent_main()
+        await mitigation_agent_single_run()
     elif mitigation_agent_retry_mode == "naive":
         # if the retry mode is naive, run mitigation agent with retry but no rollback agent.
         curr_attempt = 0
+        last_state = ""
         while curr_attempt < mitigation_agent_max_retry_attempts:
-            last_state = await mitigation_agent_main()
+            last_state = await mitigation_agent_single_run()
+            oracle_results = validate_oracles(oracles)
+            if oracle_results[0] is True:
+                # agent succeeds, let's finish here.
+                break
+            # otherwise, naively retry
             curr_attempt += 1
+        return last_state
     elif mitigation_agent_retry_mode == "validate":
         # if the retry mode is validation, run mitigation agent with rollback and weak oracle.
         # each start of new agent trial, the agent should receive the last run's oracle results
