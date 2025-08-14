@@ -49,7 +49,7 @@ class Conductor:
 
         self.dependency_check(["kubectl", "helm"])
         print(f"[Session Start] Problem ID: {self.problem_id}")
-        self.undeploy_app(setup=True)  # Cleanup any leftovers
+        self.undeploy_app()  # Cleanup any leftovers
         self.deploy_app()
 
         self.submission_stage = "noop"
@@ -89,7 +89,6 @@ class Conductor:
 
             # if no further stages, finalize here
             if not self.problem.localization_oracle and not self.problem.mitigation_oracle:
-                self.submission_stage = "done"
                 snapshot = dict(self.results)
                 self.undeploy_app()
                 return snapshot
@@ -109,7 +108,6 @@ class Conductor:
 
             if not self.problem.mitigation_oracle:
                 snapshot = dict(self.results)
-                self.submission_stage = "done"
                 self.undeploy_app()
                 return snapshot
 
@@ -123,7 +121,6 @@ class Conductor:
             self.results["TTM"] = time.time() - self.execution_start_time
 
             snapshot = dict(self.results)
-            self.submission_stage = "done"
             self.undeploy_app()
             return snapshot
 
@@ -161,10 +158,11 @@ class Conductor:
         self.problem.app.deploy()
         self.problem.app.start_workload()
 
-    def undeploy_app(self, setup: bool = False):
+    def undeploy_app(self):
         """Teardown problem.app and, if no other apps running, OpenEBS/Prometheus."""
         if self.problem:
             self.problem.app.cleanup()
+        self.submission_stage = "done"
 
     def get_deployed_apps(self):
         deployed_apps = []

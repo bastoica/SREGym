@@ -48,7 +48,7 @@ class AstronomyShop(Application):
 
     def cleanup(self):
         if self.trace_api:
-            self.trace_api.cleanup()
+            self.trace_api.stop_port_forward()
         Helm.uninstall(**self.helm_configs)
         self.kubectl.delete_namespace(self.helm_configs["namespace"])
 
