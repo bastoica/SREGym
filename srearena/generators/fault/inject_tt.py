@@ -2,6 +2,7 @@ import json
 import logging
 import yaml
 from typing import Dict, List, Any, Optional
+import time
 
 from srearena.generators.fault.base import FaultInjector
 from srearena.service.kubectl import KubeCtl
@@ -17,7 +18,7 @@ class TrainTicketFaultInjector(FaultInjector):
         self.kubectl = KubeCtl()
         self.configmap_name = "flagd-config"
         self.flagd_deployment = "flagd"
-        
+
         self.fault_mapping = {
             "fault-1-async-message-sequence-control": "F1: Asynchronous message delivery lacks sequence control",
             "fault-2-data-request-order-inconsistency": "F2: Different data requests for the same report are returned in an unexpected order",
@@ -40,131 +41,120 @@ class TrainTicketFaultInjector(FaultInjector):
             "fault-19-product-price-french-format-error": "F19: The product price is not formatted correctly in the French format",
             "fault-20-jboss-db2-jar-classpath-error": "F20: The JBoss startup classpath parameter does not include the right DB2 jar package",
             "fault-21-aria-labeled-accessibility-error": "F21: The 'aria-labeled-by' element for accessibility cannot be located by the JAWS",
-            "fault-22-sql-column-name-mismatch-error": "F22: The constructed SQL statement includes a wrong column name in the 'select' part according to its 'from' part"
+            "fault-22-sql-column-name-mismatch-error": "F22: The constructed SQL statement includes a wrong column name in the 'select' part according to its 'from' part",
         }
-        
+
     def inject_fault(self, fault_type: str) -> bool:
         print(f"[TrainTicket] Injecting fault: {fault_type}")
         return self._set_fault_state(fault_type, "on")
-        
+
     def recover_fault(self, fault_type: str) -> bool:
         print(f"[TrainTicket] Recovering from fault: {fault_type}")
         return self._set_fault_state(fault_type, "off")
-        
+
     def _get_configmap(self) -> Dict[str, Any]:
         try:
             result = self.kubectl.exec_command(
                 f"kubectl get configmap {self.configmap_name} -n {self.namespace} -o json"
             )
             return json.loads(result) if result else {}
-            
+
         except Exception as e:
             logger.error(f"Error getting ConfigMap: {e}")
             return {}
-            
+
     def _set_fault_state(self, fault_type: str, state: str) -> bool:
         """Update fault state in ConfigMap.
-        
+
         Args:
             fault_type: Name of the fault (e.g., 'fault-6-sql-error-recursive-requests')
             state: 'on' or 'off'
         """
         print(f"Setting {fault_type} to {state}...")
-        
-        # Get current config
+
         configmap = self._get_configmap()
         if not configmap:
             print("Failed to get ConfigMap")
             return False
-        
-        # Parse flags YAML
+
         flags_yaml = configmap["data"]["flags.yaml"]
         flags_data = yaml.safe_load(flags_yaml)
-        
+
         if fault_type not in flags_data["flags"]:
             print(f"Fault '{fault_type}' not found in ConfigMap")
             return False
-        
+
         # Update fault state
         flags_data["flags"][fault_type]["defaultVariant"] = state
-        
-        # Convert back to YAML
+
         updated_yaml = yaml.dump(flags_data, default_flow_style=False)
-        
-        # Apply updated ConfigMap
+
         try:
-            print(f"[DEBUG] Updating ConfigMap with fault {fault_type} = {state}")
-            
-            # Use the proper KubeCtl.update_configmap method instead of echo/pipe
             result = self.kubectl.update_configmap(
-                name=self.configmap_name,
-                namespace=self.namespace,
-                data={"flags.yaml": updated_yaml}
+                name=self.configmap_name, namespace=self.namespace, data={"flags.yaml": updated_yaml}
             )
-            
+
             if result:
                 print(f"✅ {fault_type} set to {state}")
-                
-                # Verify the update actually worked
-                print("[DEBUG] Verifying ConfigMap update...")
+
                 verification = self._get_configmap()
                 if verification and "data" in verification:
                     flags_verification = yaml.safe_load(verification["data"]["flags.yaml"])
                     actual_value = flags_verification["flags"][fault_type]["defaultVariant"]
-                    print(f"[DEBUG] Actual value in ConfigMap: {actual_value}")
                     if actual_value == state:
                         print(f"✅ ConfigMap verified: {fault_type} = {state}")
                     else:
                         print(f"❌ ConfigMap verification failed: expected {state}, got {actual_value}")
                         return False
-                
-                # Restart flagd to apply changes
-                print("Restarting flagd deployment...")
+
                 self._restart_flagd()
-                
                 print("✅ flagd restarted successfully")
+
+                print("Sleeping for 15 seconds to flag value change to take effect...")
+                time.sleep(20)
                 return True
             else:
                 print("Failed to update ConfigMap")
                 return False
-                
+
         except Exception as e:
             print(f"❌ Error updating fault: {e}")
             return False
-            
+
     def _restart_flagd(self):
         print(f"[TrainTicket] Restarting flagd deployment...")
-        
+
         try:
             result = self.kubectl.exec_command(
                 f"kubectl rollout restart deployment/{self.flagd_deployment} -n {self.namespace}"
             )
             print(f"[TrainTicket] flagd deployment restarted successfully: {result}")
-            
+
         except Exception as e:
             logger.error(f"Error restarting flagd: {e}")
-        
+
     def get_fault_status(self, fault_type: str) -> str:
         try:
             result = self.kubectl.exec_command(
                 f"kubectl get configmap {self.configmap_name} -n {self.namespace} -o jsonpath='{{.data.flags\\.yaml}}'"
             )
-            
+
             if result and fault_type in result:
                 import yaml
+
                 flags_data = yaml.safe_load(result)
-                
+
                 if "flags" in flags_data and fault_type in flags_data["flags"]:
                     return flags_data["flags"][fault_type].get("defaultVariant", "unknown")
-                    
+
         except Exception as e:
             logger.error(f"Error getting fault status: {e}")
-            
+
         return "unknown"
-        
+
     def list_available_faults(self) -> List[str]:
         return list(self.fault_mapping.keys())
-        
+
     def get_fault_description(self, fault_name: str) -> Optional[str]:
         return self.fault_mapping.get(fault_name)
 
