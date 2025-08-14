@@ -1,12 +1,15 @@
 import asyncio
 from pathlib import Path
+from typing import List
 
 import yaml
+from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.constants import END, START
 
 from clients.stratus.llm_backend.init_backend import get_llm_backend_for_tools
 from clients.stratus.stratus_agent.base_agent import BaseAgent
+from clients.stratus.stratus_agent.state import State
 from clients.stratus.stratus_utils.get_logger import get_logger
 from clients.stratus.stratus_utils.get_starting_prompt import get_starting_prompts
 from clients.stratus.stratus_utils.str_to_tool import str_to_tool
@@ -51,8 +54,24 @@ class MitigationAgent(BaseAgent):
         self.graph_builder.add_edge(self.force_submit_tool_call_node, END)
         self.graph_builder.add_edge(self.post_round_process_node, END)
 
-        memory = MemorySaver()
-        self.graph = self.graph_builder.compile(checkpointer=memory)
+        self.memory_saver = MemorySaver()
+        self.graph = self.graph_builder.compile(checkpointer=self.memory_saver)
+
+    def clear_memory(self):
+        # source: https://github.com/langchain-ai/langchain/discussions/19744#discussioncomment-13734390
+        thread_id = "1"
+        try:
+            if hasattr(self.memory_saver, "storage") and hasattr(self.memory_saver, "writes"):
+                self.memory_saver.storage.pop(thread_id, None)
+
+                keys_to_remove = [key for key in self.memory_saver.writes.keys() if key[0] == thread_id]
+                for key in keys_to_remove:
+                    self.memory_saver.writes.pop(key, None)
+
+                print(f"Memory cleared for thread_id: {thread_id}")
+                return
+        except Exception as e:
+            logger.error(f"Error clearing InMemorySaver storage for thread_id {thread_id}: {e}")
 
     async def arun(self, starting_prompts):
         """
@@ -158,6 +177,19 @@ def build_default_mitigation_agent():
     mitigation_agent.build_agent()
     mitigation_agent.save_agent_graph_to_png()
     return mitigation_agent, mitigation_agent_prompt_path, mitigation_agent_max_step
+
+
+def reflect_run(last_state: State) -> List[SystemMessage, HumanMessage]:
+    """
+    Returns a SystemMessage and a HumanMessage as a list. They are summaries and reflections of a given last run
+        `last_state`
+
+        Args:
+            last_state (State): the state from last run
+        Returns:
+            a list of SystemMessage and HumanMessage representing the reflections
+    """
+    pass
 
 
 async def single_run_with_predefined_prompts():
