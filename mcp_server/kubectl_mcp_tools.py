@@ -3,6 +3,7 @@ import logging
 from fastmcp import Context, FastMCP
 from yarl import URL
 
+from clients.stratus.stratus_utils.get_logger import get_logger
 from mcp_server.configs.load_all_cfg import kubectl_session_cfg
 from mcp_server.kubectl_server_helper.kubectl_tool_set import KubectlToolSet
 from mcp_server.kubectl_server_helper.sliding_lru_session_cache import SlidingLRUSessionCache
@@ -14,7 +15,10 @@ sessionCache = SlidingLRUSessionCache(
     max_size=kubectl_session_cfg.session_cache_size, ttl_seconds=kubectl_session_cfg.session_ttl
 )
 
+logger = get_logger()
+
 kubectl_mcp = FastMCP("Kubectl MCP Server")
+logger.info("Starting Kubectl MCP Server")
 
 
 def extract_session_id(ctx: Context):

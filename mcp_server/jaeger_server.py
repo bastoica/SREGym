@@ -1,16 +1,15 @@
 import logging
+import os
 from datetime import datetime, timedelta
 
 from fastmcp import FastMCP
 
+from clients.stratus.stratus_utils.get_logger import get_logger
 from mcp_server.utils import ObservabilityClient
 
-logger = logging.getLogger("Jaeger MCP Server")
+logger = get_logger()
 logger.info("Starting Jaeger MCP Server")
 mcp = FastMCP("Jaeger MCP Server")
-
-grafana_url = "http://localhost:16686"
-jaeger_client = ObservabilityClient(grafana_url)
 
 
 @mcp.tool(name="get_services")
@@ -24,6 +23,8 @@ def get_services() -> str:
     """
 
     logger.info("[ob_mcp] get_services called, getting jaeger services")
+    grafana_url = "http://localhost:" + os.environ["JAEGER_PORT"]
+    jaeger_client = ObservabilityClient(grafana_url)
     try:
         url = f"{grafana_url}/api/services"
         response = jaeger_client.make_request("GET", url)
@@ -50,6 +51,8 @@ def get_operations(service: str) -> str:
     """
 
     logger.info("[ob_mcp] get_operations called, getting jaeger operations")
+    grafana_url = "http://localhost:" + os.environ["JAEGER_PORT"]
+    jaeger_client = ObservabilityClient(grafana_url)
     try:
         url = f"{grafana_url}/api/operations"
         params = {"service": service}
@@ -76,6 +79,8 @@ def get_traces(service: str, last_n_minutes: int) -> str:
     """
 
     logger.info("[ob_mcp] get_traces called, getting jaeger traces")
+    grafana_url = "http://localhost:" + os.environ["JAEGER_PORT"]
+    jaeger_client = ObservabilityClient(grafana_url)
     try:
         url = f"{grafana_url}/api/traces"
         start_time = datetime.now() - timedelta(minutes=last_n_minutes)

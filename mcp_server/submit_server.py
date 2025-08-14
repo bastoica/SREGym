@@ -4,8 +4,9 @@ import requests
 from fastmcp import FastMCP
 
 from clients.stratus.configs.langgraph_tool_configs import LanggraphToolConfig
+from clients.stratus.stratus_utils.get_logger import get_logger
 
-logger = logging.getLogger("Submission MCP Server")
+logger = get_logger()
 logger.info("Starting Submission MCP Server")
 
 langgraph_tool_config = LanggraphToolConfig()
