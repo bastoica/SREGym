@@ -12,8 +12,21 @@ import requests
 
 
 class TraceAPI:
+    """
+    Jaeger HTTP API helper.
 
-    # Small guard to avoid overlapping start/stop within the same instance
+    - For most apps:
+        * Prefer NodePort on svc/jaeger
+        * Otherwise port-forward svc/jaeger :16686
+        * Base URL: http://127.0.0.1:<port>
+
+    - For Astronomy Shop:
+        * Jaeger is exposed THROUGH the frontend proxy on 8080, under /jaeger
+        * Prefer NodePort on svc/frontend-proxy
+        * Otherwise port-forward svc/frontend-proxy :8080
+        * Base URL: http://127.0.0.1:<port>/jaeger
+    """
+
     _instance_lock: threading.Lock
 
     def __init__(self, namespace: str, prefer_nodeport: bool = True, pf_ready_sleep: float = 2.0):
@@ -27,26 +40,26 @@ class TraceAPI:
         self.output_threads: List[threading.Thread] = []
         self._instance_lock = threading.Lock()
 
-        # Decide access path
+        # Decide service/port/prefix based on namespace
+        self._is_astronomy = self.namespace == "astronomy-shop"
+        self._svc_name = "frontend-proxy" if self._is_astronomy else "jaeger"
+        self._remote_port = "8080" if self._is_astronomy else "16686"
+        self._url_prefix = "/jaeger" if self._is_astronomy else ""
+
+        # Choose access path: NodePort (if available) else port-forward
         node_port = None
         if self.prefer_nodeport:
-            node_port = self.get_nodeport("jaeger", namespace)
+            node_port = self.get_nodeport(self._svc_name, self.namespace)
 
         if node_port:
             # Use NodePort directly
-            self.base_url = f"http://localhost:{node_port}"
+            self.base_url = f"http://localhost:{node_port}{self._url_prefix}"
             self.using_port_forward = False
+            self._export_env(port=node_port)  # <<< ensure env set for NodePort (incl. astronomy-shop)
         else:
             # Fall back to port-forward on a free local port
             self.using_port_forward = True
-            self.start_port_forward()  # sets base_url
-
-        # Astronomy shop UI lives under /jaeger/ui, but its API is still /api/*
-        # We'll build API URLs as f"{self.base_url}/api/...".
-        # If you need to open the UI in a browser, you can append "/jaeger/ui".
-        if self.namespace == "astronomy-shop" and not self.using_port_forward:
-            # In case Astronomy Shop somehow exposes a NodePort, keep base_url as is.
-            pass
+            self.start_port_forward()  # sets base_url and env
 
     # ------------------------
     # Cluster discovery helpers
@@ -68,14 +81,18 @@ class TraceAPI:
                 ],
                 text=True,
             ).strip()
-            print(f"NodePort for service {service_name}: {result}")
-            return result or None
+            if result:
+                print(f"NodePort for service {service_name}: {result}")
+                return result
+            return None
         except subprocess.CalledProcessError as e:
-            print(f"Error getting NodePort: {e.output}")
+            msg = (e.output or "").strip()
+            if msg:
+                print(f"Error getting NodePort: {msg}")
             return None
 
     def get_jaeger_pod_name(self) -> str:
-        """Resolve the Jaeger pod name (needed if you prefer pod port-forward)."""
+        """Resolve the Jaeger pod name (if you ever need pod forwarding)."""
         try:
             result = subprocess.check_output(
                 [
@@ -112,26 +129,15 @@ class TraceAPI:
     def _build_pf_cmd(self, local_port: int) -> list:
         """
         Build a kubectl port-forward command that binds only to 127.0.0.1.
-        We forward <local_port> -> 16686 in the cluster.
         """
-        # Service forward is more stable across restarts than pod forward; use service by default.
-        # If you prefer pod forwarding for astronomy-shop, uncomment the pod logic below.
-        target = f"svc/jaeger"
-
-        # If you *must* forward a pod for astronomy-shop:
-        if self.namespace == "astronomy-shop":
-            # pod_name = self.get_jaeger_pod_name()
-            # target = f"pod/{pod_name}"
-            # Using service is often fine too if present; leave service by default.
-            pass
-
+        target = f"svc/{self._svc_name}"
         return [
             "kubectl",
             "-n",
             self.namespace,
             "port-forward",
             target,
-            f"{local_port}:16686",
+            f"{local_port}:{self._remote_port}",
             "--address",
             "127.0.0.1",
         ]
@@ -139,7 +145,6 @@ class TraceAPI:
     def _print_output(self, stream):
         """Non-blocking reader for subprocess stdout/stderr."""
         while not self.stop_event.is_set():
-            # break if process ended
             if self.port_forward_process and self.port_forward_process.poll() is not None:
                 break
             try:
@@ -149,7 +154,6 @@ class TraceAPI:
             if ready:
                 line = stream.readline()
                 if line:
-                    # You may filter noisy lines here if desired
                     print(line, end="")
                 else:
                     break
@@ -157,11 +161,9 @@ class TraceAPI:
     def start_port_forward(self):
         """Start kubectl port-forward exactly once; idempotent."""
         with self._instance_lock:
-            # Already running?
             if self.port_forward_process and self.port_forward_process.poll() is None:
                 return
 
-            # Choose a fresh free port each time to avoid collisions with other instances
             self.local_port = self._pick_free_port()
             cmd = self._build_pf_cmd(self.local_port)
 
@@ -173,7 +175,6 @@ class TraceAPI:
                 text=True,
             )
 
-            # Start reader threads and keep handles to join later
             if self.port_forward_process.stdout:
                 t_out = threading.Thread(
                     target=self._print_output, args=(self.port_forward_process.stdout,), daemon=True
@@ -190,11 +191,10 @@ class TraceAPI:
         # Let kubectl set up the tunnel
         time.sleep(self.pf_ready_sleep)
 
-        # If it's up, set base_url; else raise
         if self.port_forward_process and self.port_forward_process.poll() is None:
             print("Port forwarding established successfully.")
-            self.base_url = f"http://127.0.0.1:{self.local_port}"
-            os.environ["JAEGER_PORT"] = str(self.local_port)
+            self.base_url = f"http://127.0.0.1:{self.local_port}{self._url_prefix}"
+            self._export_env(port=self.local_port)  # <<< ensure env set for PF case (incl. astronomy-shop)
         else:
             raise RuntimeError("Port forwarding failed to start")
 
@@ -215,7 +215,6 @@ class TraceAPI:
                 except Exception:
                     pass
 
-            # Close pipes
             try:
                 if self.port_forward_process.stdout:
                     self.port_forward_process.stdout.close()
@@ -227,7 +226,6 @@ class TraceAPI:
             self.port_forward_process = None
             self.local_port = None
 
-        # Join reader threads
         for t in self.output_threads:
             t.join(timeout=2)
         self.output_threads.clear()
@@ -240,12 +238,26 @@ class TraceAPI:
         print("Cleanup completed.")
 
     # ------------------------
+    # Environment export
+    # ------------------------
+
+    def _export_env(self, port: int):
+        """
+        Standardize env for downstream tools:
+          - JAEGER_PORT: the local port to reach Jaeger (NodePort or PF)
+          - JAEGER_BASE_URL: full base URL (includes prefix for astronomy-shop)
+        """
+        os.environ["JAEGER_PORT"] = str(port)
+        os.environ["JAEGER_BASE_URL"] = self.base_url
+
+    # ------------------------
     # Jaeger API wrappers
     # ------------------------
 
-    def _api_headers(self):
-        # Jaeger UI in astronomy-shop sometimes expects explicit Accept
-        return {"Accept": "application/json"} if self.namespace == "astronomy-shop" else {}
+    @staticmethod
+    def _api_headers():
+        # Some proxies are picky; be explicit about JSON.
+        return {"Accept": "application/json"}
 
     def get_services(self) -> List[str]:
         """Fetch list of service names known to Jaeger."""
@@ -346,5 +358,4 @@ class TraceAPI:
         os.makedirs(path, exist_ok=True)
         file_path = os.path.join(path, f"traces_{int(time.time())}.csv")
         df.to_csv(file_path, index=False)
-        # Do not cleanup here; extraction already cleans up. Keep explicit.
         return f"Traces data exported to: {file_path}"
