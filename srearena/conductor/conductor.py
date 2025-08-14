@@ -90,7 +90,7 @@ class Conductor:
             # if no further stages, finalize here
             if not self.problem.localization_oracle and not self.problem.mitigation_oracle:
                 snapshot = dict(self.results)
-                await self.undeploy_app()
+                self.undeploy_app()
                 return snapshot
 
             # otherwise advance
@@ -108,7 +108,7 @@ class Conductor:
 
             if not self.problem.mitigation_oracle:
                 snapshot = dict(self.results)
-                await self.undeploy_app()
+                self.undeploy_app()
                 return snapshot
 
             self.submission_stage = "mitigation"
@@ -121,7 +121,7 @@ class Conductor:
             self.results["TTM"] = time.time() - self.execution_start_time
 
             snapshot = dict(self.results)
-            await self.undeploy_app()
+            self.undeploy_app()
             return snapshot
 
         return dict(self.results)
