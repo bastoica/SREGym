@@ -86,6 +86,9 @@ async def mitigation_task_main():
         curr_attempt = 0
         mitigation_agent_last_state = ""
         rollback_agent_last_state = ""
+        oracle_results = OracleResult(
+            success=False, issues=["This is the beginning of mitigation, please observe the cluster for issues."]
+        )
         while curr_attempt < mitigation_agent_max_retry_attempts:
             # TODO: add incident summary feature to localization agent for mitigation agent's initial prompts
             if curr_attempt == 0:
@@ -96,7 +99,14 @@ async def mitigation_task_main():
                 mitigation_agent_prompts = yaml.safe_load(open(mitigation_agent_prompt_path, "r"))
                 retry_run_initial_messages = [
                     SystemMessage(mitigation_agent_prompts["system"]),
-                    HumanMessage(mitigation_agent_prompts["user"] + "\n\n" + ""),
+                    HumanMessage(
+                        # TODO: add faults info from localization here
+                        mitigation_agent_prompts["user"].format(max_step=mitigation_agent_max_step, faults_info="test")
+                        + "\n\n"
+                        + mitigation_agent_prompts["retry_user"].format(
+                            last_result=str(oracle_results), reflection=last_run_summary
+                        )
+                    ),
                 ]
 
                 mitigation_agent_last_state = await mitigation_agent_retry_run(last_run_summary)
