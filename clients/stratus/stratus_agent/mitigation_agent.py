@@ -6,6 +6,7 @@ import yaml
 from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.constants import END, START
+from langgraph.types import StateSnapshot
 
 from clients.stratus.llm_backend.init_backend import get_llm_backend_for_tools
 from clients.stratus.stratus_agent.base_agent import BaseAgent
@@ -179,7 +180,7 @@ def build_default_mitigation_agent():
     return mitigation_agent, mitigation_agent_prompt_path, mitigation_agent_max_step
 
 
-def reflect_run(last_state: State) -> List[SystemMessage, HumanMessage]:
+def reflect_run(last_state: StateSnapshot) -> str:
     """
     Returns a SystemMessage and a HumanMessage as a list. They are summaries and reflections of a given last run
     `last_state`.
@@ -190,9 +191,21 @@ def reflect_run(last_state: State) -> List[SystemMessage, HumanMessage]:
         Returns:
             a list of SystemMessage and HumanMessage representing the reflections
     """
+    file_parent_dir = Path(__file__).resolve().parent
+    llm_summarization_prompt_file = file_parent_dir.parent / "configs" / "llm_summarization_prompt.yaml"
+    llm_summarization_prompt = yaml.safe_load(open(llm_summarization_prompt_file, "r"))["prompt"]
     llm = get_llm_backend_for_tools()
-    logger.info("last state: %s", last_state)
-    pass
+    logger.info("asking LLM to summarize and reflect last run")
+    last_run_msgs = last_state.values.get("messages", None)
+    summary_input_messages = [
+        SystemMessage(llm_summarization_prompt),
+        HumanMessage(f"Here are the list of messages happened in the last conversation. \n\n {last_run_msgs}"),
+    ]
+    if last_run_msgs is None:
+        raise RuntimeError("StateSnapshot must contain messages!")
+    res = llm.infer(summary_input_messages)
+    res = res.content
+    return res
 
 
 async def single_run_with_predefined_prompts():
