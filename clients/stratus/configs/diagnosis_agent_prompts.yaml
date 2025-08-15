@@ -39,6 +39,18 @@ system: >
 #  In that case, <A> should be restarted. These can only be known by investigating traces and events more deeply on <A> and <B>.
 
 user: >
+  You will be working this application:
+  
+  {app_name}
+  
+  Here are some descriptions about the application:
+  
+  {app_description}
+  
+  It belongs to this namespace:
+  
+  {app_namespace}
+  
   In each round, there is a thinking stage. In the thinking stage, you are given a list of tools. Think about what you want to call. Return your tool choice and the reasoning behind
   When choosing the tool, refer to the tool by its name.
   Then, there is a tool-call stage, where you make a tool_call consistent with your explanation.

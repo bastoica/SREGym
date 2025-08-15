@@ -18,6 +18,18 @@ system: >
   application has become healthy before you call submit_tool.
 
 user: |
+  You will be working this application:
+  
+  {app_name}
+  
+  Here are some descriptions about the application:
+  
+  {app_description}
+  
+  It belongs to this namespace:
+  
+  {app_namespace}
+  
   The following is the information of faults identified by a diagnosis agent in the app:
   
   {faults_info}

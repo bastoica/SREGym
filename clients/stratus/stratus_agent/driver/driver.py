@@ -1,10 +1,15 @@
 import asyncio
+
+# for parsing return values from benchmark app info as python dict
+from ast import literal_eval
 from pathlib import Path
 from typing import List
 
+import requests
 import yaml
 from langchain_core.messages import HumanMessage, SystemMessage
 
+from clients.stratus.configs.langgraph_tool_configs import LanggraphToolConfig
 from clients.stratus.stratus_agent.diagnosis_agent import main as diagnosis_task_main
 from clients.stratus.stratus_agent.localization_agent import main as localization_task_main
 from clients.stratus.stratus_agent.mitigation_agent import (
@@ -66,17 +71,42 @@ async def mitigation_task_main(localization_summary):
     # oracle
     logger.info("setting up oracles")
     cluster_state_oracle = ClusterStateOracle()
+    oracles = [cluster_state_oracle]
+
+    logger.info("getting app info")
+
+    ltc = LanggraphToolConfig()
+    url = ltc.benchmark_app_info_url
+    try:
+        response = requests.get(url)
+        logger.info(f"Response status: {response.status_code}, text: {response.text}")
+        app_info_str = str(response.text)
+        logger.info(f"app info as str: {app_info_str}")
+        app_info = literal_eval(app_info_str)
+        logger.info(f"app info: {app_info}")
+    except Exception as e:
+        logger.error(f"[submit_mcp] HTTP submission failed: {e}")
+        return "error"
     # TODO: get app from benchmark
-    app = "test"
-    workload_oracle = WorkloadOracle(app)
-    oracles = [cluster_state_oracle, workload_oracle]
+    app_name = app_info["app_name"]
+    app_description = app_info["descriptions"]
+    app_namespace = app_info["namespace"]
+    if app_name not in ["Social Network", "Hotel Reservation"]:
+        logger.info("Current app does not support workload oracle")
+    else:
+        workload_oracle = WorkloadOracle(app_name)
+        oracles.append(workload_oracle)
 
     # defining the first set of messages that all retry mode share
     first_run_initial_messages = [
         SystemMessage(mitigation_agent_prompts["system"]),
         HumanMessage(
             mitigation_agent_prompts["user"].format(
-                max_step=mitigation_agent_max_step, faults_info=localization_summary
+                max_step=mitigation_agent_max_step,
+                faults_info=localization_summary,
+                app_name=app_name,
+                app_description=app_description,
+                app_namespace=app_namespace,
             )
         ),
     ]
@@ -127,11 +157,16 @@ async def mitigation_task_main(localization_summary):
                     SystemMessage(mitigation_agent_prompts["system"]),
                     HumanMessage(
                         mitigation_agent_prompts["user"].format(
-                            max_step=mitigation_agent_max_step, faults_info=localization_summary
+                            max_step=mitigation_agent_max_step,
+                            faults_info=localization_summary,
+                            app_name=app_name,
+                            app_description=app_description,
+                            app_namespace=app_namespace,
                         )
                         + "\n\n"
                         + mitigation_agent_prompts["retry_user"].format(
-                            last_result=str(oracle_results), reflection=last_run_summary
+                            last_result=str(oracle_results),
+                            reflection=last_run_summary,
                         )
                     ),
                 ]
