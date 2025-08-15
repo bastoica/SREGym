@@ -45,6 +45,14 @@ async def get_status():
     return {"stage": stage}
 
 
+@app.get("/get_app")
+async def get_app():
+    if _conductor is None:
+        raise HTTPException(status_code=400, detail="No problem has been started")
+    app = _conductor.app
+    return {"app_name": app.app_name, "namespace": app.namespace, "descriptions": str(app.description)}
+
+
 def run_api(conductor):
     set_conductor(conductor)
 

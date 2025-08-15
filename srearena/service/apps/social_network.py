@@ -24,6 +24,8 @@ class SocialNetwork(Application):
     def load_app_json(self):
         super().load_app_json()
         metadata = self.get_app_json()
+        self.app_name = metadata["Name"]
+        self.description = metadata["Desc"]
         self.frontend_service = metadata.get("frontend_service", "nginx-thrift")
         self.frontend_port = metadata.get("frontend_port", 8080)
 
