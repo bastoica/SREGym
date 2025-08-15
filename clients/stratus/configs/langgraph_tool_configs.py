@@ -24,6 +24,10 @@ class LanggraphToolConfig(BaseModel):
         description="url for the submission result destination, default to http://localhost:8000/submit",
         default=f"http://localhost:8000/submit",
     )
+    benchmark_app_info_url: str = Field(
+        description="url for getting benchmark application information, default to http://localhost:8000/get_app",
+        default=f"http://localhost:8000/get_app",
+    )
 
     min_len_to_sum: int = Field(
         description="Minimum length of text that will be summarized " "first before being input to the main agent.",
