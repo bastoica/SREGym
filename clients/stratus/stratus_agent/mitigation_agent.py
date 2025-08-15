@@ -51,6 +51,7 @@ class MitigationAgent(BaseAgent):
                 self.post_round_process_node: self.post_round_process_node,
             },
         )
+        # TODO: Before submitting, run oracle to see if really mitigated.
         self.graph_builder.add_edge(self.force_submit_prompt_inject_node, self.force_submit_tool_call_node)
         self.graph_builder.add_edge(self.force_submit_tool_call_node, END)
         self.graph_builder.add_edge(self.post_round_process_node, END)
