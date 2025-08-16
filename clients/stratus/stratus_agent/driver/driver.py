@@ -301,14 +301,14 @@ async def main():
     # run diagnosis agent 2 times
     # here, running the file's main function should suffice.
     # 1 for noop diagnosis
-    # logger.info("*" * 25 + " Starting [diagnosis agent] for [NOOP detection] " + "*" * 25)
-    # await diagnosis_task_main()
-    # logger.info("*" * 25 + "Finished [diagnosis agent]" + "*" * 25)
-    # #
-    # # # 1 for faulty diagnosis
-    # logger.info("*" * 25 + " Starting [diagnosis agent] for [Faulty detection] " + "*" * 25)
-    # await diagnosis_task_main()
-    # logger.info("*" * 25 + " Finished [diagnosis agent] " + "*" * 25)
+    logger.info("*" * 25 + " Starting [diagnosis agent] for [NOOP detection] " + "*" * 25)
+    await diagnosis_task_main()
+    logger.info("*" * 25 + "Finished [diagnosis agent]" + "*" * 25)
+    #
+    # # 1 for faulty diagnosis
+    logger.info("*" * 25 + " Starting [diagnosis agent] for [Faulty detection] " + "*" * 25)
+    await diagnosis_task_main()
+    logger.info("*" * 25 + " Finished [diagnosis agent] " + "*" * 25)
 
     # run localization agent 1 time for localization
     # (BTS it's just diagnosis agent with different prompts)
