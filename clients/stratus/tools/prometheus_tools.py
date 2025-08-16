@@ -64,6 +64,7 @@ async def get_metrics(
             "query": query,
         },
     )
+    result = result.content[0].text
     logger.info(f"Result: {result}")
     # metrics = result.content[0].text
     logger.info(f"Metrics received: {result}")
