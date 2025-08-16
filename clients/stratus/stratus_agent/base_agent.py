@@ -15,7 +15,7 @@ class BaseAgent:
     def __init__(self, llm, max_step, sync_tools, async_tools, submit_tool, tool_descs):
         self.graph_builder = StateGraph(State)
         self.graph: CompiledStateGraph | None = None
-        self.max_round = max_step
+        self.max_step = max_step
         self.async_tools = async_tools
         self.sync_tools = sync_tools
         self.llm = llm
