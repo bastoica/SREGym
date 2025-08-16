@@ -78,7 +78,7 @@ async def get_metrics(
     return Command(
         update={
             "messages": [
-                ToolMessage(content=result, tool_call_id=tool_call_id),
+                ToolMessage(content=str(result), tool_call_id=tool_call_id),
             ]
         }
     )

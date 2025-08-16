@@ -52,7 +52,7 @@ async def get_traces(service: str, last_n_minutes: int, tool_call_id: Annotated[
         },
     )
     await exit_stack.aclose()
-    # traces = result.content[0].text
+    result = result.content[0].text
     # if langgraph_tool_config.use_summaries and len(traces) >= langgraph_tool_config.min_len_to_sum:
     #     logger.info("Using summaries for traces.")
     #     traces = _summarize_traces(traces)
@@ -61,7 +61,7 @@ async def get_traces(service: str, last_n_minutes: int, tool_call_id: Annotated[
         update={
             "messages": [
                 ToolMessage(
-                    content=result,
+                    content=str(result),
                     tool_call_id=tool_call_id,
                 ),
             ]
