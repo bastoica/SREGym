@@ -3,6 +3,7 @@
 import time
 
 from srearena.generators.workload.locust import LocustWorkloadManager
+from srearena.observer.trace_api import TraceAPI
 from srearena.paths import ASTRONOMY_SHOP_METADATA
 from srearena.service.apps.base import Application
 from srearena.service.helm import Helm
@@ -14,11 +15,14 @@ class AstronomyShop(Application):
         super().__init__(ASTRONOMY_SHOP_METADATA)
         self.load_app_json()
         self.kubectl = KubeCtl()
+        self.trace_api = None
         self.create_namespace()
 
     def load_app_json(self):
         super().load_app_json()
         metadata = self.get_app_json()
+        self.app_name = metadata["Name"]
+        self.description = metadata["Desc"]
         self.frontend_service = "frontend-proxy"
         self.frontend_port = 8080
 
@@ -35,6 +39,8 @@ class AstronomyShop(Application):
 
         Helm.install(**self.helm_configs)
         Helm.assert_if_deployed(self.helm_configs["namespace"])
+        self.trace_api = TraceAPI(self.namespace)
+        self.trace_api.start_port_forward()
 
     def delete(self):
         """Delete the Helm configurations."""
@@ -43,6 +49,8 @@ class AstronomyShop(Application):
         self.kubectl.wait_for_namespace_deletion(self.namespace)
 
     def cleanup(self):
+        if self.trace_api:
+            self.trace_api.stop_port_forward()
         Helm.uninstall(**self.helm_configs)
         self.kubectl.delete_namespace(self.helm_configs["namespace"])
 

@@ -495,13 +495,49 @@ class SymptomFaultInjector(FaultInjector):
 
         self.create_chaos_experiment(chaos_spec, f"schedule-jvmheapstress-{deployment_name}")
 
-    def recover_jvm_heap_stress(self, deployment_name: str):
+    def recover_jvm_heap_stress(self, deployment_name: str = "ad"):
+        ns = self.namespace
+        name = deployment_name
         tmp_yaml = "/tmp/jvm_heap_deployment.yaml"
 
-        self.delete_chaos_experiment(f"schedule-jvmheapstress-{deployment_name}")
-        self.kubectl.exec_command(f"kubectl delete job/{deployment_name} -n {self.namespace}")
-        self.kubectl.exec_command(f"kubectl apply -f {tmp_yaml} -n {self.namespace}")
-        os.system(f"rm -f {tmp_yaml}")
+        print(f"[recover] namespace={ns} name={name}")
+
+        try:
+            self.kubectl.exec_command(
+                f"kubectl -n {ns} delete schedule.schedule.chaos-mesh.org "
+                f"schedule-jvmheapstress-{name} --ignore-not-found --wait=false"
+            )
+            self.kubectl.exec_command(
+                f"kubectl -n {ns} delete jvmchaos.jvm.chaos-mesh.org "
+                f"-l app.kubernetes.io/component={name} --ignore-not-found --wait=false"
+            )
+        except Exception as e:
+            print(f"[recover] chaos delete skipped/errored: {e}")
+
+        try:
+            self.kubectl.exec_command(f"kubectl -n {ns} delete job/{name} --ignore-not-found --timeout=30s")
+        except Exception as e:
+            print(f"[recover] job delete timed out/errored: {e}")
+
+        try:
+            if os.path.exists(tmp_yaml):
+                print(f"[recover] applying saved deployment from {tmp_yaml}")
+                # yaml already contains metadata.namespace from the original get
+                self.kubectl.exec_command(f"kubectl apply -f {tmp_yaml}")
+                try:
+                    os.remove(tmp_yaml)
+                except Exception:
+                    pass
+            else:
+                self.kubectl.exec_command(f"kubectl -n {ns} rollout restart deploy/{name}")
+        except Exception as e:
+            print(f"[recover] deployment restore failed: {e}")
+
+        try:
+            self.kubectl.exec_command(f"kubectl -n {ns} rollout status deploy/{name} --timeout=90s")
+            print("[recover] deployment available")
+        except Exception as e:
+            print(f"[recover] rollout status failed/timed out: {e}")
 
     def inject_jvm_return_fault(self, deployment_name: str = "ad", component_label: str = "ad"):
         """
@@ -761,7 +797,7 @@ class SymptomFaultInjector(FaultInjector):
 
 
 if __name__ == "__main__":
-    namespace = "test-hotel-reservation"
+    namespace = "hotel-reservation"
     microservices = ["geo"]
     fault_type = "pod_failure"
     injector = SymptomFaultInjector(namespace)

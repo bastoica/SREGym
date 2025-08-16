@@ -1,6 +1,7 @@
 import time
 
 from srearena.generators.workload.wrk2 import Wrk2, Wrk2WorkloadManager
+from srearena.observer.trace_api import TraceAPI
 from srearena.paths import FAULT_SCRIPTS, HOTEL_RES_METADATA, TARGET_MICROSERVICES
 from srearena.service.apps.base import Application
 from srearena.service.apps.helpers import get_frontend_url
@@ -11,12 +12,12 @@ class HotelReservation(Application):
     def __init__(self):
         super().__init__(HOTEL_RES_METADATA)
         self.kubectl = KubeCtl()
+        self.trace_api = None
+        self.trace_api = None
         self.script_dir = FAULT_SCRIPTS
         self.helm_deploy = False
 
         self.load_app_json()
-        self.create_namespace()
-        self.create_configmaps()
 
         self.payload_script = (
             TARGET_MICROSERVICES / "hotelReservation/wrk2/scripts/hotel-reservation/mixed-workload_type_1.lua"
@@ -25,6 +26,8 @@ class HotelReservation(Application):
     def load_app_json(self):
         super().load_app_json()
         metadata = self.get_app_json()
+        self.app_name = metadata["Name"]
+        self.description = metadata["Desc"]
         self.frontend_service = metadata.get("frontend_service", "frontend")
         self.frontend_port = metadata.get("frontend_port", 5000)
 
@@ -71,16 +74,12 @@ class HotelReservation(Application):
     def deploy(self):
         """Deploy the Kubernetes configurations."""
         print(f"Deploying Kubernetes configurations in namespace: {self.namespace}")
+        self.create_namespace()
+        self.create_configmaps()
         self.kubectl.apply_configs(self.namespace, self.k8s_deploy_path)
         self.kubectl.wait_for_ready(self.namespace)
-
-    def deploy_without_wait(self):
-        """Deploy the Kubernetes configurations without waiting for ready."""
-
-        print(f"Deploying Kubernetes configurations in namespace: {self.namespace}")
-        self.kubectl.apply_configs(self.namespace, self.k8s_deploy_path)
-        print(f"Waiting for stability...")
-        self.kubectl.wait_for_stable(namespace=self.namespace)
+        self.trace_api = TraceAPI(self.namespace)
+        self.trace_api.start_port_forward()
 
     def delete(self):
         """Delete the configmap."""
@@ -88,10 +87,12 @@ class HotelReservation(Application):
 
     def cleanup(self):
         """Delete the entire namespace for the hotel reservation application."""
+        if self.trace_api:
+            self.trace_api.stop_port_forward()
         self.kubectl.delete_namespace(self.namespace)
         self.kubectl.wait_for_namespace_deletion(self.namespace)
         pvs = self.kubectl.exec_command(
-            "kubectl get pv --no-headers | grep 'test-hotel-reservation' | awk '{print $1}'"
+            "kubectl get pv --no-headers | grep 'hotel-reservation' | awk '{print $1}'"
         ).splitlines()
 
         for pv in pvs:

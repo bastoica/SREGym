@@ -30,11 +30,7 @@ class MissingService(Problem):
         self.namespace = self.app.namespace
         self.localization_oracle = LocalizationOracle(problem=self, expected=[self.faulty_service])
         self.app.create_workload()
-        self.mitigation_oracle = CompoundedOracle(
-            self,
-            MitigationOracle(problem=self),
-            WorkloadOracle(problem=self, wrk_manager=self.app.wrk),
-        )
+        self.mitigation_oracle = MitigationOracle(problem=self)
 
     @mark_fault_injected
     def inject_fault(self):

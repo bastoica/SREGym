@@ -386,7 +386,7 @@ class ApplicationFaultInjector(FaultInjector):
 
 
 if __name__ == "__main__":
-    namespace = "test-hotel-reservation"
+    namespace = "hotel-reservation"
     # microservices = ["geo"]
     microservices = ["mongodb-geo"]
     # fault_type = "misconfig_app"

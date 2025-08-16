@@ -2,10 +2,11 @@ from srearena.conductor.oracles.localization import LocalizationOracle
 from srearena.conductor.oracles.mitigation import MitigationOracle
 from srearena.conductor.problems.base import Problem
 from srearena.generators.fault.inject_virtual import VirtualizationFaultInjector
+from srearena.service.apps.app_registry import AppRegistry
 from srearena.service.apps.hotel_reservation import HotelReservation
 from srearena.service.kubectl import KubeCtl
 from srearena.utils.decorators import mark_fault_injected
-from srearena.service.apps.registry import AppRegistry
+
 
 class PersistentVolumeAffinityViolation(Problem):
     def __init__(self, app_name: str = "Social Network", faulty_service: str = "user-service"):
@@ -26,7 +27,7 @@ class PersistentVolumeAffinityViolation(Problem):
     def inject_fault(self):
         print("== Fault Injection ==")
         print("Injecting persistent volume affinity violation...")
-        
+
         injector = VirtualizationFaultInjector(namespace=self.namespace)
         injector._inject(
             fault_type="persistent_volume_affinity_violation",

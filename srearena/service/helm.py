@@ -187,7 +187,7 @@ class Helm:
 # Example usage
 if __name__ == "__main__":
     sn_configs = {
-        "release_name": "test-social-network",
+        "release_name": "social-network",
         "chart_path": "/home/oppertune/DeathStarBench/socialNetwork/helm-chart/socialnetwork",
         "namespace": "social-network",
     }

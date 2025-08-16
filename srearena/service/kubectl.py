@@ -36,7 +36,7 @@ class KubeCtl:
     def list_services(self, namespace):
         """Return a list of all services within a specified namespace."""
         return self.core_v1_api.list_namespaced_service(namespace)
-    
+
     def list_nodes(self):
         """Return a list of all running nodes."""
         return self.core_v1_api.list_node()
@@ -75,7 +75,7 @@ class KubeCtl:
     def get_deployment(self, name: str, namespace: str):
         """Fetch the deployment configuration."""
         return self.apps_v1_api.read_namespaced_deployment(name, namespace)
-    
+
     def get_namespace_deployment_status(self, namespace: str):
         """Return the deployment status of an app within a namespace."""
         try:
@@ -87,7 +87,7 @@ class KubeCtl:
                 return False
             else:
                 raise e
-            
+
     def get_service_deployment_status(self, service: str, namespace: str):
         """Return the deployment status of a single service within a namespace."""
         try:
@@ -141,22 +141,21 @@ class KubeCtl:
         """Wait for a namespace to be fully deleted before proceeding."""
 
         console = Console()
-        console.log(f"[bold yellow]Waiting for namespace '{namespace}' to be deleted...")
+        console.log("[bold yellow]Waiting for namespace deletion...")
 
-        with console.status("[bold yellow]Waiting for namespace deletion...") as status:
-            wait = 0
+        wait = 0
 
-            while wait < max_wait:
-                try:
-                    self.core_v1_api.read_namespace(name=namespace)
-                except Exception as e:
-                    console.log(f"[bold green]Namespace '{namespace}' has been deleted.")
-                    return
+        while wait < max_wait:
+            try:
+                self.core_v1_api.read_namespace(name=namespace)
+            except Exception as e:
+                console.log(f"[bold green]Namespace '{namespace}' has been deleted.")
+                return
 
-                time.sleep(sleep)
-                wait += sleep
+            time.sleep(sleep)
+            wait += sleep
 
-            raise Exception(f"[red]Timeout: Namespace '{namespace}' was not deleted within {max_wait} seconds.")
+        raise Exception(f"[red]Timeout: Namespace '{namespace}' was not deleted within {max_wait} seconds.")
 
     def is_ready(self, pod):
         phase = pod.status.phase or ""
@@ -489,7 +488,7 @@ class KubeCtl:
 # Example usage:
 if __name__ == "__main__":
     kubectl = KubeCtl()
-    namespace = "test-social-network"
+    namespace = "social-network"
     frontend_service = "nginx-thrift"
     user_service = "user-service"
 

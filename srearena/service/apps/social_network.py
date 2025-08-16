@@ -3,6 +3,7 @@
 import time
 
 from srearena.generators.workload.wrk2 import Wrk2, Wrk2WorkloadManager
+from srearena.observer.trace_api import TraceAPI
 from srearena.paths import SOCIAL_NETWORK_METADATA, TARGET_MICROSERVICES
 from srearena.service.apps.base import Application
 from srearena.service.apps.helpers import get_frontend_url
@@ -15,15 +16,16 @@ class SocialNetwork(Application):
         super().__init__(SOCIAL_NETWORK_METADATA)
         self.load_app_json()
         self.kubectl = KubeCtl()
+        self.trace_api = None
         self.local_tls_path = TARGET_MICROSERVICES / "socialNetwork/helm-chart/socialnetwork"
-        self.create_namespace()
-        self.create_tls_secret()
 
         self.payload_script = TARGET_MICROSERVICES / "socialNetwork/wrk2/scripts/social-network/mixed-workload.lua"
 
     def load_app_json(self):
         super().load_app_json()
         metadata = self.get_app_json()
+        self.app_name = metadata["Name"]
+        self.description = metadata["Desc"]
         self.frontend_service = metadata.get("frontend_service", "nginx-thrift")
         self.frontend_port = metadata.get("frontend_port", 8080)
 
@@ -44,6 +46,8 @@ class SocialNetwork(Application):
 
     def deploy(self):
         """Deploy the Helm configurations with architecture-aware image selection."""
+        self.create_namespace()
+        self.create_tls_secret()
         node_architectures = self.kubectl.get_node_architectures()
         is_arm = any(arch in ["arm64", "aarch64"] for arch in node_architectures)
 
@@ -59,6 +63,8 @@ class SocialNetwork(Application):
 
         Helm.install(**self.helm_configs)
         Helm.assert_if_deployed(self.helm_configs["namespace"])
+        self.trace_api = TraceAPI(self.namespace)
+        self.trace_api.start_port_forward()
 
     def delete(self):
         """Delete the Helm configurations."""
@@ -66,6 +72,8 @@ class SocialNetwork(Application):
 
     def cleanup(self):
         """Delete the entire namespace for the social network application."""
+        if self.trace_api:
+            self.trace_api.stop_port_forward()
         Helm.uninstall(**self.helm_configs)
 
         if hasattr(self, "wrk"):

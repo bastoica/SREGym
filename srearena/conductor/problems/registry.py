@@ -37,9 +37,9 @@ from srearena.conductor.problems.pod_anti_affinity_deadlock import PodAntiAffini
 from srearena.conductor.problems.pod_failure import ChaosMeshPodFailure
 from srearena.conductor.problems.pod_kill import ChaosMeshPodKill
 from srearena.conductor.problems.product_catalog_failure import ProductCatalogServiceFailure
+from srearena.conductor.problems.pvc_claim_mismatch import PVCClaimMismatch
 from srearena.conductor.problems.readiness_probe_misconfiguration import ReadinessProbeMisconfiguration
 from srearena.conductor.problems.recommendation_service_cache_failure import RecommendationServiceCacheFailure
-from srearena.conductor.problems.redeploy_without_pv import RedeployWithoutPV
 from srearena.conductor.problems.resource_request import ResourceRequestTooLarge, ResourceRequestTooSmall
 from srearena.conductor.problems.revoke_auth import MongoDBRevokeAuth
 from srearena.conductor.problems.rolling_update_misconfigured import RollingUpdateMisconfigured
@@ -69,7 +69,7 @@ class ProblemRegistry:
             "misconfig_app_hotel_res": MisconfigAppHotelRes,
             "scale_pod_zero_social_net": ScalePodSocialNet,
             "assign_to_non_existent_node": AssignNonExistentNode,
-	        "pod_anti_affinity_deadlock": PodAntiAffinityDeadlock,
+            "pod_anti_affinity_deadlock": PodAntiAffinityDeadlock,
             "chaos_mesh_container_kill": ChaosMeshContainerKill,
             "chaos_mesh_pod_failure": ChaosMeshPodFailure,
             "chaos_mesh_pod_kill": ChaosMeshPodKill,
@@ -93,7 +93,6 @@ class ProblemRegistry:
             "astronomy_shop_payment_service_unreachable": PaymentServiceUnreachable,
             "astronomy_shop_product_catalog_service_failure": ProductCatalogServiceFailure,
             "astronomy_shop_recommendation_service_cache_failure": RecommendationServiceCacheFailure,
-            "redeploy_without_PV": RedeployWithoutPV,
             "wrong_bin_usage": WrongBinUsage,
             "taint_no_toleration_social_network": lambda: TaintNoToleration(),
             "missing_service_hotel_reservation": lambda: MissingService(
@@ -203,6 +202,7 @@ class ProblemRegistry:
             "incorrect_port_assignment": IncorrectPortAssignment,
             "incorrect_image": IncorrectImage,
             "namespace_memory_limit": NamespaceMemoryLimit,
+            "pvc_claim_mismatch": PVCClaimMismatch,
             # "missing_service_astronomy_shop": lambda: MissingService(app_name="astronomy_shop", faulty_service="ad"),
             # K8S operator misoperation -> Refactor later, not sure if they're working
             # They will also need to be updated to the new problem format.

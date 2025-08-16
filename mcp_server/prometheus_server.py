@@ -1,11 +1,14 @@
 import logging
-from fastmcp import FastMCP
-from utils import ObservabilityClient
+import os
 
-logger = logging.getLogger("Prometheus MCP Server")
+from fastmcp import FastMCP
+
+from clients.stratus.stratus_utils.get_logger import get_logger
+from mcp_server.utils import ObservabilityClient
+
+logger = get_logger()
 logger.info("Starting Prometheus MCP Server")
 
-# Here, I initialize the FastMCP server with the name "Prometheus MCP Server
 mcp = FastMCP("Prometheus MCP Server")
 
 
@@ -13,15 +16,20 @@ mcp = FastMCP("Prometheus MCP Server")
 def get_metrics(query: str) -> str:
     """Query real-time metrics data from the Prometheus instance.
 
-        Args:
-            query (str): A Prometheus Query Language (PromQL) expression used to fetch metric values.
+    Args:
+        query (str): A Prometheus Query Language (PromQL) expression used to fetch metric values.
 
-        Returns:
-            str: String of metric results, including timestamps, values, and labels or error information.
+    Returns:
+        str: String of metric results, including timestamps, values, and labels or error information.
     """
 
     logger.info("[prom_mcp] get_metrics called, getting prometheus metrics")
-    prometheus_url = "http://localhost:32000"
+    prometheus_port = os.environ.get("PROMETHEUS_PORT", None)
+    if prometheus_port is None:
+        err_msg = "PROMETHEUS_PORT environment variable is not set!"
+        logger.error(err_msg)
+        raise RuntimeError(err_msg)
+    prometheus_url = "http://localhost:" + os.environ["PROMETHEUS_PORT"]
     observability_client = ObservabilityClient(prometheus_url)
     try:
         url = f"{prometheus_url}/api/v1/query"

@@ -168,19 +168,88 @@ class VirtualizationFaultInjector(FaultInjector):
             self.kubectl.exec_command(apply_command)
             print(f"Removed nodeSelector for service {service} and redeployed.")
 
-    # V.5 - redeploy without deleting the PV - only for HotelReservation
-    def inject_redeploy_without_pv(self, app: Application):
-        """Inject a fault to delete the namespace without deleting the PV."""
-        self.kubectl.delete_namespace(self.namespace)
-        print(f"Deleting namespace {self.namespace} without deleting the PV.")
-        time.sleep(15)
-        print(f"Redeploying {self.namespace}.")
-        app = type(app)()
-        app.deploy_without_wait()
+    # --- V.5 - PVC claim name mismatch (per-service) ---
+    def inject_pvc_claim_mismatch(self, microservices: list[str]):
+        """Make pods Pending by pointing Deployments at a non-existent PVC claim."""
+        for service in microservices:
+            dep = self._get_deployment_yaml(service)
+            original = copy.deepcopy(dep)
 
-    def recover_redeploy_without_pv(self, app: Application):
-        app.cleanup()
-        # pass
+            pod_spec = dep.get("spec", {}).get("template", {}).get("spec", {})
+            volumes = pod_spec.get("volumes", [])
+            changed = False
+
+            for v in volumes:
+                pvc = v.get("persistentVolumeClaim")
+                if pvc and "claimName" in pvc:
+                    pvc["claimName"] = pvc["claimName"] + "-broken"
+                    changed = True
+
+            if not changed:
+                print(f"[{service}] No PVC volumes found; skipping.")
+                continue
+
+            modified = self._write_yaml_to_file(service, dep)
+
+            # Replace the deployment with the modified one
+            self.kubectl.exec_command(f"kubectl delete deployment {service} -n {self.namespace}")
+            self.kubectl.exec_command(f"kubectl apply -f {modified} -n {self.namespace}")
+
+            # Save the original for recovery
+            self._write_yaml_to_file(service, original)
+
+            print(f"[{service}] Patched claimName -> (…-broken). Pods should go Pending.")
+
+        self.kubectl.wait_for_stable(self.namespace)
+
+    def recover_pvc_claim_mismatch(self, microservices: list[str]):
+        """Restore the original Deployment YAML saved in /tmp/{svc}_modified.yaml."""
+        for service in microservices:
+            orig_path = f"/tmp/{service}_modified.yaml"
+            self.kubectl.exec_command(f"kubectl delete deployment {service} -n {self.namespace}")
+            self.kubectl.exec_command(f"kubectl apply -f {orig_path} -n {self.namespace}")
+            print(f"[{service}] Restored original claimName.")
+
+        self.kubectl.wait_for_ready(self.namespace)
+
+    # --- V.6 - Storage provisioner outage (cluster-scoped) ---
+    # TODO: This fault does not work because the PVCs are bound before fault injection
+    # def inject_storage_provisioner_outage(self):
+    #     """
+    #     Make all new PVCs Pending by disabling common local provisioners.
+    #     No-op if a target provisioner isn't present.
+    #     """
+    #     cmds = [
+    #         # OpenEBS localPV provisioner
+    #         "kubectl -n openebs scale deploy openebs-localpv-provisioner --replicas=0",
+    #         # Rancher/Kind local-path provisioner
+    #         "kubectl -n local-path-storage scale deploy local-path-provisioner --replicas=0",
+    #     ]
+    #     for c in cmds:
+    #         try:
+    #             self.kubectl.exec_command(c)
+    #             print(f"Ran: {c}")
+    #         except Exception as e:
+    #             print(f"Skipping: {c} ({e})")
+
+    #     print("Storage provisioner outage injected.")
+
+    # def recover_storage_provisioner_outage(self):
+    #     cmds = [
+    #         "kubectl -n openebs scale deploy openebs-localpv-provisioner --replicas=1",
+    #         "kubectl -n local-path-storage scale deploy local-path-provisioner --replicas=1",
+    #         "kubectl -n kube-system scale deploy hostpath-provisioner --replicas=1",
+    #     ]
+    #     for c in cmds:
+    #         try:
+    #             self.kubectl.exec_command(c)
+    #             print(f"Ran: {c}")
+    #         except Exception as e:
+    #             print(f"Skipping: {c} ({e})")
+
+    #     # Give the controller a moment and ensure PVCs start binding again
+    #     self.kubectl.wait_for_stable(self.namespace)
+    #     print("✅ Storage provisioner outage recovered.")
 
     # V.6 - wrong binary usage incident
     def inject_wrong_bin_usage(self, microservices: list[str]):
@@ -698,9 +767,9 @@ class VirtualizationFaultInjector(FaultInjector):
     def inject_env_variable_leak(self, microservices: list[str]):
         for microservice in microservices:
             configmap_name = None
-            if self.namespace == "test-social-network":
+            if self.namespace == "social-network":
                 configmap_name = "media-mongodb"
-            elif self.namespace == "test-hotel-reservation":
+            elif self.namespace == "hotel-reservation":
                 configmap_name = "mongo-geo-script"
             else:
                 raise ValueError(f"Unknown namespace: {self.namespace}")
@@ -1398,7 +1467,7 @@ class VirtualizationFaultInjector(FaultInjector):
 
         if len(nodes) < 2:
             raise RuntimeError("Need 2 worker nodes for this fault to be injected.")
-        
+
         nodeA, nodeB = nodes[0], nodes[1]
 
         for service in microservices:
@@ -1431,10 +1500,7 @@ class VirtualizationFaultInjector(FaultInjector):
                             ]
                         }
                     },
-                    "claimRef": {
-                        "name": "temp-pvc",
-                        "namespace": self.namespace
-                    }
+                    "claimRef": {"name": "temp-pvc", "namespace": self.namespace},
                 },
             }
 
@@ -1451,11 +1517,7 @@ class VirtualizationFaultInjector(FaultInjector):
                     "storageClassName": "",
                     "volumeName": "temp-pv",
                     "accessModes": ["ReadWriteOnce"],
-                    "resources": {
-                        "requests": {
-                            "storage": "1Gi"
-                        }
-                    }
+                    "resources": {"requests": {"storage": "1Gi"}},
                 },
             }
 
@@ -1464,7 +1526,7 @@ class VirtualizationFaultInjector(FaultInjector):
             print(f"Created PVC temp-pvc for fault injection")
 
             pod_spec = deployment_yaml.get("spec", {}).get("template", {}).get("spec", {})
-            
+
             self._change_node_selector(deployment_yaml=deployment_yaml, node_name=nodeB)
 
             if "volumes" not in pod_spec:
@@ -1498,7 +1560,6 @@ class VirtualizationFaultInjector(FaultInjector):
             self._write_yaml_to_file(service, original_deployment_yaml)
 
             print(f"Injected persistent volume affinity conflict fault for {service}")
-            
 
     def recover_persistent_volume_affinity_violation(self, microservices: list[str]):
         for service in microservices:
@@ -1719,7 +1780,7 @@ class VirtualizationFaultInjector(FaultInjector):
 
 
 if __name__ == "__main__":
-    namespace = "test-social-network"
+    namespace = "social-network"
     microservices = ["mongodb-geo"]
     # microservices = ["geo"]
     fault_type = "auth_miss_mongodb"
