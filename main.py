@@ -3,6 +3,7 @@ import csv
 import sys
 import threading
 import time
+from datetime import datetime
 
 import uvicorn
 from rich.console import Console
@@ -12,6 +13,12 @@ from mcp_server.configs.load_all_cfg import mcp_server_cfg
 from mcp_server.srearena_mcp_server import app as mcp_app
 from srearena.conductor.conductor import Conductor
 from srearena.conductor.conductor_api import request_shutdown, run_api
+
+
+def get_current_datetime_formatted():
+    now = datetime.now()
+    formatted_datetime = now.strftime("%m-%d_%H-%M")
+    return formatted_datetime
 
 
 def driver_loop(conductor: Conductor):
@@ -118,7 +125,8 @@ def main():
 
     if results:
         fieldnames = sorted({key for row in results for key in row.keys()})
-        csv_path = f"{agent_name}_results.csv"
+        current_date_time = get_current_datetime_formatted()
+        csv_path = f"{current_date_time}_{agent_name}_results.csv"
         with open(csv_path, "w", newline="") as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
