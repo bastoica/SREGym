@@ -76,14 +76,14 @@ class LiteLLMBackend:
         elif isinstance(messages, list):
             prompt_messages = messages
             if isinstance(messages[0], HumanMessage):
-                logger.info("No system message provided.")
+                # logger.info("No system message provided.")
                 system_message = SystemMessage(content="You are a helpful assistant.")
                 if system_prompt is None:
                     logger.warning("No system prompt provided. Using default system prompt.")
                 else:
-                    logger.info("Using system prompt provided.")
+                    # logger.info("Using system prompt provided.")
                     system_message.content = system_prompt
-                logger.info(f"inserting [{system_message}] at the beginning of messages")
+                # logger.info(f"inserting [{system_message}] at the beginning of messages")
                 prompt_messages.insert(0, system_message)
         else:
             raise ValueError(f"messages must be either a string or a list of dicts, but got {type(messages)}")
@@ -106,7 +106,7 @@ class LiteLLMBackend:
             raise ValueError(f"Unsupported provider: {self.provider}")
 
         if tools:
-            logger.info(f"binding tools to llm: {tools}")
+            # logger.info(f"binding tools to llm: {tools}")
             llm = llm.bind_tools(tools, tool_choice="auto")
 
         # FIXME: when using openai models, finish_reason would be the function name
@@ -118,7 +118,7 @@ class LiteLLMBackend:
         for attempt in range(MAX_RETRIES):
             try:
                 completion = llm.invoke(input=prompt_messages)
-                logger.info(f"llm response: {completion}")
+                # logger.info(f"llm response: {completion}")
                 return completion
             except HTTPError as e:
                 if e.response.status_code == 429:  # Rate-limiting error
