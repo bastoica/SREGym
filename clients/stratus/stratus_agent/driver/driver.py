@@ -60,6 +60,36 @@ def get_app_info():
         return "error"
 
 
+def get_app_class_by_name(app_name):
+    if app_name == "Social Network":
+        from srearena.service.apps.social_network import SocialNetwork
+
+        target_app = SocialNetwork()
+    elif app_name == "OpenTelemetry Demo Astronomy Shop":
+        from srearena.service.apps.astronomy_shop import AstronomyShop
+
+        target_app = AstronomyShop()
+    elif app_name == "Flight Ticket":
+        from srearena.service.apps.flight_ticket import FlightTicket
+
+        logger.info(f"Flight ticket has never been tested!!")
+        target_app = FlightTicket()
+    elif app_name == "Hotel Reservation":
+        from srearena.service.apps.hotel_reservation import HotelReservation
+
+        target_app = HotelReservation()
+    elif app_name == "TiDB Cluster with Operator":
+        from srearena.service.apps.tidb_cluster_operator import TiDBCluster
+
+        logger.info(f"TiDB has never been tested!!")
+        target_app = TiDBCluster()
+    elif app_name == "Train Ticket":
+        from srearena.service.apps.train_ticket import TrainTicket
+
+        target_app = TrainTicket()
+    return target_app
+
+
 async def diagnosis_task_main():
     logger.info("loading configs")
     file_parent_dir = Path(__file__).resolve().parent.parent
@@ -146,17 +176,18 @@ async def mitigation_task_main(localization_summary):
     cluster_state_oracle = ClusterStateOracle()
     oracles = [cluster_state_oracle]
 
+    # setting up workload oracle, need to interact with benchmark.
     logger.info("getting app info")
-
     app_info = get_app_info()
     app_name = app_info["app_name"]
     app_description = app_info["descriptions"]
     app_namespace = app_info["namespace"]
+    target_app = get_app_class_by_name(app_name)
     if app_name not in ["Social Network", "Hotel Reservation"]:
         logger.info("Current app does not support workload oracle")
     else:
         logger.info(f"adding oracle for app [{app_name}]")
-        workload_oracle = WorkloadOracle(app_name)
+        workload_oracle = WorkloadOracle(target_app)
         oracles.append(workload_oracle)
 
     # defining the first set of messages that all retry mode share
