@@ -108,7 +108,6 @@ def get_traces(service: str, last_n_minutes: int) -> str:
         response = jaeger_client.make_request("GET", url, params=params)
         logger.info(f"[ob_mcp] get_traces: {response.status_code}")
         traces = str(response.json()["data"])
-        # count token number and truncate to first 16000 token.
         return traces if traces else "None"
     except Exception as e:
         err_str = f"[ob_mcp] Error querying get_traces: {str(e)}"

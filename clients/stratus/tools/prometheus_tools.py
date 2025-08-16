@@ -10,6 +10,7 @@ from mcp.client.sse import sse_client
 
 from clients.stratus.configs.langgraph_tool_configs import LanggraphToolConfig
 from clients.stratus.llm_backend.init_backend import get_llm_backend_for_tools
+from clients.stratus.stratus_utils.truncate_by_token import truncate_to_tokens
 from clients.stratus.tools.text_editing.flake8_utils import flake8, format_flake8_output  # type: ignore
 from clients.stratus.tools.text_editing.windowed_file import (  # type: ignore
     FileNotOpened,
@@ -71,6 +72,7 @@ async def get_metrics(
     # if langgraph_tool_config.use_summaries and len(metrics) >= langgraph_tool_config.min_len_to_sum:
     #     metrics = _summarize_metrics(result)
     #     # logger.info(f"Summary: {metrics}")
+    result = truncate_to_tokens(result)
 
     return Command(
         update={
