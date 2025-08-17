@@ -418,6 +418,7 @@ async def mitigation_task_main(localization_summary):
                     steps_lst.append(rollback_agent_last_state.values["num_steps"])
                     num_retry_attempts_lst.append(str(curr_attempt))
                     rollback_stack_lst.append(rollback_agent_last_state.values["rollback_stack"])
+                    oracle_results_lst.append(str("N/A, rollback agent"))
                     curr_attempt += 1
                 else:
                     logger.info("we shouldn't retry as we don't have more attempts left.")
