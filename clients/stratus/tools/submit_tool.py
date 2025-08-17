@@ -20,6 +20,10 @@ Use this tool to submit your answer to the assigned tasks. You can give partial 
     Args:
         ans (string): the answer you would like to submit
 """
+
+rollback_submit_tool_docstring = """
+The tool to submit after you rolled back all the changes.
+"""
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -78,6 +82,19 @@ async def fake_submit_tool(ans: str, tool_call_id: Annotated[str, InjectedToolCa
     logging.info(f"_NOT_ submitting to benchmark, answer: {ans}")
     logger.info(f"This method is to only change the state[submitted] value.")
     logger.info(f"mitigation submission is done out side of agent logic, for retry")
+
+    return Command(
+        update={
+            "submitted": True,
+            "messages": [ToolMessage(f"Submission complete. No further action is needed.", tool_call_id=tool_call_id)],
+        }
+    )
+
+
+@tool("r_submit_tool", description=rollback_submit_tool_docstring)
+async def rollback_submit_tool(tool_call_id: Annotated[str, InjectedToolCallId]) -> Command:
+    logger.info("rollback agent submits")
+    logger.info(f"This method is to only change the state[submitted] value.")
 
     return Command(
         update={
