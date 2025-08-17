@@ -1,4 +1,5 @@
 import asyncio
+import time
 
 # for parsing return values from benchmark app info as python dict
 from ast import literal_eval
@@ -266,6 +267,8 @@ async def mitigation_task_main(localization_summary):
                 logger.info(f"composed retry prompts: {retry_run_initial_messages}")
                 mitigation_agent_last_state = await mitigation_agent_retry_run(retry_run_initial_messages)
             oracle_results = validate_oracles(oracles)
+            logger.info(f"sleeping for a minute for oracles to validate.")
+            asyncio.sleep(60)
             has_succeeded = oracle_results[0]
             if has_succeeded:
                 # agent succeeds, let's finish here.
@@ -331,6 +334,8 @@ async def main():
     logger.info("*" * 25 + "Starting [mitigation agent] for [mitigation]" + "*" * 25)
     await mitigation_task_main(localization_fault_summary)
     logger.info("*" * 25 + "Finished [mitigation agent]" + "*" * 25)
+
+    await asyncio.sleep(10)
 
 
 if __name__ == "__main__":

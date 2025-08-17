@@ -273,11 +273,3 @@ class WorkloadOracle(BaseOracle):
             success=result["success"],
             issues=[str(result)],
         )
-
-
-if __name__ == "__main__":
-    from srearena.service.apps.social_network import SocialNetwork
-
-    app = SocialNetwork()
-    wo = WorkloadOracle(app)
-    print(wo.validate())
