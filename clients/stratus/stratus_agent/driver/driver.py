@@ -29,6 +29,7 @@ from clients.stratus.tools.submit_tool import manual_submit_tool
 from clients.stratus.weak_oracles.base_oracle import BaseOracle, OracleResult
 from clients.stratus.weak_oracles.cluster_state_oracle import ClusterStateOracle
 from clients.stratus.weak_oracles.workload_oracle import WorkloadOracle
+from main import get_current_datetime_formatted
 
 logger = get_logger()
 
@@ -559,7 +560,8 @@ async def main():
     agent_output_df["num_retry_attempts"] = agent_retry_attempts
     agent_output_df["rollback_stack"] = agent_rollback_stack
     agent_output_df["oracle_results"] = agent_oracle_results
-    agent_output_df.to_csv(f"./{current_problem}_stratus_output.csv", index=False, header=True)
+    current_datetime = get_current_datetime_formatted()
+    agent_output_df.to_csv(f"./{current_datetime}_{current_problem}_stratus_output.csv", index=False, header=True)
 
 
 if __name__ == "__main__":
