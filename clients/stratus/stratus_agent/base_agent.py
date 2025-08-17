@@ -76,7 +76,7 @@ class BaseAgent:
 
     def should_submit_router(self, state: State):
         should_submit = state["num_steps"] == self.max_step and state["submitted"] == False
-        logger.info(f"Should the agent submit? {"Yes!" if should_submit else "No!"}")
+        logger.info(f"Should we force the agent submit? {"Yes!" if should_submit else "No!"}")
         return self.force_submit_prompt_inject_node if should_submit else self.post_round_process_node
 
     def post_round_process(self, state: State):
@@ -198,7 +198,7 @@ class BaseAgent:
                 event["messages"][-1].pretty_print()
             last_state = self.graph.get_state(config=graph_config)
             if last_state.values["submitted"]:
-                logger.info("agent submitted, breaking loop.")
+                logger.info("agent submitted, breaking loop from base_agent")
                 break
 
         return last_state
