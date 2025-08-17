@@ -41,7 +41,7 @@ uv sync
 pre-commit install
 ```
 
-<h2 id="🚀quickstart">🚀 Create your cluster</h2>
+<h2 id="🚀quickstart">🚀 Setup Your Cluster</h2>
 
 <!-- TODO: Add instructions for both local cluster and remote cluster -->
 Choose either a) or b) to set up your cluster and then proceed to the next steps.
@@ -88,67 +88,57 @@ cp config.yml.example config.yml
 ```
 Update your `config.yml` so that `k8s_host` is the host name of the control plane node of your cluster. Update `k8s_user` to be your username on the control plane node. If you are using a kind cluster, your `k8s_host` should be `kind`. If you're running SREArena on cluster, your `k8s_host` should be `localhost`.
 
-### Running agents
-We have ported [the Stratus agent](https://anonymous.4open.science/r/stratus-agent/README.md) to SREArena as a demo agent.
-
-To run the benchmark with Stratus as the demo agent, uncomment line 43 in [`main.py`](https://github.com/xlab-uiuc/SREArena/blob/c4b6c61c30eaf898168d07b8cb4624544b68fe89/main.py#L43).
-It allows the benchmark to kicks start the agent when the problem setup is done.
-
-If you would like to run Stratus by itself, please take a look at [`driver.py`](https://github.com/xlab-uiuc/SREArena/blob/stratus_eval/clients/stratus/stratus_agent/driver/driver.py).
-
-We support 
-
 <h2 id="⚙️usage">⚙️ Usage</h2>
 
 SREArena can be used in the following ways:
-- [Onboard your agent to SREArena](#how-to-onboard-your-agent-to-srearena)
+- [Run agent on SREArena](#run-agent-on-srearena)
 - [Add new applications to SREArena](#how-to-add-new-applications-to-srearena)
 - [Add new problems to SREArena](#how-to-add-new-problems-to-srearena)
 
 
-### How to onboard your agent to SREArena?
+### Run agent on SREArena
 
-SREArena makes it extremely easy to develop and evaluate your agents. You can onboard your agent to SREArena in 3 simple steps:
+#### Run our demo agent "Stratus"
+We have ported [the Stratus agent](https://anonymous.4open.science/r/stratus-agent/README.md) to SREArena as a demo agent.
 
-1. **Create your agent**: You are free to develop agents using any framework of your choice. The only requirements are:
-    - Wrap your agent in a Python class, say `Agent`
-    - Add an async method `get_action` to the class:
+To run the benchmark with Stratus as the demo agent, uncomment line 43 in [`main.py`](https://github.com/xlab-uiuc/SREArena/blob/main/main.py#L43).
+It allows the benchmark to kicks start the agent when the problem setup is done.
 
-        ```python
-        # given current state and returns the agent's action
-        async def get_action(self, state: str) -> str:
-            # <your agent's logic here>
-        ```
+If you would like to run Stratus by itself, please take a look at [`driver.py`](https://github.com/xlab-uiuc/SREArena/blob/stratus_eval/clients/stratus/stratus_agent/driver/driver.py).
 
-2. **Register your agent with SREArena**: You can now register the agent with SREArena's conductor. The conductor will manage the interaction between your agent and the environment:
+#### Run your agent on SREArena
+SREArena makes it extremely easy to develop and evaluate your agents, thanks to its decoupled design. 
+There are at most 4 phases in each problem of SREArena:
+1. **NOOP Detection**: The cluster has no incidents. The agent should detect no incident in the cluster. 
+   
+   **Expected submission**: "Yes" or "No" to indicate incident.
+2. **Incident Detection**: The cluster has a running incident. The agent should detect an incident in the cluster.
 
-    ```python
-    from srearena.conductor import Conductor
+   **Expected submission**: "Yes" or "No" to indicate incident.
+3. **Fault Localization**: The agent should localize where the incident originates.
 
-    agent = Agent()             # create an instance of your agent
-    orch = Conductor()       # get SREArena's conductor
-    orch.register_agent(agent)  # register your agent with SREArena
-    ```
+   **Expected submission**: A list of strings representing the faulty components in the cluster.
+4. **Incident Mitigation**: The agent should try to mitigate the incident and bring the cluster back online.
 
-3. **Evaluate your agent on a problem**:
-
-    1. **Initialize a problem**: SREArena provides a list of problems that you can evaluate your agent on. Find the list of available problems [here](/srearena/conductor/problems/registry.py) or using `orch.problems.get_problem_ids()`. Now initialize a problem by its ID: 
-
-        ```python
-        problem_desc, instructs, apis = orch.init_problem("k8s_target_port-misconfig-mitigation-1")
-        ```
-    
-    2. **Set agent context**: Use the problem description, instructions, and APIs available to set context for your agent. (*This step depends on your agent's design and is left to the user*)
+   **Expected submission**: empty submission to indicate that the agent is satisfied with the cluster.
 
 
-    3. **Start the problem**: Start the problem by calling the `start_problem` method. You can specify the maximum number of steps too:
+The benchmark is driven by agent submissions. The benchmark expects the agent to submit a `POST` HTTP API call to the `http://localhost:8000/submit` HTTP endpoint.
+Each submission pushes the benchmark to the next phase.
 
-        ```python
-        import asyncio
-        asyncio.run(orch.start_problem())
-        ```
+Therefore, if you would like to test your agent on SREArena, simply run [`main.py`](https://github.com/xlab-uiuc/SREArena/blob/main/main.py) to start the benchmark,
+then instruct your agent to submit answers with HTTP API call in each phase of the benchmark problem.
 
-This process will create a [`Session`](/srearena/session.py) with the conductor, where the agent will solve the problem. The conductor will evaluate your agent's solution and provide results (stored under `data/results/`). You can use these to improve your agent.
+SREArena also provides a suite of MCP Servers that support basic cluster management needs.
+
+1. **Jaeger MCP Server**: Allows the agent to query the Jaeger tracing service in the cluster.
+2. **Prometheus MCP Server**: Allows the agent to query metrics traced by Prometheus in the cluster.
+3. **Kubernetes MCP Server**: Allows the agent to execute `kubectl` commands against the k8s cluster.
+4. **Submission MCP Server**: Allows the agent to submit answers to the benchmark.
+
+The Stratus agent in [`clients/stratus`](https://github.com/xlab-uiuc/SREArena/tree/main/clients/stratus)
+demonstrates basic usages of these MCP servers in an agent.
+
 
 
 ### How to add new applications to SREArena?
