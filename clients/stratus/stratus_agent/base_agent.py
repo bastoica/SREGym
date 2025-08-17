@@ -75,8 +75,6 @@ class BaseAgent:
         }
 
     def should_submit_router(self, state: State):
-        # Fixme: bad programming here! make sure self.max_step and self.post_round_process_node is defined in
-        #   this class too!!
         should_submit = state["num_steps"] == self.max_step and state["submitted"] == False
         logger.info(f"Should the agent submit? {"Yes!" if should_submit else "No!"}")
         return self.force_submit_prompt_inject_node if should_submit else self.post_round_process_node
@@ -181,7 +179,7 @@ class BaseAgent:
         async for event in self.graph.astream(
             state,
             # recursion_limit could be as large as possible as we have our own limit.
-            config={"recursion_limit": 10000, "configurable": {"thread_id": "1"}},
+            config={"recursion_limit": 10000, "configurable": {"thread_id": "1"}, "callbacks": [self.callback]},
             stream_mode="values",
         ):
             res.append(event)
