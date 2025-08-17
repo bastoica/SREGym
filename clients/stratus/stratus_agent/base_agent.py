@@ -31,7 +31,6 @@ class BaseAgent:
         self.tool_calling_node = "tool_calling_step"
         self.process_tool_call_node = "process_tool_call"
         self.post_round_process_node = "post_round_process"
-        self.callback = UsageMetadataCallbackHandler()
 
     def llm_inference_step(self, messages, tools):
         return self.llm.inference(messages=messages, tools=tools)
@@ -181,7 +180,7 @@ class BaseAgent:
         async for event in self.graph.astream(
             state,
             # recursion_limit could be as large as possible as we have our own limit.
-            config={"recursion_limit": 10000, "configurable": {"thread_id": "1"}, "callbacks": self.callback},
+            config={"recursion_limit": 10000, "configurable": {"thread_id": "1"}},
             stream_mode="values",
         ):
             res.append(event)
