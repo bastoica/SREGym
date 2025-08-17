@@ -104,7 +104,7 @@ async def main():
 
     res = await agent.arun(get_starting_prompts(prompt_path, max_step=max_step))
     agent.clear_memory()
-    return res
+    return agent, res
 
 
 if __name__ == "__main__":

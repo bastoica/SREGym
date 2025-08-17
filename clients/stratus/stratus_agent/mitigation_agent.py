@@ -196,7 +196,9 @@ def generate_run_summary(last_state: StateSnapshot, summary_system_prompt) -> st
 async def single_run_with_predefined_prompts(init_prompts):
     agent, prompt_path, max_step = build_default_mitigation_agent()
     res = await agent.arun(init_prompts)
-    return res
+    logger.info("Clearing agent's memory")
+    agent.clear_memory()
+    return agent, res
 
 
 async def retry_run_with_feedback(feedback_prompts):
@@ -204,7 +206,7 @@ async def retry_run_with_feedback(feedback_prompts):
     res = await agent.arun(feedback_prompts)
     logger.info("Clearing agent's memory")
     agent.clear_memory()
-    return res
+    return agent, res
 
 
 if __name__ == "__main__":
