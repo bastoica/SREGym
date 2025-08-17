@@ -308,6 +308,7 @@ async def mitigation_task_main(localization_summary):
         agent_exec_stats["agent_names"] = agent_names_lst
         agent_exec_stats["input_tokens"] = input_tokens_lst
         agent_exec_stats["output_tokens"] = output_tokens_lst
+        agent_exec_stats["time"] = time_lst
         agent_exec_stats["total_tokens"] = total_tokens_lst
         agent_exec_stats["steps"] = steps_lst
         agent_exec_stats["num_retry_attempts"] = num_retry_attempts_lst
@@ -389,7 +390,7 @@ async def mitigation_task_main(localization_summary):
                 logger.info("agent succeeds! manually submitting for the agent")
                 await manual_submit_tool("")
                 logger.info("breaking the retry loop")
-                return agent_exec_stats
+                # return agent_exec_stats
             else:
                 # here the agent fails, we make decision if we should retry
                 should_retry = curr_attempt + 1 < mitigation_agent_max_retry_attempts
@@ -421,9 +422,17 @@ async def mitigation_task_main(localization_summary):
                     logger.info("we shouldn't retry as we don't have more attempts left.")
                     logger.info(f"making a real submission for the agent.")
                     await manual_submit_tool("")
-                    return agent_exec_stats
+                    # return agent_exec_stats
 
-        logger.error("THE MITIGATION TASK SHOULD NEVER BE HERE! SOMETHING IS TERRIBLY WRONG!!!")
+        agent_exec_stats["agent_name"] = agent_names_lst
+        agent_exec_stats["input_tokens"] = input_tokens_lst
+        agent_exec_stats["output_tokens"] = output_tokens_lst
+        agent_exec_stats["total_tokens"] = total_tokens_lst
+        agent_exec_stats["time"] = time_lst
+        agent_exec_stats["steps"] = steps_lst
+        agent_exec_stats["num_retry_attempts"] = num_retry_attempts_lst
+        agent_exec_stats["rollback_stack"] = rollback_stack_lst
+        agent_exec_stats["oracle_results"] = oracle_results_lst
         return agent_exec_stats
 
 
