@@ -57,7 +57,7 @@ async def submit_tool(
         logger.info("giving agent another change by decrementing step count")
         return Command(
             update={
-                "num_steps": state["num_steps"] + 1,
+                "num_steps": state["num_steps"] - 1,
                 "messages": [
                     ToolMessage(content=f"HTTP submission failed: {result}", tool_call_id=tool_call_id),
                 ],
