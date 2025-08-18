@@ -72,7 +72,7 @@ def get_app_info():
 
 def get_curr_problem():
     ltc = LanggraphToolConfig()
-    url = ltc.problem_url
+    url = ltc.benchmark_current_problem
     try:
         response = requests.get(url)
         logger.info(f"Response status: {response.status_code}, text: {response.text}")

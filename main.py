@@ -40,7 +40,7 @@ def driver_loop(conductor: Conductor):
 
             await conductor.start_problem()
 
-            # await stratus_driver()
+            await stratus_driver()
 
             # Poll until grading completes
             while conductor.submission_stage != "done":
@@ -56,6 +56,15 @@ def driver_loop(conductor: Conductor):
                 else:
                     snapshot[stage] = outcome
             all_results.append(snapshot)
+
+            fieldnames = sorted({key for row in all_results for key in row.keys()})
+            current_date_time = get_current_datetime_formatted()
+            csv_path = f"{current_date_time}_arena_{pid}_results.csv"
+            with open(csv_path, "w", newline="") as csvfile:
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                writer.writeheader()
+                writer.writerows(all_results)
+            print(f"✅ Problem {pid} complete! Results written to {csv_path}")
 
         return all_results
 
