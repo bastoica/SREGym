@@ -489,6 +489,9 @@ async def main():
     agent_rollback_stack.append(diagnosis_agent_exec_stats["rollback_stack"])
     agent_oracle_results.append(diagnosis_agent_exec_stats["oracle_results"])
     logger.info("*" * 25 + " Finished [diagnosis agent] " + "*" * 25)
+    logger.info("sleeping for a minute for fault propagation")
+    await asyncio.sleep(60)
+
 
     # 1 for faulty diagnosis
     logger.info("*" * 25 + " Starting [diagnosis agent] for [Faulty detection] " + "*" * 25)
