@@ -8,9 +8,15 @@ class TrainTicketUser(HttpUser):
 
     def on_start(self):
         self.client.verify = False
+        self.last_login_time = 0
+        self.login_interval = 1800  # 30 minutes in seconds
         self._login()
 
     def _login(self):
+
+        current_time = time.time()
+        self.last_login_time = current_time
+        
         response = self.client.post(
             "/api/v1/users/login",
             json={"username": "fdse_microservice", "password": "111111"},
@@ -22,11 +28,19 @@ class TrainTicketUser(HttpUser):
             self.token = data.get("data", {}).get("token", "")
             self.user_id = data.get("data", {}).get("userId", "")
             self.headers = {"Authorization": f"Bearer {self.token}", "Content-Type": "application/json"}
+            print(f"[Login] Successfully logged in at {current_time}, token: {self.token[:20]}...")
         else:
-            print(f"Login failed: {response.status_code}")
+            print(f"[Login] Failed: {response.status_code}")
             self.token = ""
             self.user_id = ""
             self.headers = {"Content-Type": "application/json"}
+
+    # The JWT token is valid for 1 hours, so we need to refresh it if it's expired.
+    def _check_and_refresh_token(self):
+        current_time = time.time()
+        if current_time - self.last_login_time > self.login_interval:
+            print(f"[Token] Refreshing token after {current_time - self.last_login_time:.0f} seconds")
+            self._login()
 
     def _get_existing_order_id(self):
         if not getattr(self, "user_id", None):
@@ -110,6 +124,8 @@ class TrainTicketUser(HttpUser):
         if not getattr(self, "headers", None):
             return
 
+        self._check_and_refresh_token()
+
         try:
             response = self.client.get(
                 "/api/v1/routeservice/routes",
@@ -134,6 +150,8 @@ class TrainTicketUser(HttpUser):
         """
         if not getattr(self, "headers", None):
             return
+
+        self._check_and_refresh_token()
 
         try:
             response = self.client.get(
