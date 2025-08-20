@@ -132,9 +132,9 @@ class Wrk2:
         namespace = "default"
         configmap_name = "wrk2-payload-script"
 
-        self.create_configmap(name=configmap_name, namespace=namespace, payload_script_path=payload_script)
+        self.create_configmap(name=configmap_name, namespace=namespace, payload_script_path=payload_script, url=url)
 
-        self.create_wrk_job(job_name="wrk2-job", namespace=namespace, payload_script=payload_script.name, url=url)
+        self.create_wrk_job(job_name="wrk2-job", namespace=namespace, payload_script=payload_script.name)
 
     def stop_workload(self, job_name="wrk2-job"):
         namespace = "default"
