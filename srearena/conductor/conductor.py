@@ -8,6 +8,7 @@ from json.decoder import JSONDecodeError
 from srearena.conductor.oracles.detection import DetectionOracle
 from srearena.conductor.parser import ResponseParser
 from srearena.conductor.problems.registry import ProblemRegistry
+from srearena.service.khaos import KhaosController
 from srearena.service.kubectl import KubeCtl
 from srearena.service.telemetry.prometheus import Prometheus
 from srearena.utils.critical_section import CriticalSection
@@ -27,6 +28,8 @@ class Conductor:
         self.execution_start_time = None
         self.execution_end_time = None
         self.use_wandb = os.getenv("USE_WANDB", "false").lower() == "true"
+
+        self.khaos = KhaosController(self.kubectl)
 
         self.problem = None
         self.detection_oracle = None
@@ -141,6 +144,10 @@ class Conductor:
         try:
             with SigintAwareSection():
                 print(f"[Session Start] Problem ID: {self.problem_id}")
+
+                # --- Deploy Khaos DS (idempotent) ---
+                print("Deploying Khaos DaemonSet...")
+                self.khaos.ensure_deployed()
 
                 print("Setting up metrics-server...")
                 self.kubectl.exec_command(
