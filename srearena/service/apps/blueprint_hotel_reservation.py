@@ -6,6 +6,7 @@ from srearena.paths import FAULT_SCRIPTS, BLUEPRINT_HOTEL_RES_METADATA, TARGET_M
 from srearena.service.apps.base import Application
 from srearena.service.kubectl import KubeCtl
 
+from kubernetes import config
 
 class BlueprintHotelReservation(Application):
     def __init__(self):
@@ -56,8 +57,24 @@ class BlueprintHotelReservation(Application):
             return file.read()
 
     def create_workload(
-        self, tput: int = 3000, duration: str = '120s', multiplier: int = 6
+        self, tput: int = None, duration: str = None, multiplier: int = None
     ):
+        config.load_kube_config()
+        current_context = config.list_kube_config_contexts()[1]
+        cluster = current_context["context"]["cluster"]
+        is_kind = cluster.startswith("kind-")
+        if tput is None:
+            if is_kind:
+                tput = 200
+            else:
+                tput = 3000
+        if duration is None:
+            duration = "120s"
+        if multiplier is None:
+            if is_kind:
+                multiplier = 7
+            else:
+                multiplier = 6
         self.wrk = BHotelWrkWorkloadManager(
             wrk=BHotelWrk(tput=tput, duration=duration, multiplier=multiplier),
         )

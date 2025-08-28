@@ -24,12 +24,12 @@ class RPCRetryStorm(Problem):
     def inject_fault(self):
         print("== Fault Injection ==")
         injector = VirtualizationFaultInjector(namespace=self.namespace)
-        injector.inject_rpc_timeout_retries_misconfiguration(config=self.faulty_service)
+        injector.inject_rpc_timeout_retries_misconfiguration(configmap=self.faulty_service)
         print(f"Service: {self.faulty_service} | Namespace: {self.namespace}\n")
 
     @mark_fault_injected
     def recover_fault(self):
         print("== Fault Recovery ==")
         injector = VirtualizationFaultInjector(namespace=self.namespace)
-        injector.recover_rpc_timeout_retries_misconfiguration(config=self.faulty_service)
+        injector.recover_rpc_timeout_retries_misconfiguration(configmap=self.faulty_service)
         print(f"Service: {self.faulty_service} | Namespace: {self.namespace}\n")
