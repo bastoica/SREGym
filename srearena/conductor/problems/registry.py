@@ -31,6 +31,7 @@ from srearena.conductor.problems.stale_coredns_config import StaleCoreDNSConfig
 from srearena.conductor.problems.storage_user_unregistered import MongoDBUserUnregistered
 from srearena.conductor.problems.target_port import K8STargetPortMisconfig
 from srearena.conductor.problems.trainticket_f17 import TrainTicketF17
+from srearena.conductor.problems.train_ticket_f22 import TrainTicketF22
 from srearena.conductor.problems.wrong_bin_usage import WrongBinUsage
 from srearena.conductor.problems.wrong_dns_policy import WrongDNSPolicy
 from srearena.conductor.problems.wrong_service_selector import WrongServiceSelector
@@ -65,6 +66,7 @@ class ProblemRegistry:
             "redeploy_without_PV": RedeployWithoutPV,
             "wrong_bin_usage": WrongBinUsage,
             "trainticket_f17_nested_sql_select_clause_error": TrainTicketF17,
+            "trainticket_f22_sql_column_name_mismatch_error": TrainTicketF22,
             "missing_service_hotel_reservation": lambda: MissingService(
                 app_name="hotel_reservation", faulty_service="mongodb-rate"
             ),
