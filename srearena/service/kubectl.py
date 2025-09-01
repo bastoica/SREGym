@@ -5,10 +5,11 @@ import subprocess
 import time
 
 try:
-    from kubernetes import client, config, dynamic
+    from kubernetes import client, config
 except ModuleNotFoundError as e:
     print("Your Kubeconfig is missing. Please set up a cluster.")
     exit(1)
+    from kubernetes import client, config, dynamic
 from kubernetes.client import api_client
 from kubernetes.client.rest import ApiException
 from rich.console import Console
@@ -459,6 +460,29 @@ class KubeCtl:
                 return f"{round(value, 2)}{unit}"
             value /= 1024
         return f"{round(value, 2)}Ei"
+
+    def is_emulated_cluster(self) -> bool:
+        try:
+            nodes = self.core_v1_api.list_node()
+            for node in nodes.items:
+                provider_id = (node.spec.provider_id or "").lower()
+                runtime = node.status.node_info.container_runtime_version.lower()
+                kubelet = node.status.node_info.kubelet_version.lower()
+                node_name = node.metadata.name.lower()
+
+                if any(keyword in provider_id for keyword in ["kind", "k3d", "minikube"]):
+                    return True
+                if any(keyword in runtime for keyword in ["containerd://", "docker://"]) and "kind" in node_name:
+                    return True
+                if "minikube" in node_name or "k3d" in node_name:
+                    return True
+                if "kind" in kubelet:
+                    return True
+
+            return False
+        except Exception as e:
+            print(f"Error detecting cluster type: {e}")
+            return False
 
     def get_matching_replicasets(self, namespace: str, deployment_name: str) -> list[client.V1ReplicaSet]:
         apps_v1 = self.apps_v1_api
