@@ -45,7 +45,7 @@ class ReadError(Problem):
             raise RuntimeError(f"No pods found for service '{self.faulty_service}' in namespace '{self.namespace}'.")
 
         # Use Khaos HWFaultInjector (injects -EIO on read())
-        self.injector.read_error(target_pods)
+        self.injector.inject(target_pods, "read_error")
         print(f"Injected read_error into pods: {', '.join(target_pods)}\n")
 
     @mark_fault_injected
