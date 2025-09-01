@@ -38,6 +38,7 @@ from srearena.conductor.problems.pod_failure import ChaosMeshPodFailure
 from srearena.conductor.problems.pod_kill import ChaosMeshPodKill
 from srearena.conductor.problems.product_catalog_failure import ProductCatalogServiceFailure
 from srearena.conductor.problems.pvc_claim_mismatch import PVCClaimMismatch
+from srearena.conductor.problems.read_error import ReadError
 from srearena.conductor.problems.readiness_probe_misconfiguration import ReadinessProbeMisconfiguration
 from srearena.conductor.problems.recommendation_service_cache_failure import RecommendationServiceCacheFailure
 from srearena.conductor.problems.resource_request import ResourceRequestTooLarge, ResourceRequestTooSmall
@@ -209,6 +210,7 @@ class ProblemRegistry:
             "incorrect_image": IncorrectImage,
             "namespace_memory_limit": NamespaceMemoryLimit,
             "pvc_claim_mismatch": PVCClaimMismatch,
+            "read_error": ReadError,
             # "missing_service_astronomy_shop": lambda: MissingService(app_name="astronomy_shop", faulty_service="ad"),
             # K8S operator misoperation -> Refactor later, not sure if they're working
             # They will also need to be updated to the new problem format.
