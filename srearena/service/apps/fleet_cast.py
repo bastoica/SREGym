@@ -7,7 +7,9 @@ from srearena.paths import FLEET_CAST_METADATA
 from srearena.service.apps.base import Application
 from srearena.service.helm import Helm
 from srearena.service.kubectl import KubeCtl
-
+import yaml
+from pathlib import Path
+from srearena.service.apps.tidb_cluster_operator import TiDBClusterDeployer
 
 class FleetCast(Application):
     def __init__(self):
@@ -25,7 +27,13 @@ class FleetCast(Application):
     def deploy(self):
         """Deploy the Helm configurations."""
         self.kubectl.create_namespace_if_not_exist(self.namespace)
+        print("Deploying TiDB Cluster with Operator...")
+        base_dir = Path(__file__).parent.parent  # go up from apps/ → service/
+        meta_path = base_dir / "metadata" / "tidb_metadata.json"
 
+        deployer = TiDBClusterDeployer(str(meta_path))
+        deployer.deploy_all()
+        print("---DEPLOYED TiDB CLUSTER---")
         Helm.add_repo(
             "fleetcast",
             "https://lilygn.github.io/FleetCast",
@@ -36,16 +44,16 @@ class FleetCast(Application):
 
     def delete(self):
         """Delete the Helm configurations."""
-        # Helm.uninstall(**self.helm_configs)
-        # self.kubectl.delete_namespace(self.helm_configs["namespace"])
-        # self.kubectl.wait_for_namespace_deletion(self.namespace)
+        Helm.uninstall(**self.helm_configs)
+        self.kubectl.delete_namespace(self.helm_configs["namespace"])
+        self.kubectl.wait_for_namespace_deletion(self.namespace)
 
-    # def cleanup(self):
-    #     Helm.uninstall(**self.helm_configs)
-    #     self.kubectl.delete_namespace(self.helm_configs["namespace"])
+    def cleanup(self):
+        Helm.uninstall(**self.helm_configs)
+        self.kubectl.delete_namespace(self.helm_configs["namespace"])
 
-    #     if hasattr(self, "wrk"):
-    #         self.wrk.stop()
+        if hasattr(self, "wrk"):
+            self.wrk.stop()
 
     def create_workload(self):
         self.wrk = LocustWorkloadManager(

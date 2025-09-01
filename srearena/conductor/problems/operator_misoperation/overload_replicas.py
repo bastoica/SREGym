@@ -32,14 +32,14 @@ class K8SOperatorOverloadReplicasFault(Problem):
     @mark_fault_injected
     def inject_fault(self):
         print("== Fault Injection ==")
-        injector = K8SOperatorFaultInjector(namespace=self.namespace)
+        injector = K8SOperatorFaultInjector(namespace='tidb-cluster')
         injector.inject_overload_replicas
         print(f"[FAULT INJECTED] {self.faulty_service} overload replica failure\n")
 
     @mark_fault_injected
     def recover_fault(self):
         print("== Fault Recovery ==")
-        injector = K8SOperatorFaultInjector(namespace=self.namespace)
+        injector = K8SOperatorFaultInjector(namespace='tidb-cluster')
         injector.recover_overload_replicas()
         print(f"[FAULT RECOVERED] {self.faulty_service} overload replica failure\n")
 

@@ -24,14 +24,14 @@ class K8SOperatorNonExistentStorageFault(Problem):
     @mark_fault_injected
     def inject_fault(self):
         print("== Fault Injection ==")
-        injector = K8SOperatorFaultInjector(namespace=self.namespace)
+        injector = K8SOperatorFaultInjector(namespace='tidb-cluster')
         injector.inject_non_existent_storage()
         print(f"[FAULT INJECTED] {self.faulty_service} non-existent storage failure\n")
 
     @mark_fault_injected
     def recover_fault(self):
         print("== Fault Recovery ==")
-        injector = K8SOperatorFaultInjector(namespace=self.namespace)
+        injector = K8SOperatorFaultInjector(namespace='tidb-cluster')
         injector.recover_non_existent_storage()
         print(f"[FAULT RECOVERED] {self.faulty_service} non-existent storage failure\n")
 

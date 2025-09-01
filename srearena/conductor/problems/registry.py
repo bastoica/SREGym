@@ -63,16 +63,16 @@ from srearena.conductor.problems.operator_misoperation.non_existent_storage impo
 class ProblemRegistry:
     def __init__(self):
         self.PROBLEM_REGISTRY = {
-            # "k8s_target_port-misconfig": lambda: K8STargetPortMisconfig(faulty_service="user-service"),
-            # "auth_miss_mongodb": MongoDBAuthMissing,
-            # "revoke_auth_mongodb-1": lambda: MongoDBRevokeAuth(faulty_service="mongodb-geo"),
-            # "revoke_auth_mongodb-2": lambda: MongoDBRevokeAuth(faulty_service="mongodb-rate"),
-            # "storage_user_unregistered-1": lambda: MongoDBUserUnregistered(faulty_service="mongodb-geo"),
-            # "storage_user_unregistered-2": lambda: MongoDBUserUnregistered(faulty_service="mongodb-rate"),
-            # "misconfig_app_hotel_res": MisconfigAppHotelRes,
-            # "scale_pod_zero_social_net": ScalePodSocialNet,
-            # "assign_to_non_existent_node": AssignNonExistentNode,
-            # "pod_anti_affinity_deadlock": PodAntiAffinityDeadlock,
+             "k8s_target_port-misconfig": lambda: K8STargetPortMisconfig(faulty_service="user-service"),
+             "auth_miss_mongodb": MongoDBAuthMissing,
+             "revoke_auth_mongodb-1": lambda: MongoDBRevokeAuth(faulty_service="mongodb-geo"),
+            "revoke_auth_mongodb-2": lambda: MongoDBRevokeAuth(faulty_service="mongodb-rate"),
+             "storage_user_unregistered-1": lambda: MongoDBUserUnregistered(faulty_service="mongodb-geo"),
+             "storage_user_unregistered-2": lambda: MongoDBUserUnregistered(faulty_service="mongodb-rate"),
+             "misconfig_app_hotel_res": MisconfigAppHotelRes,
+             "scale_pod_zero_social_net": ScalePodSocialNet,
+             "assign_to_non_existent_node": AssignNonExistentNode,
+             "pod_anti_affinity_deadlock": PodAntiAffinityDeadlock,
             # # --- Chaos Mesh problems (No mitigation oracle)
             # "chaos_mesh_container_kill": ChaosMeshContainerKill,
             # "chaos_mesh_pod_failure": ChaosMeshPodFailure,
@@ -215,7 +215,6 @@ class ProblemRegistry:
             # "missing_service_astronomy_shop": lambda: MissingService(app_name="astronomy_shop", faulty_service="ad"),
             # K8S operator misoperation -> Refactor later, not sure if they're working
             # They will also need to be updated to the new problem format.
-            # "operator_overload_replicas-detection-1": K8SOperatorOverloadReplicasDetection,
             "operator_overload_replicas": K8SOperatorOverloadReplicasFault,
              "operator_non_existent_storage": K8SOperatorNonExistentStorageFault,
             "operator_invalid_affinity_toleration": K8SOperatorInvalidAffinityTolerationFault,

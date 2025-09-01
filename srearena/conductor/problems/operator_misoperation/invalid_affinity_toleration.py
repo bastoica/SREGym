@@ -31,14 +31,15 @@ class K8SOperatorInvalidAffinityTolerationFault(Problem):
     @mark_fault_injected
     def inject_fault(self):
         print("== Fault Injection ==")
-        injector = K8SOperatorFaultInjector(namespace=self.namespace)
+        injector = K8SOperatorFaultInjector(namespace='tidb-cluster')
         injector.inject_invalid_affinity_toleration()
         print(f"[FAULT INJECTED] {self.faulty_service} invalid affinity toleration failure\n")
 
     @mark_fault_injected
     def recover_fault(self):
         print("== Fault Recovery ==")
-        injector = K8SOperatorFaultInjector(namespace=self.namespace)
+        
+        injector = K8SOperatorFaultInjector(namespace='tidb-cluster')
         injector.recover_invalid_affinity_toleration()
         print(f"[FAULT INJECTED] {self.faulty_service} invalid affinity toleration failure\n")
 

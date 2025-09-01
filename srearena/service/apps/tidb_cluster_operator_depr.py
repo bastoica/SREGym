@@ -78,6 +78,5 @@ class TiDBClusterDeployer:
         print("Deployment complete.")
 
 if __name__ == "__main__":
-    # Replace path below with your actual JSON config path
-    deployer = TiDBClusterDeployer("path/to/metadata.json")
+    deployer = TiDBClusterDeployer("../metadata/tidb_metadata.json")
     deployer.deploy_all()
