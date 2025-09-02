@@ -6,6 +6,7 @@ import time
 from pathlib import Path
 
 import yaml
+from kubernetes import config
 
 from srearena.generators.fault.base import FaultInjector
 from srearena.paths import TARGET_MICROSERVICES
@@ -13,7 +14,6 @@ from srearena.service.apps.base import Application
 from srearena.service.helm import Helm
 from srearena.service.kubectl import KubeCtl
 
-from kubernetes import config
 
 class VirtualizationFaultInjector(FaultInjector):
     def __init__(self, namespace: str):
@@ -1669,16 +1669,16 @@ class VirtualizationFaultInjector(FaultInjector):
     def inject_rpc_timeout_retries_misconfiguration(self, configmap:str):
         GRPC_CLIENT_TIMEOUT = "50ms"
         GRPC_CLIENT_RETRIES_ON_ERROR = "30"
-        config_patch_command = f"kubectl patch configmap {configmap} -n {self.namespace} -p '{{\"data\":{{\"GRPC_CLIENT_TIMEOUT\":\"{GRPC_CLIENT_TIMEOUT}\",\"GRPC_CLIENT_RETRIES_ON_ERROR\":\"{GRPC_CLIENT_RETRIES_ON_ERROR}\"}}}}'"
+        config_patch_command = f'kubectl patch configmap {configmap} -n {self.namespace} -p \'{{"data":{{"GRPC_CLIENT_TIMEOUT":"{GRPC_CLIENT_TIMEOUT}","GRPC_CLIENT_RETRIES_ON_ERROR":"{GRPC_CLIENT_RETRIES_ON_ERROR}"}}}}\''
         self.kubectl.exec_command(config_patch_command)
         deployment_rollout_command = f"kubectl rollout restart deployment -l configmap={configmap} -n {self.namespace}"
         self.kubectl.exec_command(deployment_rollout_command)
         self.kubectl.wait_for_ready(self.namespace)
 
-    def recover_rpc_timeout_retries_misconfiguration(self, configmap:str):
+    def recover_rpc_timeout_retries_misconfiguration(self, configmap: str):
         GRPC_CLIENT_TIMEOUT = "1s"
         GRPC_CLIENT_RETRIES_ON_ERROR = "1"
-        config_patch_command = f"kubectl patch configmap {configmap} -n {self.namespace} -p '{{\"data\":{{\"GRPC_CLIENT_TIMEOUT\":\"{GRPC_CLIENT_TIMEOUT}\",\"GRPC_CLIENT_RETRIES_ON_ERROR\":\"{GRPC_CLIENT_RETRIES_ON_ERROR}\"}}}}'"
+        config_patch_command = f'kubectl patch configmap {configmap} -n {self.namespace} -p \'{{"data":{{"GRPC_CLIENT_TIMEOUT":"{GRPC_CLIENT_TIMEOUT}","GRPC_CLIENT_RETRIES_ON_ERROR":"{GRPC_CLIENT_RETRIES_ON_ERROR}"}}}}\''
         self.kubectl.exec_command(config_patch_command)
         deployment_rollout_command = f"kubectl rollout restart deployment -l configmap={configmap} -n {self.namespace}"
         self.kubectl.exec_command(deployment_rollout_command)

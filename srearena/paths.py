@@ -24,3 +24,6 @@ ASTRONOMY_SHOP_METADATA = BASE_DIR / "service" / "metadata" / "astronomy-shop.js
 TIDB_METADATA = BASE_DIR / "service" / "metadata" / "tidb-with-operator.json"
 FLIGHT_TICKET_METADATA = BASE_DIR / "service" / "metadata" / "flight-ticket.json"
 BLUEPRINT_HOTEL_RES_METADATA = BASE_DIR / "service" / "metadata" / "blueprint-hotel-reservation.json"
+
+# Khaos DaemonSet
+KHAOS_DS = BASE_DIR / "service" / "khaos.yaml"
