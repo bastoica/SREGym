@@ -132,9 +132,9 @@ class Wrk2:
         namespace = "default"
         configmap_name = "wrk2-payload-script"
 
-        self.create_configmap(name=configmap_name, namespace=namespace, payload_script_path=payload_script)
+        self.create_configmap(name=configmap_name, namespace=namespace, payload_script_path=payload_script, url=url)
 
-        self.create_wrk_job(job_name="wrk2-job", namespace=namespace, payload_script=payload_script.name, url=url)
+        self.create_wrk_job(job_name="wrk2-job", namespace=namespace, payload_script=payload_script.name)
 
     def stop_workload(self, job_name="wrk2-job"):
         namespace = "default"
@@ -158,19 +158,18 @@ class Wrk2:
         console = Console()
         waited = 0
 
-        with console.status(f"[bold yellow]Waiting for job '{job_name}' to be deleted..."):
-            while waited < max_wait:
-                try:
-                    api_instance.read_namespaced_job(name=job_name, namespace=namespace)
-                    time.sleep(sleep)
-                    waited += sleep
-                except client.exceptions.ApiException as e:
-                    if e.status == 404:
-                        console.log(f"[bold green]Job '{job_name}' successfully deleted.")
-                        return
-                    else:
-                        console.log(f"[red]Error checking job deletion: {e}")
-                        raise
+        while waited < max_wait:
+            try:
+                api_instance.read_namespaced_job(name=job_name, namespace=namespace)
+                time.sleep(sleep)
+                waited += sleep
+            except client.exceptions.ApiException as e:
+                if e.status == 404:
+                    console.log(f"[bold green]Job '{job_name}' successfully deleted.")
+                    return
+                else:
+                    console.log(f"[red]Error checking job deletion: {e}")
+                    raise
 
         raise TimeoutError(f"[red]Timed out waiting for job '{job_name}' to be deleted.")
 

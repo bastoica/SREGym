@@ -18,6 +18,8 @@ class FlightTicket(Application):
     def load_app_json(self):
         super().load_app_json()
         metadata = self.get_app_json()
+        self.app_name = metadata["Name"]
+        self.description = metadata["Desc"]
         self.frontend_service = None
         self.frontend_port = None
 
@@ -39,6 +41,7 @@ class FlightTicket(Application):
 
     def cleanup(self):
         Helm.uninstall(**self.helm_configs)
+        self.kubectl.delete_namespace(self.helm_configs["namespace"])
 
 
 # if __name__ == "__main__":

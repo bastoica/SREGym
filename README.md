@@ -1,6 +1,6 @@
 <div align="center">
 
-<h1>SREArena</h1>
+<h1>A Unified Framework for Benchmarking SRE Agents</h1>
 
 <!-- [🤖Overview](#🤖overview) |  -->
 [🚀Quick Start](#🚀quickstart) | 
@@ -14,9 +14,12 @@
 </div>
 
 
-SREArena is a holistic framework to enable the design, development, and evaluation of autonomous AIOps agents that, additionally, serve the purpose of building reproducible, standardized, interoperable and scalable benchmarks. SREArena can deploy microservice cloud environments, inject faults, generate workloads, and export telemetry data, while orchestrating these components and providing interfaces for interacting with and evaluating agents. 
+SREArena is a unified framework to enable the design, development, and evaluation of autonomous AIOps agents that, additionally, serve the purpose of building reproducible, standardized, interoperable and scalable benchmarks. SREArena can deploy microservice cloud environments, inject faults, generate workloads, and export telemetry data, while orchestrating these components and providing interfaces for interacting with and evaluating agents. 
 
-Moreover, SREArena provides a built-in benchmark suite with a set of problems to evaluate AIOps agents in an interactive environment. This suite can be easily extended to meet user-specific needs. See the problem list [here](/srearena/conductor/problems/registry.py#L15).
+Moreover, SREArena provides a built-in benchmark suite with a set of problems to evaluate AIOps agents in an interactive environment. This suite can be easily extended to meet user-specific needs.
+
+### Problems
+See a complete problem list with descriptions [here](https://docs.google.com/spreadsheets/d/1FGIeLNcKsHjrZGQ_VJcQRGl6oTmYyzjW0_ve5tfM_eg/edit?usp=sharing).
 
 <h2 id="📦installation">📦 Installation</h2>
 
@@ -24,12 +27,8 @@ Moreover, SREArena provides a built-in benchmark suite with a set of problems to
 - Python >= 3.12
 - [Helm](https://helm.sh/)
 - [brew](https://docs.brew.sh/Homebrew-and-Python)
+- [kubectl](https://kubernetes.io/docs/tasks/tools/)
 
-Recommended installation:
-```bash
-brew install python@3.12 uv
-```
-https://github.com/astral-sh/uv
 We recommend [uv](https://github.com/astral-sh/uv) for managing dependencies. You can also use a standard `pip install -e .` to install the dependencies.
 
 ```bash
@@ -39,9 +38,10 @@ which python3.12 # finds the python interpreter path
 uv venv -p <python_interpreter_path>
 source .venv/bin/activate
 uv sync
+pre-commit install
 ```
 
-<h2 id="🚀quickstart">🚀 Quick Start </h2>
+<h2 id="🚀quickstart">🚀 Setup Your Cluster</h2>
 
 <!-- TODO: Add instructions for both local cluster and remote cluster -->
 Choose either a) or b) to set up your cluster and then proceed to the next steps.
@@ -61,119 +61,71 @@ If you're running into issues, consider building a Docker image for your machine
 
 When using kind, each node pulls images from docker hub independently, which can easily hit the rate limitation. You can uncomment `containerdConfigPatches` in the corresponding kind config file to pull images from our exclusive image registry without rate limiting.
 
-### [Tips]
-If you are running SREArena using a proxy, beware of exporting the HTTP proxy as `172.17.0.1`. When creating the kind cluster, all the nodes in the cluster will inherit the proxy setting from the host environment and the Docker container. 
-
-The `172.17.0.1` address is used to communicate with the host machine. For more details, refer to the official guide: [Configure Kind to Use a Proxy](https://kind.sigs.k8s.io/docs/user/quick-start/#configure-kind-to-use-a-proxy).
-
-Additionally, Docker doesn't support SOCKS5 proxy directly. If you're using a SOCKS5 protocol to proxy, you may need to use [Privoxy](https://www.privoxy.org) to forward SOCKS5 to HTTP.
-
-If you're running VLLM and the LLM agent locally, Privoxy will by default proxy `localhost`, which will cause errors. To avoid this issue, you should set the following environment variable:
-
-```bash
-export no_proxy=localhost
-``` 
-
-After finishing cluster creation, proceed to the next "Update `config.yml`" step.
-
 ### b) Remote cluster
-SREArena supports any remote kubernetes cluster that your `kubectl` context is set to, whether it's a cluster from a cloud provider or one you build yourself. We have some Ansible playbooks to setup clusters on providers like [CloudLab](https://www.cloudlab.us/) and our own machines. Follow this [README](./scripts/ansible/README.md) to set up your own cluster, and then proceed to the next "Update `config.yml`" step.
+SREArena supports any remote kubernetes cluster that your `kubectl` context is set to, whether it's a cluster from a cloud provider or one you build yourself. 
 
-### Update `config.yml`
-```bash
-cd srearena
-cp config.yml.example config.yml
-```
-Update your `config.yml` so that `k8s_host` is the host name of the control plane node of your cluster. Update `k8s_user` to be your username on the control plane node. If you are using a kind cluster, your `k8s_host` should be `kind`. If you're running SREArena on cluster, your `k8s_host` should be `localhost`.
-
-### Running agents
-Human as the agent:
-
-```bash
-python3 cli.py
-(srearena) $ start k8s_target_port-misconfig # or choose any problem you want to solve
-# ... wait for the setup ...
-(srearena) $ submit("Yes") # submit solution
-```
-
-Run GPT-4 baseline agent:
-
-```bash
-# Create a .env file in the project root (if not exists)
-echo "OPENAI_API_KEY=<YOUR_OPENAI_API_KEY>" > .env
-# Add more API keys as needed:
-# echo "QWEN_API_KEY=<YOUR_QWEN_API_KEY>" >> .env
-# echo "DEEPSEEK_API_KEY=<YOUR_DEEPSEEK_API_KEY>" >> .env
-
-python3 clients/gpt.py # you can also change the problem to solve in the main() function
-```
-
-The clients will automatically load API keys from your .env file.
-
-You can check the running status of the cluster using [k9s](https://k9scli.io/) or other cluster monitoring tools conveniently.
-
-To browse your logged `session_id` values in the W&B app as a table:
-
-1. Make sure you have W&B installed and configured.
-2. Set the USE_WANDB environment variable:
-    ```bash
-    # Add to your .env file
-    echo "USE_WANDB=true" >> .env
-    ```
-3. In the W&B web UI, open any run and click Tables → Add Query Panel.
-4. In the key field, type `runs.summary` and click `Run`, then you will see the results displayed in a table format.
+We have some Ansible playbooks to setup clusters on providers like [CloudLab](https://www.cloudlab.us/) and our own machines. Follow this [README](./scripts/ansible/README.md) to set up your own cluster.
 
 <h2 id="⚙️usage">⚙️ Usage</h2>
 
 SREArena can be used in the following ways:
-- [Onboard your agent to SREArena](#how-to-onboard-your-agent-to-srearena)
+- [Run agent on SREArena](#run-agent-on-srearena)
 - [Add new applications to SREArena](#how-to-add-new-applications-to-srearena)
 - [Add new problems to SREArena](#how-to-add-new-problems-to-srearena)
 
 
-### How to onboard your agent to SREArena?
+### Run agent on SREArena
 
-SREArena makes it extremely easy to develop and evaluate your agents. You can onboard your agent to SREArena in 3 simple steps:
+#### Run our demo agent "Stratus"
+We have ported [the Stratus agent](https://anonymous.4open.science/r/stratus-agent/README.md) to SREArena as a demo agent.
 
-1. **Create your agent**: You are free to develop agents using any framework of your choice. The only requirements are:
-    - Wrap your agent in a Python class, say `Agent`
-    - Add an async method `get_action` to the class:
+To run the benchmark with Stratus as the demo agent, uncomment line 43 in [`main.py`](https://github.com/xlab-uiuc/SREArena/blob/main/main.py#L43).
+It allows the benchmark to kick start the agent when the problem setup is done.
 
-        ```python
-        # given current state and returns the agent's action
-        async def get_action(self, state: str) -> str:
-            # <your agent's logic here>
-        ```
+If you would like to run Stratus by itself, please take a look at [`driver.py`](https://github.com/xlab-uiuc/SREArena/blob/stratus_eval/clients/stratus/stratus_agent/driver/driver.py).
 
-2. **Register your agent with SREArena**: You can now register the agent with SREArena's conductor. The conductor will manage the interaction between your agent and the environment:
+We evaluated Stratus with `llama-3-3-70b-instruct`, here is a quick glance of the results:
+- NOOP detection success rate: 34.7%
+- Faulty system detection success rate: 89.8%
+- Localization success rate: 16.3%
+   - percentage of agent answer subsets ground truth: 18.4%
+- Mitigation success rate: 22.4%
 
-    ```python
-    from srearena.conductor import Conductor
+Detailed evaluation, with token usages and step counts, will be released soon.
 
-    agent = Agent()             # create an instance of your agent
-    orch = Conductor()       # get SREArena's conductor
-    orch.register_agent(agent)  # register your agent with SREArena
-    ```
+#### Run your agent on SREArena
+SREArena makes it extremely easy to develop and evaluate your agents, thanks to its decoupled design. 
+There are at most 4 phases in each problem of SREArena:
+1. **NOOP Detection**: The cluster has no incidents. The agent should detect no incident in the cluster. 
+   
+   **Expected submission**: "Yes" or "No" to indicate incident.
+2. **Incident Detection**: The cluster has a running incident. The agent should detect an incident in the cluster.
 
-3. **Evaluate your agent on a problem**:
+   **Expected submission**: "Yes" or "No" to indicate incident.
+3. **Fault Localization**: The agent should localize where the incident originates.
 
-    1. **Initialize a problem**: SREArena provides a list of problems that you can evaluate your agent on. Find the list of available problems [here](/srearena/conductor/problems/registry.py) or using `orch.problems.get_problem_ids()`. Now initialize a problem by its ID: 
+   **Expected submission**: A list of strings representing the faulty components in the cluster.
+4. **Incident Mitigation**: The agent should try to mitigate the incident and bring the cluster back online.
 
-        ```python
-        problem_desc, instructs, apis = orch.init_problem("k8s_target_port-misconfig-mitigation-1")
-        ```
-    
-    2. **Set agent context**: Use the problem description, instructions, and APIs available to set context for your agent. (*This step depends on your agent's design and is left to the user*)
+   **Expected submission**: empty submission to indicate that the agent is satisfied with the cluster.
 
 
-    3. **Start the problem**: Start the problem by calling the `start_problem` method. You can specify the maximum number of steps too:
+The benchmark is driven by agent submissions. The benchmark expects the agent to submit a `POST` HTTP API call to the `http://localhost:8000/submit` HTTP endpoint.
+Each submission pushes the benchmark to the next phase.
 
-        ```python
-        import asyncio
-        asyncio.run(orch.start_problem())
-        ```
+Therefore, if you would like to test your agent on SREArena, simply run [`main.py`](https://github.com/xlab-uiuc/SREArena/blob/main/main.py) to start the benchmark,
+then instruct your agent to submit answers with HTTP API call in each phase of the benchmark problem.
 
-This process will create a [`Session`](/srearena/session.py) with the conductor, where the agent will solve the problem. The conductor will evaluate your agent's solution and provide results (stored under `data/results/`). You can use these to improve your agent.
+SREArena also provides a suite of MCP Servers that support basic cluster management needs.
+
+1. **Jaeger MCP Server**: Allows the agent to query the Jaeger tracing service in the cluster.
+2. **Prometheus MCP Server**: Allows the agent to query metrics traced by Prometheus in the cluster.
+3. **Kubernetes MCP Server**: Allows the agent to execute `kubectl` commands against the k8s cluster.
+4. **Submission MCP Server**: Allows the agent to submit answers to the benchmark.
+
+The Stratus agent in [`clients/stratus`](https://github.com/xlab-uiuc/SREArena/tree/main/clients/stratus)
+demonstrates basic usages of these MCP servers in an agent.
+
 
 
 ### How to add new applications to SREArena?
@@ -236,8 +188,9 @@ in the [`problems`](/srearena/conductor/problems) directory, as follows:
     from srearena.service.apps.myapp import MyApp
     from srearena.conductor.oracles.detection import DetectionOracle
     from srearena.conductor.oracles.localization import LocalizationOracle
-    from srearena.conductor.oracles.mitigation import MitigationOracle
+    from srearena.conductor.oracles.mitigation import MitigationOracle # or custom oracle
     from srearena.conductor.problems.base import Problem
+    from srearena.utils.decorators import mark_fault_injected
     ```
 
 2. **Define**. To define a problem, create a class that inherits from the `Problem` class, and defines 2 methods:, `inject_fault`, and `recover_fault`. Remember to setup your oracles as well!:
@@ -248,15 +201,15 @@ in the [`problems`](/srearena/conductor/problems) directory, as follows:
             self.app = MyApp()
             self.faulty_service # Used for localization, can be None or a list
             # === Attach evaluation oracles ===
-            self.detection_oracle = DetectionOracle(problem=self, expected="Yes")
-
             self.localization_oracle = LocalizationOracle(problem=self, expected=[self.faulty_service])
 
             self.mitigation_oracle = MitigationOracle(problem=self)
         
+        @mark_fault_injected
         def inject_fault(self)
             # <your fault injection logic here>
         
+        @mark_fault_injected
         def recover_fault(self):
             # <your fault recovery logic here>
     ```
@@ -347,7 +300,6 @@ See a full example of a problem [here](/srearena/conductor/problems/target_port.
 <details>
   <summary>Utils</summary>
   <pre>
-  ├── config.yml - srearena configs
   ├── config.py - config parser
   ├── paths.py - paths and constants
   ├── session.py - srearena session manager
@@ -360,6 +312,18 @@ See a full example of a problem [here](/srearena/conductor/problems/target_port.
 
 <summary><code>cli.py</code>: A command line interface to interact with SREArena, e.g., used by human operators.</summary>
 
+### [Tips]
+If you are running SREArena using a proxy, beware of exporting the HTTP proxy as `172.17.0.1`. When creating the kind cluster, all the nodes in the cluster will inherit the proxy setting from the host environment and the Docker container. 
+
+The `172.17.0.1` address is used to communicate with the host machine. For more details, refer to the official guide: [Configure Kind to Use a Proxy](https://kind.sigs.k8s.io/docs/user/quick-start/#configure-kind-to-use-a-proxy).
+
+Additionally, Docker doesn't support SOCKS5 proxy directly. If you're using a SOCKS5 protocol to proxy, you may need to use [Privoxy](https://www.privoxy.org) to forward SOCKS5 to HTTP.
+
+If you're running VLLM and the LLM agent locally, Privoxy will by default proxy `localhost`, which will cause errors. To avoid this issue, you should set the following environment variable:
+
+```bash
+export no_proxy=localhost
+``` 
 
 <!-- <h2 id="📄how-to-cite">📄 How to Cite</h2>
 

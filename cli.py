@@ -1,7 +1,14 @@
-"""SREArena CLI client."""
+"""
+SREArena CLI client. Use this for debugging and platform development work—
+otherwise use main.py.
+
+This version talks directly to the in-process Conductor for both environment
+setup and grading, but still gives you the PromptToolkit+Rich UI.
+"""
 
 import asyncio
-import atexit
+import json
+import sys
 
 from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import WordCompleter
@@ -11,129 +18,136 @@ from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
 
-from srearena.conductor import Conductor, exit_cleanup_fault
+from srearena.conductor.conductor import Conductor
 from srearena.service.shell import Shell
-from srearena.utils.sigint_aware_section import SigintAwareSection
 
 WELCOME = """
 # SREArena
 - Type your commands or actions below.
-- Use `exit` to quit the application.
+"""
+
+OPTIONS = """
 - Use `start <problem_id>` to begin a new problem.
+- Use `deploy <app_name>` / `undeploy <app_name>` to manage standalone apps.
+- Use `list` to see deployed apps.
+- Use `options` to re-print this list.
+- Use `exit` to quit.
 """
 
-TASK_MESSAGE = """{prob_desc}
-You are provided with the following APIs to interact with the service:
+WARNING = (
+    "[bold yellow][WARNING][/bold yellow] Starting a new problem will "
+    "restart any running app. Make sure you finish working before you start."
+)
 
-{telemetry_apis}
-
-You are also provided an API to a secure terminal to the service where you can run commands:
-
-{shell_api}
-
-Finally, you will submit your solution for this task using the following API:
-
-{submit_api}
-
-At each turn think step-by-step and respond with your action.
-"""
+# (If you still want TASK_MESSAGE for problem context, you can re-enable it here.)
 
 
 class HumanAgent:
-    def __init__(self, conductor):
+    def __init__(self, conductor: Conductor):
         self.session = PromptSession()
         self.console = Console(force_terminal=True, color_system="auto")
         self.conductor = conductor
         self.pids = self.conductor.problems.get_problem_ids()
-        self.completer = WordCompleter(self.pids, ignore_case=True, match_middle=True)
-
-    def display_welcome_message(self):
-        self.console.print(Markdown(WELCOME), justify="center")
-        self.console.print()
-
-    def display_context(self, problem_desc, apis):
-        self.shell_api = self._filter_dict(apis, lambda k, _: "exec_shell" in k)
-        self.submit_api = self._filter_dict(apis, lambda k, _: "submit" in k)
-        self.telemetry_apis = self._filter_dict(apis, lambda k, _: "exec_shell" not in k and "submit" not in k)
-
-        stringify_apis = lambda apis: "\n\n".join([f"{k}\n{v}" for k, v in apis.items()])
-
-        self.task_message = TASK_MESSAGE.format(
-            prob_desc=problem_desc,
-            telemetry_apis=stringify_apis(self.telemetry_apis),
-            shell_api=stringify_apis(self.shell_api),
-            submit_api=stringify_apis(self.submit_api),
+        self.completer = WordCompleter(
+            ["list", "options", "exit"] + [f"start {pid}" for pid in self.pids],
+            ignore_case=True,
+            match_middle=True,
+            sentence=True,
         )
+        self.session_purpose = None  # "problem", "exit", etc.
 
-        self.console.print(Markdown(self.task_message))
-
-    def display_env_message(self, env_input):
-        self.console.print(Panel(env_input, title="Environment", style="white on blue"))
+    def display_welcome(self):
+        self.console.print(Markdown(WELCOME), justify="center")
+        self.console.print(Markdown(OPTIONS), justify="center")
+        self.console.print(WARNING)
         self.console.print()
 
-    async def set_problem(self):
-        user_input = await self.get_user_input(completer=self.completer)
-
-        if user_input.startswith("start"):
-            try:
-                _, problem_id = user_input.split(maxsplit=1)
-            except ValueError:
-                self.console.print("Invalid command. Please use `start <problem_id>`")
+    async def select_mode(self):
+        """Prompt until we get 'start <problem_id>' or 'exit'."""
+        while True:
+            inp = await self._prompt()
+            cmd = inp.strip().split(maxsplit=1)
+            if cmd[0].lower() == "exit":
+                sys.exit(0)
+            if cmd[0].lower() == "options":
+                self.console.print(Markdown(OPTIONS), justify="center")
+                continue
+            if cmd[0].lower() == "list":
+                apps = self.conductor.get_deployed_apps()
+                text = "\n".join(apps) if apps else "No apps deployed"
+                self.console.print(Panel(text, title="Deployed Apps"))
+                continue
+            if cmd[0].lower() == "start" and len(cmd) == 2:
+                pid = cmd[1]
+                if pid not in self.pids:
+                    self.console.print(f"[red]Unknown problem id: {pid}")
+                    continue
+                self.conductor.problem_id = pid
+                self.session_purpose = "problem"
                 return
+            self.console.print("[red]Invalid command. Type `options` to see choices.")
 
-            self.conductor.problem_id = problem_id.strip()
+    async def interactive_loop(self):
+        """Once problem is started, repeatedly shell or submit until done."""
+        env = ""
+        while self.conductor.submission_stage != "done":
+            # display last environment or grading response
+            if env:
+                print(env)
 
-        else:
-            self.console.print("Invalid command. Please use `start <problem_id>`")
+            inp = await self._prompt()
+            text = inp.strip()
 
-    async def get_action(self, env_input):
-        self.display_env_message(env_input)
-        user_input = await self.get_user_input()
+            # shell command
+            if not text.startswith("submit("):
+                try:
+                    out = Shell.exec(text)
+                except Exception as e:
+                    out = f"[❌] Shell error: {e}"
+                env = out
+                continue
 
-        if not user_input.strip().startswith("submit("):
+            wrapped = f"```\n{text}\n```"
             try:
-                output = Shell.exec(user_input.strip())
-                self.display_env_message(output)
+                resp = await self.conductor.submit(wrapped)
             except Exception as e:
-                self.display_env_message(f"[❌] Shell command failed: {e}")
-            return await self.get_action(env_input)
+                env = f"[❌] Grading error: {e}"
+            else:
+                env = resp
 
-        return f"Action:```\n{user_input}\n```"
+        # final results panel
+        final = json.dumps(self.conductor.results, indent=2)
+        self.console.print(Panel(final, title="Final Results", style="bold green"))
 
-    async def get_user_input(self, completer=None):
+    async def _prompt(self) -> str:
         loop = asyncio.get_running_loop()
         style = Style.from_dict({"prompt": "ansigreen bold"})
-        prompt_text = [("class:prompt", "SREArena> ")]
-
+        prompt_txt = [("class:prompt", "SREArena> ")]
         with patch_stdout():
             try:
-                with SigintAwareSection():
-                    input = await loop.run_in_executor(
-                        None,
-                        lambda: self.session.prompt(prompt_text, style=style, completer=completer),
-                    )
+                return await loop.run_in_executor(
+                    None,
+                    lambda: self.session.prompt(prompt_txt, style=style, completer=self.completer),
+                )
+            except (KeyboardInterrupt, EOFError):
+                sys.exit(0)
 
-                    if input.lower() == "exit":
-                        raise SystemExit
-
-                    return input
-            except (SystemExit, KeyboardInterrupt, EOFError):
-                atexit.register(exit_cleanup_fault, conductor=self.conductor)
-                raise SystemExit from None
-
-    def _filter_dict(self, dictionary, filter_func):
-        return {k: v for k, v in dictionary.items() if filter_func(k, v)}
 
 async def main():
     conductor = Conductor()
     agent = HumanAgent(conductor)
-    conductor.register_agent(agent, name="human")
+    conductor.register_agent()  # no-op but for symmetry
 
-    agent.display_welcome_message()
-    await agent.set_problem()
+    # 1) Intro & pick a problem
+    agent.display_welcome()
+    await agent.select_mode()
 
-    results = await conductor.start_problem()
-    print(results)
+    # 2) Deploy environment & launch HTTP server
+    await conductor.start_problem()
+
+    # 3) Interactive shell / submit loop
+    await agent.interactive_loop()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

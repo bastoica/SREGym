@@ -15,24 +15,29 @@ RETRY_BACKOFF_FACTOR = float(os.getenv("RETRY_BACKOFF_FACTOR", 0.3))
 
 
 class ObservabilityClient:
-    jaeger_url: Optional[str] = None
+    observability_server_url: Optional[str] = None
     jaeger_service_account_token: Optional[str] = None
     headers: Optional[Dict] = None
     session: Optional[Any] = None
 
-    def __init__(self, jaeger_url: Optional[str] = None):
-        self.jaeger_url = os.environ.get("OBSERVABILITY_STACK_URL", None)
-        if self.jaeger_url is None:
-            if jaeger_url is not None:
-                self.jaeger_url = jaeger_url
+    def __init__(self, observability_url: Optional[str] = None):
+        # FIXME: this is always None because we don't use this env var anymore
+        #   refactor this logic.
+        self.observability_server_url = os.environ.get("JAEGER_URL", None)
+        if self.observability_server_url is None:
+            if observability_url is not None:
+                self.observability_server_url = observability_url
             else:
-                self.jaeger_url = "http://localhost:8000"
+                self.observability_server_url = "http://localhost:8000"
 
-        logger.info(f"jaeger url: {self.jaeger_url}")
+        logger.info(f"observability endpoint is: {self.observability_server_url}")
 
+        # This is almost always NOP because we don't have such setting
         self.jaeger_service_account_token = os.environ.get("GRAFANA_SERVICE_ACCOUNT_TOKEN", "NOP")
 
-        logger.debug("url: {g}, token: {t}".format(g=self.jaeger_url, t=self.jaeger_service_account_token))
+        logger.debug(
+            "url: {g}, token: {t}".format(g=self.observability_server_url, t=self.jaeger_service_account_token)
+        )
 
         self.headers = {
             "Content-Type": "application/json",

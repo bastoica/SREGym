@@ -9,6 +9,7 @@ try:
 except ModuleNotFoundError as e:
     print("Your Kubeconfig is missing. Please set up a cluster.")
     exit(1)
+from kubernetes.client import api_client
 from kubernetes.client.rest import ApiException
 from rich.console import Console
 
@@ -35,6 +36,10 @@ class KubeCtl:
     def list_services(self, namespace):
         """Return a list of all services within a specified namespace."""
         return self.core_v1_api.list_namespaced_service(namespace)
+
+    def list_nodes(self):
+        """Return a list of all running nodes."""
+        return self.core_v1_api.list_node()
 
     def get_cluster_ip(self, service_name, namespace):
         """Retrieve the cluster IP address of a specified service within a namespace."""
@@ -71,7 +76,34 @@ class KubeCtl:
         """Fetch the deployment configuration."""
         return self.apps_v1_api.read_namespaced_deployment(name, namespace)
 
-    def wait_for_ready(self, namespace, sleep=2, max_wait=300):
+    def get_namespace_deployment_status(self, namespace: str):
+        """Return the deployment status of an app within a namespace."""
+        try:
+            deployed_services = self.apps_v1_api.list_namespaced_deployment(namespace)
+            return len(deployed_services.items) > 0
+        except ApiException as e:
+            if e.status == 404:
+                print(f"Namespace {namespace} doesn't exist.")
+                return False
+            else:
+                raise e
+
+    def get_service_deployment_status(self, service: str, namespace: str):
+        """Return the deployment status of a single service within a namespace."""
+        try:
+            self.get_deployment(service, namespace)
+            return True
+        except ApiException as e:
+            if e.status == 404:
+                return False
+            else:
+                raise e
+
+    def get_service(self, name: str, namespace: str):
+        """Fetch the service configuration."""
+        return client.CoreV1Api().read_namespaced_service(name=name, namespace=namespace)
+
+    def wait_for_ready(self, namespace, sleep=2, max_wait=500):
         """Wait for all pods in a namespace to be in a Ready state before proceeding."""
 
         console = Console()
@@ -109,22 +141,21 @@ class KubeCtl:
         """Wait for a namespace to be fully deleted before proceeding."""
 
         console = Console()
-        console.log(f"[bold yellow]Waiting for namespace '{namespace}' to be deleted...")
+        console.log("[bold yellow]Waiting for namespace deletion...")
 
-        with console.status("[bold yellow]Waiting for namespace deletion...") as status:
-            wait = 0
+        wait = 0
 
-            while wait < max_wait:
-                try:
-                    self.core_v1_api.read_namespace(name=namespace)
-                except Exception as e:
-                    console.log(f"[bold green]Namespace '{namespace}' has been deleted.")
-                    return
+        while wait < max_wait:
+            try:
+                self.core_v1_api.read_namespace(name=namespace)
+            except Exception as e:
+                console.log(f"[bold green]Namespace '{namespace}' has been deleted.")
+                return
 
-                time.sleep(sleep)
-                wait += sleep
+            time.sleep(sleep)
+            wait += sleep
 
-            raise Exception(f"[red]Timeout: Namespace '{namespace}' was not deleted within {max_wait} seconds.")
+        raise Exception(f"[red]Timeout: Namespace '{namespace}' was not deleted within {max_wait} seconds.")
 
     def wait_for_job_completion(self, name: str, namespace: str, sleep: int = 5, max_wait: int = 10_000):
         """Wait for a Kubernetes Job to complete."""
@@ -208,6 +239,9 @@ class KubeCtl:
         """Update the deployment configuration."""
         return self.apps_v1_api.replace_namespaced_deployment(name, namespace, deployment)
 
+    def patch_deployment(self, name: str, namespace: str, patch_body: dict):
+        return self.apps_v1_api.patch_namespaced_deployment(name=name, namespace=namespace, body=patch_body)
+
     def patch_service(self, name, namespace, body):
         """Patch a Kubernetes service in a specified namespace."""
         try:
@@ -216,6 +250,12 @@ class KubeCtl:
         except ApiException as e:
             print(f"Exception when patching service: {e}\n")
             return None
+
+    def patch_custom_object(self, group, version, namespace, plural, name, body):
+        """Patch a custom Kubernetes object (e.g., Chaos Mesh CRD)."""
+        return self.custom_api.patch_namespaced_custom_object(
+            group=group, version=version, namespace=namespace, plural=plural, name=name, body=body
+        )
 
     def create_configmap(self, name, namespace, data):
         """Create or update a configmap from a dictionary of data."""
@@ -397,11 +437,110 @@ class KubeCtl:
             value /= 1024
         return f"{round(value, 2)}Ei"
 
+    def is_emulated_cluster(self) -> bool:
+        try:
+            nodes = self.core_v1_api.list_node()
+            for node in nodes.items:
+                provider_id = (node.spec.provider_id or "").lower()
+                runtime = node.status.node_info.container_runtime_version.lower()
+                kubelet = node.status.node_info.kubelet_version.lower()
+                node_name = node.metadata.name.lower()
+
+                if any(keyword in provider_id for keyword in ["kind", "k3d", "minikube"]):
+                    return True
+                if any(keyword in runtime for keyword in ["containerd://", "docker://"]) and "kind" in node_name:
+                    return True
+                if "minikube" in node_name or "k3d" in node_name:
+                    return True
+                if "kind" in kubelet:
+                    return True
+
+            return False
+        except Exception as e:
+            print(f"Error detecting cluster type: {e}")
+            return False
+
+    def get_matching_replicasets(self, namespace: str, deployment_name: str) -> list[client.V1ReplicaSet]:
+        apps_v1 = self.apps_v1_api
+        rs_list = apps_v1.list_namespaced_replica_set(namespace)
+        matching_rs = []
+
+        for rs in rs_list.items:
+            owner_refs = rs.metadata.owner_references
+            if owner_refs:
+                for owner in owner_refs:
+                    if owner.kind == "Deployment" and owner.name == deployment_name:
+                        matching_rs.append(rs)
+                        break
+
+        return matching_rs
+
+    def delete_replicaset(self, name: str, namespace: str):
+        body = client.V1DeleteOptions(propagation_policy="Foreground")
+        try:
+            self.apps_v1_api.delete_namespaced_replica_set(
+                name=name,
+                namespace=namespace,
+                body=body,
+            )
+            print(f"✅ Deleted ReplicaSet '{name}' in namespace '{namespace}'")
+        except client.exceptions.ApiException as e:
+            raise RuntimeError(f"Failed to delete ReplicaSet {name} in {namespace}: {e}")
+
+    def apply_resource(self, manifest: dict):
+
+        dyn_client = dynamic.DynamicClient(api_client.ApiClient())
+
+        gvk = {
+            ("v1", "ResourceQuota"): dyn_client.resources.get(api_version="v1", kind="ResourceQuota"),
+            # Add more mappings here if needed in the future
+        }
+
+        key = (manifest["apiVersion"], manifest["kind"])
+        if key not in gvk:
+            raise ValueError(f"Unsupported resource type: {key}")
+
+        resource = gvk[key]
+        namespace = manifest["metadata"].get("namespace")
+
+        try:
+            existing = resource.get(name=manifest["metadata"]["name"], namespace=namespace)
+            # If exists, patch it
+            resource.patch(body=manifest, name=manifest["metadata"]["name"], namespace=namespace)
+            print(f"✅ Patched existing {manifest['kind']} '{manifest['metadata']['name']}'")
+        except dynamic.exceptions.NotFoundError:
+            resource.create(body=manifest, namespace=namespace)
+            print(f"✅ Created new {manifest['kind']} '{manifest['metadata']['name']}'")
+
+    def get_resource_quotas(self, namespace: str) -> list:
+        try:
+            response = self.core_v1_api.list_namespaced_resource_quota(namespace=namespace)
+            return response.items
+        except client.exceptions.ApiException as e:
+            raise RuntimeError(f"Failed to get resource quotas in namespace '{namespace}': {e}")
+
+    def delete_resource_quota(self, name: str, namespace: str):
+        try:
+            self.core_v1_api.delete_namespaced_resource_quota(
+                name=name, namespace=namespace, body=client.V1DeleteOptions(propagation_policy="Foreground")
+            )
+            print(f"✅ Deleted resource quota '{name}' in namespace '{namespace}'")
+        except client.exceptions.ApiException as e:
+            raise RuntimeError(f"❌ Failed to delete resource quota '{name}' in namespace '{namespace}': {e}")
+
+    def scale_deployment(self, name: str, namespace: str, replicas: int):
+        try:
+            body = {"spec": {"replicas": replicas}}
+            self.apps_v1_api.patch_namespaced_deployment(name=name, namespace=namespace, body=body)
+            print(f"✅ Scaled deployment '{name}' in namespace '{namespace}' to {replicas} replicas.")
+        except client.exceptions.ApiException as e:
+            raise RuntimeError(f"❌ Failed to scale deployment '{name}' in namespace '{namespace}': {e}")
+
 
 # Example usage:
 if __name__ == "__main__":
     kubectl = KubeCtl()
-    namespace = "test-social-network"
+    namespace = "social-network"
     frontend_service = "nginx-thrift"
     user_service = "user-service"
 

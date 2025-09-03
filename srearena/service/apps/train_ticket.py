@@ -23,19 +23,23 @@ class TrainTicket(Application):
     def load_app_json(self):
         super().load_app_json()
         metadata = self.get_app_json()
+        self.app_name = metadata["Name"]
+        self.description = metadata["Desc"]
         self.frontend_service = None
         self.frontend_port = None
 
     def deploy(self):
         if self._is_train_ticket_deployed():
-            print(f"[TrainTicket] Skipping deployment: train-ticket app is already deployed in namespace {self.namespace}")
+            print(
+                f"[TrainTicket] Skipping deployment: train-ticket app is already deployed in namespace {self.namespace}"
+            )
             return
-        
+
         if self.namespace:
             self.kubectl.create_namespace_if_not_exist(self.namespace)
 
         Helm.install(**self.helm_configs)
-        self.kubectl.wait_for_job_completion(name="train-ticket-deploy", namespace="train-ticket") 
+        self.kubectl.wait_for_job_completion(name="train-ticket-deploy", namespace="train-ticket")
 
         self._deploy_flagd_infrastructure()
         self._deploy_load_generator()
@@ -44,9 +48,11 @@ class TrainTicket(Application):
         """Delete the Helm configurations."""
         # Helm.uninstall(**self.helm_configs) # Don't helm uninstall until cleanup job is fixed on train-ticket
         if self._is_train_ticket_deployed():
-            print(f"[TrainTicket] Skipping deletion: train-ticket app is currently deployed in namespace {self.namespace}")
+            print(
+                f"[TrainTicket] Skipping deletion: train-ticket app is currently deployed in namespace {self.namespace}"
+            )
             return
-        
+
         if self.namespace:
             self.kubectl.delete_namespace(self.namespace)
         self.kubectl.wait_for_namespace_deletion(self.namespace)
@@ -59,12 +65,12 @@ class TrainTicket(Application):
             namespace_exists = self.kubectl.exec_command(f"kubectl get namespace {self.namespace}")
             if "not found" in namespace_exists or "No resources found" in namespace_exists:
                 return False
-            
+
             # Check if train-ticket deployment exists
             deployment_exists = self.kubectl.exec_command(f"kubectl get deployment -n {self.namespace}")
             if "No resources found" in deployment_exists or not deployment_exists.strip():
                 return False
-            
+
             return True
         except Exception as e:
             print(f"[TrainTicket] Warning: Failed to check deployment status: {e}")
@@ -73,15 +79,17 @@ class TrainTicket(Application):
     def cleanup(self):
         """Cleanup the train-ticket application if it's not currently deployed."""
         if self._is_train_ticket_deployed():
-            print(f"[TrainTicket] Skipping cleanup: train-ticket app is currently deployed in namespace {self.namespace}")
+            print(
+                f"[TrainTicket] Skipping cleanup: train-ticket app is currently deployed in namespace {self.namespace}"
+            )
             return
-        
+
         # Helm.uninstall(**self.helm_configs)
         if self.namespace:
             self.kubectl.delete_namespace(self.namespace)
 
     def create_workload(self):
-        """Create workload manager for log collection (like astronomy shop)."""  
+        """Create workload manager for log collection (like astronomy shop)."""
         self.wrk = LocustWorkloadManager(
             namespace=self.namespace,
             locust_url="load-generator:8089",
@@ -120,32 +128,33 @@ class TrainTicket(Application):
         try:
 
             locustfile_path = Path(__file__).parent.parent.parent / "resources" / "trainticket" / "locustfile.py"
-            
+
             if locustfile_path.exists():
-                result = self.kubectl.exec_command(f"kubectl create configmap locustfile-config --from-file=locustfile.py={locustfile_path} -n {self.namespace} --dry-run=client -o yaml | kubectl apply -f -")
+                result = self.kubectl.exec_command(
+                    f"kubectl create configmap locustfile-config --from-file=locustfile.py={locustfile_path} -n {self.namespace} --dry-run=client -o yaml | kubectl apply -f -"
+                )
                 print(f"[TrainTicket] Created ConfigMap from file: {result}")
-            
-            deployment_path = Path(__file__).parent.parent.parent / "resources" / "trainticket" / "locust-deployment.yaml"
-            
+
+            deployment_path = (
+                Path(__file__).parent.parent.parent / "resources" / "trainticket" / "locust-deployment.yaml"
+            )
+
             if deployment_path.exists():
                 with open(deployment_path, "r") as f:
                     content = f.read()
-                
+
                 with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as tmp:
                     tmp.write(content)
                     temp_path = tmp.name
-                
+
                 result = self.kubectl.exec_command(f"kubectl apply -f {temp_path}")
                 os.unlink(temp_path)
                 print(f"[TrainTicket] Deployed load generator: {result}")
-            
+
             print("[TrainTicket] Load generator deployed with auto-start")
-            
+
         except Exception as e:
             print(f"[TrainTicket] Warning: Failed to deploy load generator: {e}")
-
-    
-
 
 
 # if __name__ == "__main__":

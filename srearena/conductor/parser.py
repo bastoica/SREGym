@@ -3,7 +3,11 @@
 import ast
 import re
 
-from srearena.utils.status import ResponseParsingError
+
+class ResponseParsingError(Exception):
+    def __init__(self, message):
+        super().__init__(f"Error parsing response: {message}")
+        self.message = message
 
 
 class ResponseParser:

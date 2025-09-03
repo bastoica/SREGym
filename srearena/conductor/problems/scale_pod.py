@@ -2,13 +2,11 @@
 
 import time
 
-from srearena.conductor.oracles.compound import CompoundedOracle
 from srearena.conductor.oracles.localization import LocalizationOracle
 from srearena.conductor.oracles.scale_pod_zero_mitigation import ScalePodZeroMitigationOracle
-from srearena.conductor.oracles.workload import WorkloadOracle
 from srearena.conductor.problems.base import Problem
 from srearena.generators.fault.inject_virtual import VirtualizationFaultInjector
-from srearena.service.apps.socialnet import SocialNetwork
+from srearena.service.apps.social_network import SocialNetwork
 from srearena.service.kubectl import KubeCtl
 from srearena.utils.decorators import mark_fault_injected
 
@@ -28,11 +26,7 @@ class ScalePodSocialNet(Problem):
         self.localization_oracle = LocalizationOracle(problem=self, expected=[self.faulty_service])
 
         self.app.create_workload()
-        self.mitigation_oracle = CompoundedOracle(
-            self,
-            ScalePodZeroMitigationOracle(problem=self),
-            WorkloadOracle(problem=self, wrk_manager=self.app.wrk),
-        )
+        self.mitigation_oracle = ScalePodZeroMitigationOracle(problem=self)
 
     @mark_fault_injected
     def inject_fault(self):
