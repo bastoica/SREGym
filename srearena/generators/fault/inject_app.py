@@ -389,10 +389,13 @@ class ApplicationFaultInjector(FaultInjector):
         Patch the deployment to delete a specific environment variable.
         """
         # Fetch current deployment
-        deployment = self.kubectl.get_deployment(deployment_name, self.namespace)
-        container = deployment.spec.template.spec.containers[0]
-        current_env = container.env
-
+        try:
+            deployment = self.kubectl.get_deployment(deployment_name, self.namespace)
+            container = deployment.spec.template.spec.containers[0]
+            current_env = container.env
+        except Exception as e:
+            raise ValueError(f"Failed to get deployment '{deployment_name}': {e}")
+        
         # Remove the target env var
         updated_env = []
         found = False
@@ -419,11 +422,14 @@ class ApplicationFaultInjector(FaultInjector):
         Restore the previously deleted environment variable.
         """
         # Fetch current deployment
-        deployment = self.kubectl.get_deployment(deployment_name, self.namespace)
-        container = deployment.spec.template.spec.containers[0]
-        container_name = container.name
-        current_env = container.env
-
+        try:
+            deployment = self.kubectl.get_deployment(deployment_name, self.namespace)
+            container = deployment.spec.template.spec.containers[0]
+            container_name = container.name
+            current_env = container.env
+        except Exception as e:
+            raise ValueError(f"Failed to get deployment '{deployment_name}': {e}")
+        
         # Check if env var already exists
         for e in current_env:
             if e.name == env_var:

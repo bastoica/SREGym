@@ -90,10 +90,14 @@ class HumanAgent:
     async def interactive_loop(self):
         """Once problem is started, repeatedly shell or submit until done."""
         env = ""
+        submit_error = False
         while self.conductor.submission_stage != "done":
             # display last environment or grading response
             if env:
                 print(env)
+            if submit_error:
+                self.console.print("[red]Submission failed. Please fix the errors and try again.[/red]")
+                break
 
             inp = await self._prompt()
             text = inp.strip()
@@ -112,6 +116,7 @@ class HumanAgent:
                 resp = await self.conductor.submit(wrapped)
             except Exception as e:
                 env = f"[❌] Grading error: {e}"
+                submit_error = True
             else:
                 env = resp
 
