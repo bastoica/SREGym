@@ -6,6 +6,8 @@ from srearena.conductor.oracles.base import Oracle
 class InvalidAffinityMitigationOracle(Oracle):
     def __init__(self, problem, deployment_name: str):
         super().__init__(problem)
+        self.cr_name = "basic"
+
         self.deployment_name = deployment_name
         self.namespace = problem.namespace
         self.kubectl = problem.kubectl
@@ -49,29 +51,71 @@ class InvalidAffinityMitigationOracle(Oracle):
 
 
     def getTheValue(self) -> dict:
-        output = self.kubectl.exec_command(
-            f"kubectl get tidbcluster basic -n {self.namespace} -o json"
-        )
+        ns = self.namespace
+        name = "basic"  
 
-        obj = json.loads(output)
-        tolerations = (
-            obj.get("spec", {})
-            .get("tidb", {})
-            .get("tolerations", []) or []
-        )
-
-        effects = []
-        for tol in tolerations:
-            if isinstance(tol, dict):
-                effects.append(tol.get("effect"))
-
-        if "TAKE_SOME_EFFECT" in effects:
-            return {"success": False, "effects": effects}
-
-        return {"success": True, "effects": effects}
+        cr_json = json.loads(self.kubectl.exec_command(
+            f"kubectl get tidb-cluster {name} -n {ns} -o json"
+        ))
+        cr_effects = [
+            t.get("effect")
+            for t in (cr_json.get("spec", {}).get("tidb", {}).get("tolerations", []) or [])
+            if isinstance(t, dict)
+        ]
 
 
+        try:
+            sts_json = json.loads(self.kubectl.exec_command(
+                f"kubectl get sts {name}-tidb -n {ns} -o json"
+            ))
+            tpl_tolerations = (sts_json.get("spec", {})
+                                        .get("template", {})
+                                        .get("spec", {})
+                                        .get("tolerations", []) or [])
+            sts_effects = [t.get("effect") for t in tpl_tolerations if isinstance(t, dict)]
+        except Exception:
+            sts_json = {}
+            sts_effects = []
 
-       
 
- 
+        pod_effects = []
+        try:
+            pods_json = json.loads(self.kubectl.exec_command(
+                f"kubectl get pods -n {ns} -l app.kubernetes.io/instance={name},app.kubernetes.io/component=tidb -o json"
+            ))
+            for item in pods_json.get("items", []):
+                tol = (item.get("spec", {}) or {}).get("tolerations", []) or []
+                pod_effects.extend([t.get("effect") for t in tol if isinstance(t, dict)])
+        except Exception:
+            pods_json = {}
+
+        try:
+            ev = self.kubectl.exec_command(f"kubectl get events -n {ns} --sort-by=.metadata.creationTimestamp | tail -n 30")
+        except Exception:
+            ev = ""
+
+        bad = "TAKE_SOME_EFFECT"
+        applied_in = {
+            "cr_has_bad_effect": (bad in cr_effects),
+            "sts_has_bad_effect": (bad in sts_effects),
+            "any_pod_has_bad_effect": (bad in pod_effects),
+        }
+        success = not any(applied_in.values())
+
+        return {
+            "success": success,
+            "details": {
+                "cr_effects": cr_effects,
+                "sts_effects": sts_effects,
+                "pod_effects": pod_effects,
+                "recent_events_tail": ev[-2000:],  
+            },
+            "applied_in": applied_in
+        }
+
+
+
+
+        
+
+    

@@ -49,18 +49,38 @@ class WrongUpdateStrategyMitigationOracle(Oracle):
 
 
     def getTheValue(self) -> dict:
-        output = self.kubectl.exec_command(
-               f"kubectl get deployment {self.deployment_name} -n {self.namespace} -o yaml"
-              )
-        deployment = yaml.safe_load(output)
-        statefulUpdateStrategy = (
-            deployment.get("spec", {})
-            .get("tidb", {})
-            .get("statefulSetUpdateStrategy"))
-        if (statefulUpdateStrategy == "SomeStrategyForUpdate"):
-            return {"success": False}
-        return {"success": True}
+        ns = self.namespace
+        name = "basic"
 
-       
+        cr = json.loads(self.kubectl.exec_command(
+            f"kubectl get tidb-cluster {name} -n {ns} -o json"
+        ))
+        cr_strategy = (
+            cr.get("spec", {})
+              .get("tidb", {})
+              .get("statefulSetUpdateStrategy")
+        )
 
- 
+        sts_name = f"{name}-tidb"
+        sts_type = None
+        try:
+            sts = json.loads(self.kubectl.exec_command(
+                f"kubectl get sts {sts_name} -n {ns} -o json"
+            ))
+            sts_type = (
+                sts.get("spec", {})
+                   .get("updateStrategy", {})
+                   .get("type")
+            )
+        except Exception:
+            pass
+
+        BAD = "SomeStrategyForUpdate"
+        fault_applied = (cr_strategy == BAD)
+
+        return {
+            "success": not fault_applied,
+            "cr_statefulSetUpdateStrategy": cr_strategy,
+            "sts_updateStrategy_type": sts_type,   
+            "fault_applied": fault_applied
+        }

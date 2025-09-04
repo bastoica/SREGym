@@ -49,20 +49,57 @@ class SecurityContextMitigationOracle(Oracle):
 
 
     def getTheValue(self) -> dict:
-        output = self.kubectl.exec_command(
-               f"kubectl get deployment {self.deployment_name} -n {self.namespace} -o yaml"
-              )
-        deployment = yaml.safe_load(output)
-        run_as_user = (
-            deployment.get("spec", {})
-               .get("tidb", {})
-               .get("podSecurityContext", {})
-               .get("runAsUser")
-        )
-        if run_as_user == -1:
-            return {"success": False, "runAsUser": run_as_user}
-        return {"success": True, "runAsUser": run_as_user}
+        ns = self.namespace
+        name = "basic"
 
+        cr = json.loads(self.kubectl.exec_command(
+            f"kubectl get tidb-cluster {name} -n {ns} -o json"
+        ))
+        run_as_user = (
+            cr.get("spec", {})
+              .get("tidb", {})
+              .get("podSecurityContext", {})
+              .get("runAsUser")
+        )
+
+        sts_name = f"{name}-tidb"
+        sts_run_as_user = None
+        try:
+            sts = json.loads(self.kubectl.exec_command(
+                f"kubectl get sts {sts_name} -n {ns} -o json"
+            ))
+            sts_run_as_user = (
+                sts.get("spec", {})
+                   .get("template", {})
+                   .get("spec", {})
+                   .get("securityContext", {})
+                   .get("runAsUser")
+            )
+        except Exception:
+            pass
+
+        pod_run_as_users = []
+        try:
+            pods = json.loads(self.kubectl.exec_command(
+                f"kubectl get pods -n {ns} "
+                f"-l app.kubernetes.io/instance={name},app.kubernetes.io/component=tidb -o json"
+            ))
+            for item in pods.get("items", []):
+                pod_run_as_users.append(
+                    (item.get("metadata", {}).get("name"),
+                     (item.get("spec", {}).get("securityContext") or {}).get("runAsUser"))
+                )
+        except Exception:
+            pass
+
+        fault_present = (run_as_user == -1)
+        return {
+            "success": not fault_present,
+            "cr_runAsUser": run_as_user,
+            "sts_runAsUser": sts_run_as_user,
+            "pod_runAsUsers": pod_run_as_users,
+            "fault_applied": fault_present
+        }
        
 
  

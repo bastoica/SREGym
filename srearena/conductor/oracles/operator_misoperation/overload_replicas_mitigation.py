@@ -6,6 +6,7 @@ from srearena.conductor.oracles.base import Oracle
 class OverloadReplicasMitigationOracle(Oracle):
     def __init__(self, problem, deployment_name: str):
         super().__init__(problem)
+        self.cr_name = "basic"
         self.deployment_name = deployment_name
         self.namespace = problem.namespace
         self.kubectl = problem.kubectl
@@ -49,15 +50,49 @@ class OverloadReplicasMitigationOracle(Oracle):
 
 
     def getTheValue(self) -> dict:
-        output = self.kubectl.exec_command(
-               f"kubectl get deployment {self.deployment_name} -n {self.namespace} -o yaml"
-              )
-        deployment = yaml.safe_load(output)
-        pd = deployment["spec"].get("pd")
-        replicas = deployment["tidb"].get("replicas")
-        if (replicas == 100000):
-            return {"success": False}
-        return {"success": True}
+        ns = self.namespace
+        name = "basic"
+
+        cr = json.loads(self.kubectl.exec_command(
+            f"kubectl get tidb-cluster {name} -n {ns} -o json"
+        ))
+        desired = (cr.get("spec", {}).get("tidb", {}) or {}).get("replicas")
+
+        sts_name = f"{name}-tidb"
+        try:
+            sts = json.loads(self.kubectl.exec_command(
+                f"kubectl get sts {sts_name} -n {ns} -o json"
+            ))
+            sts_replicas   = (sts.get("spec", {}) or {}).get("replicas")
+            sts_ready      = (sts.get("status", {}) or {}).get("readyReplicas")
+            sts_current    = (sts.get("status", {}) or {}).get("replicas")
+        except Exception:
+            sts = {}
+            sts_replicas = sts_ready = sts_current = None
+
+        try:
+            pods = json.loads(self.kubectl.exec_command(
+                f"kubectl get pods -n {ns} "
+                f"-l app.kubernetes.io/instance={name},app.kubernetes.io/component=tidb -o json"
+            ))
+            pod_count = len(pods.get("items", []))
+        except Exception:
+            pod_count = None
+
+        fault_applied = (desired == 100000)
+
+        return {
+            "success": not fault_applied,
+            "cr_tidb_replicas_desired": desired,
+            "sts": {
+                "name": sts_name,
+                "spec_replicas": sts_replicas,
+                "status_replicas": sts_current,
+                "ready_replicas": sts_ready,
+            },
+            "tidb_pod_count": pod_count,
+            "fault_applied": fault_applied
+        }
 
 
        

@@ -6,6 +6,8 @@ from srearena.conductor.oracles.base import Oracle
 class NonExistentStorageClassMitigationOracle(Oracle):
     def __init__(self, problem, deployment_name: str):
         super().__init__(problem)
+        self.cr_name = "basic"
+
         self.deployment_name = deployment_name
         self.namespace = problem.namespace
         self.kubectl = problem.kubectl
@@ -49,19 +51,59 @@ class NonExistentStorageClassMitigationOracle(Oracle):
 
 
     def getTheValue(self) -> dict:
-        output = self.kubectl.exec_command(
-               f"kubectl get deployment {self.deployment_name} -n {self.namespace} -o yaml"
-              )
-        deployment = yaml.safe_load(output)
-        storage = (
-            deployment.get("spec").get("pd").get("storageClassName")
+        ns = self.namespace
+        name = self.cr_name
+
+        cr = json.loads(self.kubectl.exec_command(
+            f"kubectl get tidb-cluster {name} -n {ns} -o json"
+        ))
+        pd_sc   = (cr.get("spec", {}).get("pd", {})   or {}).get("storageClassName")
+        tikv_sc = (cr.get("spec", {}).get("tikv", {}) or {}).get("storageClassName")
+
+        pvc_pd_json = json.loads(self.kubectl.exec_command(
+            f"kubectl get pvc -n {ns} "
+            f"-l app.kubernetes.io/instance={name},app.kubernetes.io/component=pd -o json"
+        ))
+        pvc_tikv_json = json.loads(self.kubectl.exec_command(
+            f"kubectl get pvc -n {ns} "
+            f"-l app.kubernetes.io/instance={name},app.kubernetes.io/component=tikv -o json"
+        ))
+
+        def summarize_pvcs(pvc_list):
+            out = []
+            for p in pvc_list.get("items", []):
+                meta = p.get("metadata", {}) or {}
+                spec = p.get("spec", {}) or {}
+                stat = p.get("status", {}) or {}
+                out.append({
+                    "name": meta.get("name"),
+                    "storageClassName": spec.get("storageClassName"),
+                    "phase": stat.get("phase"),  
+                })
+            return out
+
+        pvc_pd   = summarize_pvcs(pvc_pd_json)
+        pvc_tikv = summarize_pvcs(pvc_tikv_json)
+
+        events_tail = self.kubectl.exec_command(
+            f"kubectl get events -n {ns} --sort-by=.metadata.creationTimestamp | tail -n 50"
         )
-        if (storage == "ThisIsAStorageClass"):
-            return {"success": False}
-        
-        return {"success": True}
 
+        BAD = "ThisIsAStorageClass"
+        cr_has_bad = (pd_sc == BAD) or (tikv_sc == BAD)
+        pvc_shows_bad = any(e.get("storageClassName") == BAD for e in pvc_pd + pvc_tikv)
+        any_pending = any(e.get("phase") == "Pending" for e in pvc_pd + pvc_tikv)
 
-       
+        fault_applied = cr_has_bad or pvc_shows_bad
+        success = not fault_applied  
 
+        return {
+            "success": success,
+            "cr_values": {"pd.storageClassName": pd_sc, "tikv.storageClassName": tikv_sc},
+            "pvc_pd": pvc_pd,
+            "pvc_tikv": pvc_tikv,
+            "any_pvc_pending": any_pending,
+            "events_tail": events_tail[-2000:],
+            "fault_applied": fault_applied
+        }
  
