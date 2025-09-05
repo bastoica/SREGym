@@ -17,7 +17,7 @@ class IncorrectImage(Problem):
         super().__init__(app=self.app, namespace=self.namespace)
 
         self.localization_oracle = LocalizationOracle(problem=self, expected=[self.faulty_service])
-        self.mitigation_oracle = IncorrectImageMitigationOracle(problem=self)
+        self.mitigation_oracle = IncorrectImageMitigationOracle(problem=self, actual_images={self.faulty_service: "app-image:latest"})
 
         self.app.create_workload()
 

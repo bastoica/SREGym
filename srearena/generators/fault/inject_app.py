@@ -358,7 +358,6 @@ class ApplicationFaultInjector(FaultInjector):
         # Get current deployment for container name
         deployment = self.kubectl.get_deployment(deployment_name, namespace)
         container_name = deployment.spec.template.spec.containers[0].name
-
         # Set replicas to 0 before updating image
         self.kubectl.patch_deployment(name=deployment_name, namespace=namespace, patch_body={"spec": {"replicas": 0}})
 
@@ -383,7 +382,6 @@ class ApplicationFaultInjector(FaultInjector):
                 "spec": {"template": {"spec": {"containers": [{"name": container_name, "image": correct_image}]}}}
             },
         )
-
 
 if __name__ == "__main__":
     namespace = "hotel-reservation"
