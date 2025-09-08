@@ -118,7 +118,7 @@ k8s_target_port-misconfig:
   - mitigation
 ```
 
-This entry will tell the conductor to run noop, detection and mitigation. If the entry for a problem_id doesn't exist, the conductor will assume that all tasks are to be run.
+This entry will tell the conductor to run noop, detection and mitigation when running the k8s_target_port-misconfig problem. If the entry for a problem_id doesn't exist, the conductor will assume that all tasks are to be run.
 
 
 The benchmark is driven by agent submissions. The benchmark expects the agent to submit a `POST` HTTP API call to the `http://localhost:8000/submit` HTTP endpoint.
