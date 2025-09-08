@@ -176,7 +176,7 @@ class Conductor:
         self.kubectl.wait_for_ready("kube-system")
 
         print("Deploying Khaos DaemonSet...")
-        # self.khaos.ensure_deployed()
+        self.khaos.ensure_deployed()
 
         print("Setting up OpenEBS…")
         self.kubectl.exec_command("kubectl apply -f https://openebs.github.io/charts/openebs-operator.yaml")
