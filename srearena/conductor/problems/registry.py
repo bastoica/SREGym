@@ -11,7 +11,8 @@ from srearena.conductor.problems.configmap_drift import ConfigMapDrift
 from srearena.conductor.problems.container_kill import ChaosMeshContainerKill
 from srearena.conductor.problems.cpu_stress import ChaosMeshCPUStress
 from srearena.conductor.problems.duplicate_pvc_mounts import DuplicatePVCMounts
-from srearena.conductor.problems.env_variable_leak import EnvVariableLeak
+
+# from srearena.conductor.problems.missing_configmap import MissingConfigMap
 from srearena.conductor.problems.env_variable_shadowing import EnvVariableShadowing
 from srearena.conductor.problems.http_abort import ChaosMeshHttpAbort
 from srearena.conductor.problems.http_post_tamper import ChaosMeshHttpPostTamper
@@ -48,6 +49,8 @@ from srearena.conductor.problems.recommendation_service_cache_failure import Rec
 from srearena.conductor.problems.resource_request import ResourceRequestTooLarge, ResourceRequestTooSmall
 from srearena.conductor.problems.revoke_auth import MongoDBRevokeAuth
 from srearena.conductor.problems.rolling_update_misconfigured import RollingUpdateMisconfigured
+
+# from srearena.conductor.problems.missing_env_variable import MissingEnvVariable
 from srearena.conductor.problems.rpc_retry_storm import RPCRetryStorm
 from srearena.conductor.problems.scale_pod import ScalePodSocialNet
 from srearena.conductor.problems.service_dns_resolution_failure import ServiceDNSResolutionFailure
@@ -69,172 +72,165 @@ from srearena.service.kubectl import KubeCtl
 class ProblemRegistry:
     def __init__(self):
         self.PROBLEM_REGISTRY = {
-            # "k8s_target_port-misconfig": lambda: K8STargetPortMisconfig(faulty_service="user-service"), # SocialNet
-            # "auth_miss_mongodb": MongoDBAuthMissing, # SocialNet
-            # "revoke_auth_mongodb-1": lambda: MongoDBRevokeAuth(faulty_service="mongodb-geo"), # HotelRes
-            # "revoke_auth_mongodb-2": lambda: MongoDBRevokeAuth(faulty_service="mongodb-rate"), # HotelRes
-            # "storage_user_unregistered-1": lambda: MongoDBUserUnregistered(faulty_service="mongodb-geo"), # HotelRes
-            # "storage_user_unregistered-2": lambda: MongoDBUserUnregistered(faulty_service="mongodb-rate"), # HotelRes
-            # "misconfig_app_hotel_res": MisconfigAppHotelRes, # HotelRes
-            # "scale_pod_zero_social_net": ScalePodSocialNet, # SocialNet
-            # "assign_to_non_existent_node": AssignNonExistentNode, # SocialNet
-            # "pod_anti_affinity_deadlock": PodAntiAffinityDeadlock, # SocialNet
-            # # --- Chaos Mesh problems (No mitigation oracle)
-            # "chaos_mesh_container_kill": ChaosMeshContainerKill, # HotelRes
-            # "chaos_mesh_pod_failure": ChaosMeshPodFailure, # HotelRes
-            # "chaos_mesh_pod_kill": ChaosMeshPodKill, # HotelRes
-            # "chaos_mesh_network_loss": ChaosMeshNetworkLoss, # HotelRes
-            # "chaos_mesh_network_delay": ChaosMeshNetworkDelay, # HotelRes
-            # "chaos_mesh_network_partition": ChaosMeshNetworkPartition, # AstroShop
-            # "chaos_mesh_http_abort": ChaosMeshHttpAbort, # AstroShop
-            # "chaos_mesh_cpu_stress": ChaosMeshCPUStress, # AstroShop
-            # "chaos_mesh_jvm_stress": ChaosMeshJVMHeapStress, # AstroShop
-            # "chaos_mesh_jvm_return": ChaosMeshJVMReturnFault, # AstroShop
-            # "chaos_mesh_memory_stress": ChaosMeshMemoryStress, # AstroShop
-            # "chaos_mesh_http_post_tamper": ChaosMeshHttpPostTamper, # AstroShop
-            # # ---
-            # # --- Astro shop problems with no mitigation oracle
-            # "astronomy_shop_ad_service_failure": AdServiceFailure,
-            # "astronomy_shop_ad_service_high_cpu": AdServiceHighCpu,
-            # "astronomy_shop_ad_service_manual_gc": AdServiceManualGc,
-            # "astronomy_shop_cart_service_failure": CartServiceFailure,
-            # "astronomy_shop_ad_service_image_slow_load": ImageSlowLoad,
-            # "astronomy_shop_payment_service_failure": PaymentServiceFailure,
-            # "astronomy_shop_payment_service_unreachable": PaymentServiceUnreachable,
-            # "astronomy_shop_product_catalog_service_failure": ProductCatalogServiceFailure,
-            # "astronomy_shop_recommendation_service_cache_failure": RecommendationServiceCacheFailure,
-            # # ---
-            # "wrong_bin_usage": WrongBinUsage, # HotelRes
-            # "trainticket_f17_nested_sql_select_clause_error": TrainTicketF17,
-            # "trainticket_f22_sql_column_name_mismatch_error": TrainTicketF22,
-            # "taint_no_toleration_social_network": lambda: TaintNoToleration(), # SocialNet
-            # "missing_service_hotel_reservation": lambda: MissingService(
-            #     app_name="hotel_reservation", faulty_service="mongodb-rate"
-            # ),
-            # "kafka_queue_problems_hotel_reservation": lambda: KafkaQueueProblems(
-            #     app_name="hotel_reservation", faulty_service="memcached-rate"
-            # ),
-            # "loadgenerator_flood_homepage": LoadGeneratorFloodHomepage, # AstroShop
-            # "k8s_dns_resolution_failure": ServiceDNSResolutionFailure, # AstroShop
-            # "k8s_sidecar_port_conflict": SidecarPortConflict, # AstroShop
-            # "k8s_stale_coredns_config": StaleCoreDNSConfig, # AstroShop
-            # "k8s_resource_request_too_large": ResourceRequestTooLarge,
-            # "k8s_resource_request_too_small": ResourceRequestTooSmall,
-            # "k8s_wrong_dns_policy": WrongDNSPolicy, # AstroShop
-            # "k8s_wrong_service_selector": WrongServiceSelector, # AstroShop
-            # "resource_request_too_large": lambda: ResourceRequestTooLarge(
-            #     app_name="hotel_reservation", faulty_service="mongodb-rate"
-            # ),
-            # "resource_request_too_small": lambda: ResourceRequestTooSmall(
-            #     app_name="hotel_reservation", faulty_service="mongodb-rate"
-            # ),
-            # "wrong_service_selector_astronomy_shop": lambda: WrongServiceSelector(
-            #     app_name="astronomy_shop", faulty_service="frontend"
-            # ),
-            # "wrong_service_selector_hotel_reservation": lambda: WrongServiceSelector(
-            #     app_name="hotel_reservation", faulty_service="frontend"
-            # ),
-            # "wrong_service_selector_social_network": lambda: WrongServiceSelector(
-            #     app_name="social_network", faulty_service="user-service"
-            # ),
-            # "service_dns_resolution_failure_astronomy_shop": lambda: ServiceDNSResolutionFailure(
-            #     app_name="astronomy_shop", faulty_service="frontend"
-            # ),
-            # "service_dns_resolution_failure_social_network": lambda: ServiceDNSResolutionFailure(
-            #     app_name="social_network", faulty_service="user-service"
-            # ),
-            # "wrong_dns_policy_astronomy_shop": lambda: WrongDNSPolicy(
-            #     app_name="astronomy_shop", faulty_service="frontend"
-            # ),
-            # "wrong_dns_policy_social_network": lambda: WrongDNSPolicy(
-            #     app_name="social_network", faulty_service="user-service"
-            # ),
-            # "wrong_dns_policy_hotel_reservation": lambda: WrongDNSPolicy(
-            #     app_name="hotel_reservation", faulty_service="profile"
-            # ),
-            # "stale_coredns_config_astronomy_shop": lambda: StaleCoreDNSConfig(app_name="astronomy_shop"),
-            # "stale_coredns_config_social_network": lambda: StaleCoreDNSConfig(app_name="social_network"),
-            # "sidecar_port_conflict_astronomy_shop": lambda: SidecarPortConflict(
-            #     app_name="astronomy_shop", faulty_service="frontend"
-            # ),
-            # "sidecar_port_conflict_social_network": lambda: SidecarPortConflict(
-            #     app_name="social_network", faulty_service="user-service"
-            # ),
-            # "sidecar_port_conflict_hotel_reservation": lambda: SidecarPortConflict(
-            #     app_name="hotel_reservation", faulty_service="frontend"
-            # ),
-            # "env_variable_leak_social_network": lambda: EnvVariableLeak(
+            "k8s_target_port-misconfig": lambda: K8STargetPortMisconfig(faulty_service="user-service"),
+            "auth_miss_mongodb": MongoDBAuthMissing,
+            "revoke_auth_mongodb-1": lambda: MongoDBRevokeAuth(faulty_service="mongodb-geo"),
+            "revoke_auth_mongodb-2": lambda: MongoDBRevokeAuth(faulty_service="mongodb-rate"),
+            "storage_user_unregistered-1": lambda: MongoDBUserUnregistered(faulty_service="mongodb-geo"),
+            "storage_user_unregistered-2": lambda: MongoDBUserUnregistered(faulty_service="mongodb-rate"),
+            "misconfig_app_hotel_res": MisconfigAppHotelRes,
+            "scale_pod_zero_social_net": ScalePodSocialNet,
+            "assign_to_non_existent_node": AssignNonExistentNode,
+            "pod_anti_affinity_deadlock": PodAntiAffinityDeadlock,
+            # --- Chaos Mesh problems (No mitigation oracle)
+            "chaos_mesh_container_kill": ChaosMeshContainerKill,
+            "chaos_mesh_pod_failure": ChaosMeshPodFailure,
+            "chaos_mesh_pod_kill": ChaosMeshPodKill,
+            "chaos_mesh_network_loss": ChaosMeshNetworkLoss,
+            "chaos_mesh_network_delay": ChaosMeshNetworkDelay,
+            "chaos_mesh_network_partition": ChaosMeshNetworkPartition,
+            "chaos_mesh_http_abort": ChaosMeshHttpAbort,
+            "chaos_mesh_cpu_stress": ChaosMeshCPUStress,
+            "chaos_mesh_jvm_stress": ChaosMeshJVMHeapStress,
+            "chaos_mesh_jvm_return": ChaosMeshJVMReturnFault,
+            "chaos_mesh_memory_stress": ChaosMeshMemoryStress,
+            "chaos_mesh_http_post_tamper": ChaosMeshHttpPostTamper,
+            # ---
+            # --- Astro shop problems with no mitigation oracle
+            "astronomy_shop_ad_service_failure": AdServiceFailure,
+            "astronomy_shop_ad_service_high_cpu": AdServiceHighCpu,
+            "astronomy_shop_ad_service_manual_gc": AdServiceManualGc,
+            "astronomy_shop_cart_service_failure": CartServiceFailure,
+            "astronomy_shop_ad_service_image_slow_load": ImageSlowLoad,
+            "astronomy_shop_payment_service_failure": PaymentServiceFailure,
+            "astronomy_shop_payment_service_unreachable": PaymentServiceUnreachable,
+            "astronomy_shop_product_catalog_service_failure": ProductCatalogServiceFailure,
+            "astronomy_shop_recommendation_service_cache_failure": RecommendationServiceCacheFailure,
+            # ---
+            "wrong_bin_usage": WrongBinUsage,
+            "trainticket_f17_nested_sql_select_clause_error": TrainTicketF17,
+            "trainticket_f22_sql_column_name_mismatch_error": TrainTicketF22,
+            "taint_no_toleration_social_network": lambda: TaintNoToleration(),
+            "missing_service_hotel_reservation": lambda: MissingService(
+                app_name="hotel_reservation", faulty_service="mongodb-rate"
+            ),
+            "kafka_queue_problems_hotel_reservation": lambda: KafkaQueueProblems(
+                app_name="hotel_reservation", faulty_service="memcached-rate"
+            ),
+            "loadgenerator_flood_homepage": LoadGeneratorFloodHomepage,
+            "k8s_dns_resolution_failure": ServiceDNSResolutionFailure,
+            "k8s_sidecar_port_conflict": SidecarPortConflict,
+            "k8s_stale_coredns_config": StaleCoreDNSConfig,
+            "k8s_resource_request_too_large": ResourceRequestTooLarge,
+            "k8s_resource_request_too_small": ResourceRequestTooSmall,
+            "k8s_wrong_dns_policy": WrongDNSPolicy,
+            "k8s_wrong_service_selector": WrongServiceSelector,
+            "resource_request_too_large": lambda: ResourceRequestTooLarge(
+                app_name="hotel_reservation", faulty_service="mongodb-rate"
+            ),
+            "resource_request_too_small": lambda: ResourceRequestTooSmall(
+                app_name="hotel_reservation", faulty_service="mongodb-rate"
+            ),
+            "wrong_service_selector_astronomy_shop": lambda: WrongServiceSelector(
+                app_name="astronomy_shop", faulty_service="frontend"
+            ),
+            "wrong_service_selector_hotel_reservation": lambda: WrongServiceSelector(
+                app_name="hotel_reservation", faulty_service="frontend"
+            ),
+            "wrong_service_selector_social_network": lambda: WrongServiceSelector(
+                app_name="social_network", faulty_service="user-service"
+            ),
+            "service_dns_resolution_failure_astronomy_shop": lambda: ServiceDNSResolutionFailure(
+                app_name="astronomy_shop", faulty_service="frontend"
+            ),
+            "service_dns_resolution_failure_social_network": lambda: ServiceDNSResolutionFailure(
+                app_name="social_network", faulty_service="user-service"
+            ),
+            "wrong_dns_policy_astronomy_shop": lambda: WrongDNSPolicy(
+                app_name="astronomy_shop", faulty_service="frontend"
+            ),
+            "wrong_dns_policy_social_network": lambda: WrongDNSPolicy(
+                app_name="social_network", faulty_service="user-service"
+            ),
+            "wrong_dns_policy_hotel_reservation": lambda: WrongDNSPolicy(
+                app_name="hotel_reservation", faulty_service="profile"
+            ),
+            "stale_coredns_config_astronomy_shop": lambda: StaleCoreDNSConfig(app_name="astronomy_shop"),
+            "stale_coredns_config_social_network": lambda: StaleCoreDNSConfig(app_name="social_network"),
+            "sidecar_port_conflict_astronomy_shop": lambda: SidecarPortConflict(
+                app_name="astronomy_shop", faulty_service="frontend"
+            ),
+            "sidecar_port_conflict_social_network": lambda: SidecarPortConflict(
+                app_name="social_network", faulty_service="user-service"
+            ),
+            "sidecar_port_conflict_hotel_reservation": lambda: SidecarPortConflict(
+                app_name="hotel_reservation", faulty_service="frontend"
+            ),
+            # "missing_configmap_social_network": lambda: MissingConfigMap(
             #     app_name="social_network", faulty_service="media-mongodb"
             # ),
-            # "env_variable_leak_hotel_reservation": lambda: EnvVariableLeak(
+            # "missing_configmap_hotel_reservation": lambda: MissingConfigMap(
             #     app_name="hotel_reservation", faulty_service="mongodb-geo"
             # ),
-            # "configmap_drift_hotel_reservation": lambda: ConfigMapDrift(faulty_service="geo"),
-            # "readiness_probe_misconfiguration_astronomy_shop": lambda: ReadinessProbeMisconfiguration(
-            #     app_name="astronomy_shop", faulty_service="frontend"
-            # ),
-            # "readiness_probe_misconfiguration_social_network": lambda: ReadinessProbeMisconfiguration(
-            #     app_name="social_network", faulty_service="user-service"
-            # ),
-            # "readiness_probe_misconfiguration_hotel_reservation": lambda: ReadinessProbeMisconfiguration(
-            #     app_name="hotel_reservation", faulty_service="frontend"
-            # ),
-            # "liveness_probe_misconfiguration_astronomy_shop": lambda: LivenessProbeMisconfiguration(
-            #     app_name="astronomy_shop", faulty_service="frontend"
-            # ),
-            # "liveness_probe_misconfiguration_social_network": lambda: LivenessProbeMisconfiguration(
-            #     app_name="social_network", faulty_service="user-service"
-            # ),
-            # "liveness_probe_misconfiguration_hotel_reservation": lambda: LivenessProbeMisconfiguration(
-            #     app_name="hotel_reservation", faulty_service="recommendation"
-            # ),
-            # "network_policy_block": lambda: NetworkPolicyBlock(faulty_service="payment-service"),
-            # "liveness_probe_too_aggressive_astronomy_shop": lambda: LivenessProbeTooAggressive(
-            #     app_name="astronomy_shop"
-            # ),
-            # "liveness_probe_too_aggressive_social_network": lambda: LivenessProbeTooAggressive(
-            #     app_name="social_network"
-            # ),
-            # "liveness_probe_too_aggressive_hotel_reservation": lambda: LivenessProbeTooAggressive(
-            #     app_name="hotel_reservation"
-            # ),
-            # "duplicate_pvc_mounts_astronomy_shop": lambda: DuplicatePVCMounts(
-            #     app_name="astronomy_shop", faulty_service="frontend"
-            # ),
-            # "duplicate_pvc_mounts_social_network": lambda: DuplicatePVCMounts(
-            #     app_name="social_network", faulty_service="jaeger"
-            # ),
-            # "duplicate_pvc_mounts_hotel_reservation": lambda: DuplicatePVCMounts(
-            #     app_name="hotel_reservation", faulty_service="frontend"
-            # ),
-            # "env_variable_shadowing_astronomy_shop": lambda: EnvVariableShadowing(),
-            # "rolling_update_misconfigured_social_network": lambda: RollingUpdateMisconfigured(
-            #     app_name="social_network"
-            # ),
-            # "rolling_update_misconfigured_hotel_reservation": lambda: RollingUpdateMisconfigured(
-            #     app_name="hotel_reservation"
-            # ),
-            # "ingress_misroute": lambda: IngressMisroute(
-            #     path="/api", correct_service="frontend-service", wrong_service="recommendation-service"
-            # ), # HotelRes
-            # "persistent_volume_affinity_violation": PersistentVolumeAffinityViolation, # SocialNet
-            # "valkey_auth_disruption": ValkeyAuthDisruption, # AstroShop
-            # # --- valkey problem w/o mitigation oracle
-            # "valkey_memory_disruption": ValkeyMemoryDisruption, # AstroShop
-            # # ---
-            # "incorrect_port_assignment": IncorrectPortAssignment, # AstroShop
-            # "incorrect_image": IncorrectImage, # AstroShop
-            # "namespace_memory_limit": NamespaceMemoryLimit, # HotelRes
-            # "pvc_claim_mismatch": PVCClaimMismatch, # HotelRes
-            # "read_error": ReadError, # HotelRes
-            # # Example MIF problem
-            "social_net_hotel_res_astro_shop_concurrent_failures": lambda: MultipleIndependentFailures(
-                problems=[
-                    K8STargetPortMisconfig(faulty_service="user-service"),
-                    MongoDBRevokeAuth(faulty_service="mongodb-geo"),
-                    WrongServiceSelector()
-                ]
+            "configmap_drift_hotel_reservation": lambda: ConfigMapDrift(faulty_service="geo"),
+            "readiness_probe_misconfiguration_astronomy_shop": lambda: ReadinessProbeMisconfiguration(
+                app_name="astronomy_shop", faulty_service="frontend"
             ),
+            "readiness_probe_misconfiguration_social_network": lambda: ReadinessProbeMisconfiguration(
+                app_name="social_network", faulty_service="user-service"
+            ),
+            "readiness_probe_misconfiguration_hotel_reservation": lambda: ReadinessProbeMisconfiguration(
+                app_name="hotel_reservation", faulty_service="frontend"
+            ),
+            "liveness_probe_misconfiguration_astronomy_shop": lambda: LivenessProbeMisconfiguration(
+                app_name="astronomy_shop", faulty_service="frontend"
+            ),
+            "liveness_probe_misconfiguration_social_network": lambda: LivenessProbeMisconfiguration(
+                app_name="social_network", faulty_service="user-service"
+            ),
+            "liveness_probe_misconfiguration_hotel_reservation": lambda: LivenessProbeMisconfiguration(
+                app_name="hotel_reservation", faulty_service="recommendation"
+            ),
+            "network_policy_block": lambda: NetworkPolicyBlock(faulty_service="payment-service"),
+            "liveness_probe_too_aggressive_astronomy_shop": lambda: LivenessProbeTooAggressive(
+                app_name="astronomy_shop"
+            ),
+            "liveness_probe_too_aggressive_social_network": lambda: LivenessProbeTooAggressive(
+                app_name="social_network"
+            ),
+            "liveness_probe_too_aggressive_hotel_reservation": lambda: LivenessProbeTooAggressive(
+                app_name="hotel_reservation"
+            ),
+            "duplicate_pvc_mounts_astronomy_shop": lambda: DuplicatePVCMounts(
+                app_name="astronomy_shop", faulty_service="frontend"
+            ),
+            "duplicate_pvc_mounts_social_network": lambda: DuplicatePVCMounts(
+                app_name="social_network", faulty_service="jaeger"
+            ),
+            "duplicate_pvc_mounts_hotel_reservation": lambda: DuplicatePVCMounts(
+                app_name="hotel_reservation", faulty_service="frontend"
+            ),
+            "env_variable_shadowing_astronomy_shop": lambda: EnvVariableShadowing(),
+            "rolling_update_misconfigured_social_network": lambda: RollingUpdateMisconfigured(
+                app_name="social_network"
+            ),
+            "rolling_update_misconfigured_hotel_reservation": lambda: RollingUpdateMisconfigured(
+                app_name="hotel_reservation"
+            ),
+            "ingress_misroute": lambda: IngressMisroute(
+                path="/api", correct_service="frontend-service", wrong_service="recommendation-service"
+            ),
+            "persistent_volume_affinity_violation": PersistentVolumeAffinityViolation,
+            "valkey_auth_disruption": ValkeyAuthDisruption,
+            # --- valkey problem w/o mitigation oracle
+            "valkey_memory_disruption": ValkeyMemoryDisruption,
+            # ---
+            "incorrect_port_assignment": IncorrectPortAssignment,
+            "incorrect_image": IncorrectImage,
+            "namespace_memory_limit": NamespaceMemoryLimit,
+            "pvc_claim_mismatch": PVCClaimMismatch,
+            "read_error": ReadError,
+            # "missing_env_variable_astronomy_shop": lambda: MissingEnvVariable(app_name="astronomy_shop", faulty_service="frontend"),
             # "missing_service_astronomy_shop": lambda: MissingService(app_name="astronomy_shop", faulty_service="ad"),
             # K8S operator misoperation -> Refactor later, not sure if they're working
             # They will also need to be updated to the new problem format.
@@ -248,7 +244,14 @@ class ProblemRegistry:
             # "operator_security_context_fault-localization-1": K8SOperatorSecurityContextFaultLocalization,
             # "operator_wrong_update_strategy-detection-1": K8SOperatorWrongUpdateStrategyDetection,
             # "operator_wrong_update_strategy-localization-1": K8SOperatorWrongUpdateStrategyLocalization,
-            # "rpc_retry_storm": RPCRetryStorm,
+            "rpc_retry_storm": RPCRetryStorm,
+            "social_net_hotel_res_astro_shop_concurrent_failures": lambda: MultipleIndependentFailures(
+                problems=[
+                    K8STargetPortMisconfig(faulty_service="user-service"),
+                    MongoDBRevokeAuth(faulty_service="mongodb-geo"),
+                    WrongServiceSelector(),
+                ]
+            ),
         }
         self.kubectl = KubeCtl()
         self.non_emulated_cluster_problems = ["rpc_retry_storm"]
