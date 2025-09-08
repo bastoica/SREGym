@@ -18,7 +18,7 @@ class FaultyImageCorrelated(Problem):
         super().__init__(app=self.app, namespace=self.namespace)
 
         self.localization_oracle = LocalizationOracle(problem=self, expected=self.faulty_services)
-        # not really the incorrect image problem, just reuse the incorrect image function1
+        # not really the incorrect image problem, just reuse the incorrect image function
         self.mitigation_oracle = IncorrectImageMitigationOracle(problem=self, actual_images={service: "jackcuii/hotel-reservation:latest" for service in self.faulty_services})
 
         self.app.create_workload()
@@ -26,7 +26,7 @@ class FaultyImageCorrelated(Problem):
     @mark_fault_injected
     def inject_fault(self):
         print("== Fault Injection ==")
-        # not really the incorrect image problem, just reuse the incorrect image function1
+        # not really the incorrect image problem, just reuse the incorrect image function
         for service in self.faulty_services:
             self.injector.inject_incorrect_image(
                 deployment_name=service, namespace=self.namespace, bad_image="jackcuii/hotel-reservation:latest"
