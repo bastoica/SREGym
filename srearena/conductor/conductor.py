@@ -1,5 +1,8 @@
 import shutil
 import time
+from pathlib import Path
+
+import yaml
 
 from srearena.conductor.oracles.detection import DetectionOracle
 from srearena.conductor.problems.registry import ProblemRegistry
@@ -32,6 +35,8 @@ class Conductor:
         self.submission_stage = None  # "noop", "detection", "localization", "mitigation", "done"
         self.results = {}
 
+        self.tasklist = None
+
     def register_agent(self, name="agent"):
         self.agent_name = name
 
@@ -39,6 +44,29 @@ class Conductor:
         for b in binaries:
             if shutil.which(b) is None:
                 raise RuntimeError(f"[❌] Required dependency '{b}' not found.")
+
+    def get_tasklist(self):
+        if not self.tasklist:
+            file_dir = Path(__file__).resolve().parent
+            tasklist_path = file_dir / "tasklist.yml"
+
+            with open(tasklist_path, "r") as f:
+                tasklist = yaml.safe_load(f)
+                if not tasklist:
+                    raise RuntimeError("Badly formatted tasklist file. Please recompile.")
+                tasklist = tasklist["all"]
+
+            if self.problem_id not in (tasklist["problems"] if tasklist["problems"] else []):
+                print("problem_id not found in tasklist. Assuming that all tasks will be run.")
+                self.tasklist = ["noop", "detection", "localization", "mitigation", "done"]
+            else:
+                if len(tasklist["problems"][self.problem_id]) == 0:
+                    raise RuntimeError(f"No steps specified for {self.problem_id}.")
+                print(
+                    f"Tasklist specified for {self.problem_id}. Configured tasks to run: {tasklist["problems"][self.problem_id]}."
+                )
+                tasklist["problems"][self.problem_id].append("done")
+                self.tasklist = tasklist["problems"][self.problem_id]
 
     async def start_problem(self):
         """
@@ -53,11 +81,15 @@ class Conductor:
 
         self.dependency_check(["kubectl", "helm"])
         print(f"[Session Start] Problem ID: {self.problem_id}")
+
+        self.get_tasklist()
+
         self.undeploy_app()  # Cleanup any leftovers
         self.deploy_app()
 
-        self.submission_stage = "noop"
-        print("✅ Deployment complete. Ready for submission.")
+        self.submission_stage = self.tasklist[0]
+
+        print(f"✅ Deployment complete. Ready for submission. Now running task <{self.tasklist[0]}>.")
 
     async def submit(self, wrapped_cmd: str) -> dict:
         """
@@ -82,9 +114,6 @@ class Conductor:
 
             self.problem.inject_fault()
 
-            self.submission_stage = "detection"
-            return dict(self.results)
-
         # DETECTION
         if self.submission_stage == "detection":
             r = self.detection_oracle.evaluate(sol)
@@ -98,13 +127,6 @@ class Conductor:
                 self.undeploy_app()
                 return snapshot
 
-            # otherwise advance
-            if self.problem.localization_oracle:
-                self.submission_stage = "localization"
-            else:
-                self.submission_stage = "mitigation"
-            return dict(self.results)
-
         # LOCALIZATION
         if self.submission_stage == "localization":
             r = self.problem.localization_oracle.evaluate(sol)
@@ -117,9 +139,6 @@ class Conductor:
                 self.undeploy_app()
                 return snapshot
 
-            self.submission_stage = "mitigation"
-            return dict(self.results)
-
         # MITIGATION
         if self.submission_stage == "mitigation":
             r = self.problem.mitigation_oracle.evaluate()
@@ -131,6 +150,13 @@ class Conductor:
             self.undeploy_app()
             return snapshot
 
+        next_stage_idx = self.tasklist.index(self.submission_stage) + 1
+        next_stage = self.tasklist[next_stage_idx]
+        if next_stage == "localization" and not self.problem.localization_oracle:
+            print("Localization oracle is not attached. Skipping localization step.")
+            next_stage_idx += 1
+        self.submission_stage = self.tasklist[next_stage_idx]
+        print(f"👉 Next task: {self.submission_stage}")
         return dict(self.results)
 
     def deploy_app(self):
@@ -151,7 +177,7 @@ class Conductor:
         self.kubectl.wait_for_ready("kube-system")
 
         print("Deploying Khaos DaemonSet...")
-        self.khaos.ensure_deployed()
+        # self.khaos.ensure_deployed()
 
         print("Setting up OpenEBS…")
         self.kubectl.exec_command("kubectl apply -f https://openebs.github.io/charts/openebs-operator.yaml")
