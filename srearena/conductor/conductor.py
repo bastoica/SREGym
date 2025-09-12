@@ -2,10 +2,9 @@ import shutil
 import time
 from pathlib import Path
 
-import yaml
+
 
 import yaml
-
 from srearena.conductor.oracles.detection import DetectionOracle
 from srearena.conductor.problems.registry import ProblemRegistry
 from srearena.conductor.utils import is_ordered_subset
