@@ -54,6 +54,8 @@ class NonExistentStorageClassMitigationOracle(Oracle):
         ns = self.namespace
         name = self.cr_name
         results = {}
+        evaluatePods = self.evaluatePods()
+        print(f"Pod readiness: {evaluatePods}")
 
         cr = json.loads(self.kubectl.exec_command(
             f"kubectl get tidbcluster {name} -n tidb-cluster -o json"

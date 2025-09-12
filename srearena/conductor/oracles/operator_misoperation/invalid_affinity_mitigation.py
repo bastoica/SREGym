@@ -52,7 +52,7 @@ class InvalidAffinityMitigationOracle(Oracle):
 
     def evaluate(self) -> dict:
         evaluatePods = self.evaluatePods()
-        print(f"evaluatePods: {evaluatePods}")
+        print(f"Pod readiness: {evaluatePods}")
         ns = self.namespace
         name = "basic"  
 

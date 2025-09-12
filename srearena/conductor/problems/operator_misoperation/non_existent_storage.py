@@ -21,7 +21,7 @@ class K8SOperatorNonExistentStorageFault(Problem):
         app = FleetCast()
         super().__init__(app=app, namespace='tidb-cluster')
         self.faulty_service = faulty_service
-        self.KubeCtl = KubeCtl()
+        self.kubectl = KubeCtl()
         self.localization_oracle = LocalizationOracle(problem=self, expected=["tidb-cluster"])
         self.mitigation_oracle = NonExistentStorageClassMitigationOracle(problem=self, deployment_name="basic")
 

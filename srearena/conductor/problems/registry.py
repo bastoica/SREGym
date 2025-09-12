@@ -217,8 +217,8 @@ class ProblemRegistry:
             # They will also need to be updated to the new problem format.
             #"operator_overload_replicas": K8SOperatorOverloadReplicasFault,
             #  "operator_non_existent_storage": K8SOperatorNonExistentStorageFault,
-             "operator_invalid_affinity_toleration": K8SOperatorInvalidAffinityTolerationFault,
-            # "operator_security_context_fault": K8SOperatorSecurityContextFault,
+            #"operator_invalid_affinity_toleration": K8SOperatorInvalidAffinityTolerationFault,
+            "operator_security_context_fault": K8SOperatorSecurityContextFault,
             # "operator_wrong_update_strategy_fault": K8SOperatorWrongUpdateStrategyFault,
           
         }

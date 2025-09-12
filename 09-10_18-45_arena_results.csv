@@ -1,0 +1,2 @@
+Detection.accuracy,Detection.success,Localization.accuracy,Localization.is_subset,Localization.success,Mitigation.cr_statefulSetUpdateStrategy,Mitigation.fault_applied,Mitigation.sts_updateStrategy_type,Mitigation.success,NOOP Detection.accuracy,NOOP Detection.success,TTD,TTL,TTM,problem_id
+100.0,True,0.0,False,False,SomeStrategyForUpdate,True,RollingUpdate,False,100.0,True,182.6695680618286,183.97231793403625,186.9459240436554,operator_wrong_update_strategy_fault

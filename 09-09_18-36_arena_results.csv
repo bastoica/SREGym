@@ -1,0 +1,2 @@
+Detection.accuracy,Detection.success,Localization.accuracy,Localization.is_subset,Localization.success,Mitigation.cr_runAsUser,Mitigation.fault_applied,Mitigation.pod_runAsUsers,Mitigation.sts_runAsUser,Mitigation.success,NOOP Detection.accuracy,NOOP Detection.success,TTD,TTL,TTM,problem_id
+100.0,True,0.0,False,False,-1,True,"[('basic-tidb-0', None), ('basic-tidb-1', None)]",,False,100.0,True,820.1277029514313,824.3856790065765,832.124321937561,operator_security_context_fault

@@ -52,7 +52,7 @@ class SecurityContextMitigationOracle(Oracle):
         ns = self.namespace
         name = "basic"
         evaluatePods = self.evaluatePods()
-        print(f"evaluatePods: {evaluatePods}")
+        print(f"Pod Readiness: {evaluatePods}")
 
         cr = json.loads(self.kubectl.exec_command(
             f"kubectl get tidbcluster {name} -n tidb-cluster -o json"
