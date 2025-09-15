@@ -4,10 +4,7 @@ import threading
 from typing import List, Dict, Optional, Set
 from dataclasses import dataclass
 from enum import Enum
-import yaml
 from kubernetes import client
-import asyncio
-# from srearena.generators.fault.inject_symp import SymptomFaultInjector
 from srearena.generators.noise.chaos_injector import ChaosInjector
 from srearena.service.kubectl import KubeCtl
 
@@ -460,7 +457,7 @@ class TransientIssuesGenerator:
 
 
     ### Specific injection methods & cleanup implementations
-    def _inject_pod_kill(self, experiment_name: str, target_pods: List[Dict[str,str]], scope: PodScope) -> bool:
+    def _inject_pod_kill(self, experiment_name: str, target_pods: List[Dict[str,str]]) -> bool:
         """Inject pod kill fault"""
         try:
             # target_namespace = self.namespace if scope != PodScope.NON_TARGET_NAMESPACE else "default"
@@ -493,14 +490,14 @@ class TransientIssuesGenerator:
         except Exception as e:
             raise RuntimeError(f"Failed to inject pod kill: {e}") from e
 
-    def _cleanup_pod_kill(self, experiment_name: str, target_pods: List[str]):
+    def _cleanup_pod_kill(self, experiment_name: str):
         """Cleanup pod kill fault"""
         try:
             self.chaos_injector.delete_chaos_experiment(experiment_name)
         except Exception as e:
             raise RuntimeError(f"Failed to cleanup pod kill experiment {experiment_name}: {e}") from e
 
-    def _inject_network_delay(self, experiment_name: str, target_pods: List[str], scope: PodScope) -> bool:
+    def _inject_network_delay(self, experiment_name: str, target_pods: List[str]) -> bool:
         """Inject network delay fault"""
         try:
             latencies = ["100ms", "200ms", "500ms", "1s", "2s"]
@@ -536,14 +533,14 @@ class TransientIssuesGenerator:
         except Exception as e:
             raise RuntimeError(f"Failed to inject network delay: {e}") from e
 
-    def _cleanup_network_delay(self, experiment_name: str, target_pods: List[str]):
+    def _cleanup_network_delay(self, experiment_name: str):
         """Cleanup network delay fault"""
         try:
             self.chaos_injector.delete_chaos_experiment(experiment_name)
         except Exception as e:
             raise RuntimeError(f"Failed to cleanup network delay experiment {experiment_name}: {e}") from e
 
-    def _inject_cpu_stress(self, experiment_name: str, target_pods: List[str], scope: PodScope) -> bool:
+    def _inject_cpu_stress(self, experiment_name: str, target_pods: List[str]) -> bool:
         """Inject CPU stress fault"""
         try:
             target_pod = random.choice(target_pods)
@@ -579,14 +576,14 @@ class TransientIssuesGenerator:
         except Exception as e:
             raise RuntimeError(f"Failed to inject CPU stress: {e}") from e
 
-    def _cleanup_cpu_stress(self, experiment_name: str, target_pods: List[str]):
+    def _cleanup_cpu_stress(self, experiment_name: str):
         """Cleanup CPU stress fault"""
         try:
             self.chaos_injector.delete_chaos_experiment(experiment_name)
         except Exception as e:
             raise RuntimeError(f"Failed to cleanup CPU stress experiment {experiment_name}: {e}") from e
 
-    def _inject_memory_stress(self, experiment_name: str, target_pods: List[str], scope: PodScope) -> bool:
+    def _inject_memory_stress(self, experiment_name: str, target_pods: List[str]) -> bool:
         """Inject memory stress fault"""
         try:
             target_pod = random.choice(target_pods)
@@ -625,14 +622,14 @@ class TransientIssuesGenerator:
         except Exception as e:
             raise RuntimeError(f"Failed to inject memory stress: {e}") from e
 
-    def _cleanup_memory_stress(self, experiment_name: str, target_pods: List[str]):
+    def _cleanup_memory_stress(self, experiment_name: str):
         """Cleanup memory stress fault"""
         try:
             self.chaos_injector.delete_chaos_experiment(experiment_name)
         except Exception as e:
             raise RuntimeError(f"Failed to cleanup memory stress experiment {experiment_name}: {e}") from e
 
-    def _inject_network_loss(self, experiment_name: str, target_pods: List[str], scope: PodScope) -> bool:
+    def _inject_network_loss(self, experiment_name: str, target_pods: List[str]) -> bool:
         """Inject network packet loss fault"""
         try:
             loss_rates = ["10", "20", "30", "50"]
@@ -667,14 +664,14 @@ class TransientIssuesGenerator:
         except Exception as e:
             raise RuntimeError(f"Failed to inject network loss: {e}") from e
 
-    def _cleanup_network_loss(self, experiment_name: str, target_pods: List[str]):
+    def _cleanup_network_loss(self, experiment_name: str):
         """Cleanup network packet loss fault"""
         try:
             self.chaos_injector.delete_chaos_experiment(experiment_name)
         except Exception as e:
             raise RuntimeError(f"Failed to cleanup network loss experiment {experiment_name}: {e}") from e
 
-    def _inject_container_kill(self, experiment_name: str, target_pods: List[str], scope: PodScope) -> bool:
+    def _inject_container_kill(self, experiment_name: str, target_pods: List[str]) -> bool:
         """Inject container kill fault"""
         try:
             # target_namespace = self.namespace if scope != PodScope.NON_TARGET_NAMESPACE else "default"
@@ -724,14 +721,14 @@ class TransientIssuesGenerator:
         except Exception as e:
             raise RuntimeError(f"Failed to inject container kill: {e}") from e
 
-    def _cleanup_container_kill(self, experiment_name: str, target_pods: List[str]):
+    def _cleanup_container_kill(self, experiment_name: str):
         """Cleanup container kill fault"""
         try:
             self.chaos_injector.delete_chaos_experiment(experiment_name)
         except Exception as e:
             raise RuntimeError(f"Failed to cleanup container kill experiment {experiment_name}: {e}") from e
 
-    def _inject_pod_failure(self, experiment_name: str, target_pods: List[str], scope: PodScope) -> bool:
+    def _inject_pod_failure(self, experiment_name: str, target_pods: List[str]) -> bool:
         """Inject pod failure fault"""
         try:
             target_pod = random.choice(target_pods)
@@ -761,14 +758,14 @@ class TransientIssuesGenerator:
         except Exception as e:
             raise RuntimeError(f"Failed to inject pod failure: {e}") from e
 
-    def _cleanup_pod_failure(self, experiment_name: str, target_pods: List[str]):
+    def _cleanup_pod_failure(self, experiment_name: str):
         """Cleanup pod failure fault"""
         try:
             self.chaos_injector.delete_chaos_experiment(experiment_name)
         except Exception as e:
             raise RuntimeError(f"Failed to cleanup pod failure experiment {experiment_name}: {e}") from e
 
-    def _inject_network_partition(self, experiment_name: str, target_pods: List[str], scope: PodScope) -> bool:
+    def _inject_network_partition(self, experiment_name: str, target_pods: List[str]) -> bool:
         """Inject network partition fault"""
         try:
             # For network partition, we need at least 2 different services
@@ -821,7 +818,7 @@ class TransientIssuesGenerator:
         except Exception as e:
             raise RuntimeError(f"Failed to inject network partition: {e}") from e
 
-    def _cleanup_network_partition(self, experiment_name: str, target_pods: List[str]):
+    def _cleanup_network_partition(self, experiment_name: str):
         """Cleanup network partition fault"""
         try:
             self.chaos_injector.delete_chaos_experiment(experiment_name)
@@ -879,8 +876,7 @@ class TransientIssuesGenerator:
                 return []
             
             # Step 4: Random selection
-            selected = random.sample(unique_pods, count)
-            # print(f"Selected target services in scope {scope.value}: {f"{p['service_label']}@{p['namespace']}\" for {p} in {selected}]}")
+            selected = random.sample(unique_pods, min(count, len(unique_pods)))
             return selected
             
         except Exception as e:

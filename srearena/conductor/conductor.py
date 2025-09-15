@@ -119,8 +119,9 @@ class Conductor:
                 return dict(self.results)
 
             self.problem.inject_fault()
+            faulty_services = self.problem.faulty_service if isinstance(self.problem.faulty_service, (list, tuple)) else [self.problem.faulty_service]
             self.transient_issue_generator = TransientIssuesGenerator(namespace=self.problem.app.namespace,
-                                                                        target_services=self.problem.faulty_service,
+                                                                        target_services=faulty_services,
                                                                         min_duration=40,
                                                                         max_duration=60,)
             self.transient_issue_generator.start_continuous_injection(fault_types=[FaultType.FAIL_SLOW, FaultType.FAIL_STOP],
