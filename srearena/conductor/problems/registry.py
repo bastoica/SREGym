@@ -48,7 +48,6 @@ from srearena.conductor.problems.recommendation_service_cache_failure import Rec
 from srearena.conductor.problems.resource_request import ResourceRequestTooLarge, ResourceRequestTooSmall
 from srearena.conductor.problems.revoke_auth import MongoDBRevokeAuth
 from srearena.conductor.problems.rolling_update_misconfigured import RollingUpdateMisconfigured
-from srearena.conductor.problems.rpc_retry_storm import RPCRetryStorm
 from srearena.conductor.problems.scale_pod import ScalePodSocialNet
 from srearena.conductor.problems.service_dns_resolution_failure import ServiceDNSResolutionFailure
 from srearena.conductor.problems.sidecar_port_conflict import SidecarPortConflict
@@ -66,7 +65,9 @@ from srearena.conductor.problems.wrong_service_selector import WrongServiceSelec
 from srearena.conductor.problems.faulty_image_correlated import FaultyImageCorrelated
 from srearena.conductor.problems.update_incompatible_correlated import UpdateIncompatibleCorrelated
 from srearena.conductor.problems.missing_env_variable import MissingEnvVariable
-from srearena.conductor.problems.rpc_retry_storm import RPCRetryStorm
+from srearena.conductor.problems.load_spike_rpc_retry_storm import LoadSpikeRPCRetryStorm
+from srearena.conductor.problems.capacity_decrease_rpc_retry_storm import CapacityDecreaseRPCRetryStorm
+from srearena.conductor.problems.gc_capacity_degradation import GCCapacityDegradation
 
 from srearena.service.kubectl import KubeCtl
 
@@ -252,7 +253,9 @@ class ProblemRegistry:
             # "operator_security_context_fault-localization-1": K8SOperatorSecurityContextFaultLocalization,
             # "operator_wrong_update_strategy-detection-1": K8SOperatorWrongUpdateStrategyDetection,
             # "operator_wrong_update_strategy-localization-1": K8SOperatorWrongUpdateStrategyLocalization,
-            "rpc_retry_storm": RPCRetryStorm,
+            "load_spike_rpc_retry_storm": LoadSpikeRPCRetryStorm,
+            "capacity_decrease_rpc_retry_storm": CapacityDecreaseRPCRetryStorm,
+            "gc_capacity_degradation": GCCapacityDegradation,
             "social_net_hotel_res_astro_shop_concurrent_failures": lambda: MultipleIndependentFailures(
                 problems=[
                     K8STargetPortMisconfig(faulty_service="user-service"),
