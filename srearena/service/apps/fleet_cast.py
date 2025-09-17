@@ -18,6 +18,8 @@ class FleetCast(Application):
         self.load_app_json()
         self.kubectl = KubeCtl()
         self.create_namespace()
+        tidb_prometheus.main()
+
 
     def load_app_json(self):
         super().load_app_json()
@@ -44,7 +46,6 @@ class FleetCast(Application):
 
         Helm.install(**self.helm_configs)
         Helm.assert_if_deployed(self.helm_configs["namespace"])
-        tidb_prometheus.main()
 
 
     def delete(self):
