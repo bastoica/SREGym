@@ -280,7 +280,6 @@ class TransientIssuesGenerator:
 
     def cleanup_all_experiments(self):
         """Cleanup all active experiments"""
-        print('here')
         experiment_names = list(self.active_experiments.keys())
         for name in experiment_names:
             self.cleanup_experiment(name)
