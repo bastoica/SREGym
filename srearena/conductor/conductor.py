@@ -152,21 +152,21 @@ class Conductor:
             r = self.detection_oracle.evaluate(sol)
             self.results["Detection"] = r
             self.results["TTD"] = time.time() - self.execution_start_time
-            self.logger.info(f"[EVAL] Detection {"Succeed" if r["success"] else "Failed"}\n TTD: {r["TTD"]}")
+            self.logger.info(f"[EVAL] Detection {"Succeed" if r["success"] else "Failed"}\n TTD: {self.results['TTD']}")
 
         # LOCALIZATION
         if self.submission_stage == "localization":
             r = self.problem.localization_oracle.evaluate(sol)
             self.results["Localization"] = r
             self.results["TTL"] = time.time() - self.execution_start_time
-            self.logger.info(f"[EVAL] Localization {"Succeed" if r["success"] else "Failed"}\n TTL: {r["TTL"]}")
+            self.logger.info(f"[EVAL] Localization {"Succeed" if r["success"] else "Failed"}\n TTL: {self.results['TTL']}")
 
         # MITIGATION
         if self.submission_stage == "mitigation":
             r = self.problem.mitigation_oracle.evaluate()
             self.results["Mitigation"] = r
             self.results["TTM"] = time.time() - self.execution_start_time
-            self.logger.info(f"[EVAL] Mitigation {"Succeed" if r["success"] else "Failed"}\n TTM: {r["TTM"]}")
+            self.logger.info(f"[EVAL] Mitigation {"Succeed" if r["success"] else "Failed"}\n TTM: {self.results['TTM']}")
 
         next_stage_idx = self.tasklist.index(self.submission_stage) + 1
 

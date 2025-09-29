@@ -35,8 +35,7 @@ try:
     URL_TOOLS = os.environ["URL_TOOLS"].rstrip("/")
 except KeyError:
     URL_TOOLS = ""
-    print("Unable to find environment variable - URL_TOOLS.")
-    raise
+    print("Unable to find environment variable, leave it empty - URL_TOOLS.")
 
 try:
     API_KEY_TOOLS = os.environ["API_KEY_TOOLS"]
