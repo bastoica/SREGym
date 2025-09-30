@@ -33,6 +33,7 @@ from srearena.conductor.problems.persistent_volume_affinity_violation import Per
 from srearena.conductor.problems.pod_anti_affinity_deadlock import PodAntiAffinityDeadlock
 from srearena.conductor.problems.product_catalog_failure import ProductCatalogServiceFailure
 from srearena.conductor.problems.pvc_claim_mismatch import PVCClaimMismatch
+from srearena.conductor.problems.rbac_misconfiguration import RBACMisconfiguration
 from srearena.conductor.problems.read_error import ReadError
 from srearena.conductor.problems.readiness_probe_misconfiguration import ReadinessProbeMisconfiguration
 from srearena.conductor.problems.recommendation_service_cache_failure import RecommendationServiceCacheFailure
@@ -133,6 +134,7 @@ class ProblemRegistry:
             "pod_anti_affinity_deadlock": PodAntiAffinityDeadlock,
             "persistent_volume_affinity_violation": PersistentVolumeAffinityViolation,
             "pvc_claim_mismatch": PVCClaimMismatch,
+            "rbac_misconfiguration": RBACMisconfiguration,
             "readiness_probe_misconfiguration_astronomy_shop": lambda: ReadinessProbeMisconfiguration(
                 app_name="astronomy_shop", faulty_service="frontend"
             ),
