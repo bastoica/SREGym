@@ -47,7 +47,6 @@ from srearena.conductor.problems.recommendation_service_cache_failure import Rec
 from srearena.conductor.problems.resource_request import ResourceRequestTooLarge, ResourceRequestTooSmall
 from srearena.conductor.problems.revoke_auth import MongoDBRevokeAuth
 from srearena.conductor.problems.rolling_update_misconfigured import RollingUpdateMisconfigured
-from srearena.conductor.problems.rpc_retry_storm import RPCRetryStorm
 from srearena.conductor.problems.scale_pod import ScalePodSocialNet
 from srearena.conductor.problems.service_dns_resolution_failure import ServiceDNSResolutionFailure
 from srearena.conductor.problems.sidecar_port_conflict import SidecarPortConflict
@@ -255,7 +254,6 @@ class ProblemRegistry:
             "operator_invalid_affinity_toleration": K8SOperatorInvalidAffinityTolerationFault,
             "operator_security_context_fault": K8SOperatorSecurityContextFault,
             "operator_wrong_update_strategy_fault": K8SOperatorWrongUpdateStrategyFault,
-            "rpc_retry_storm": RPCRetryStorm,
         }
         self.kubectl = KubeCtl()
         self.non_emulated_cluster_problems = []
