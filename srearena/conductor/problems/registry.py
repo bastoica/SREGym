@@ -27,6 +27,13 @@ from srearena.conductor.problems.missing_service import MissingService
 from srearena.conductor.problems.multiple_failures import MultipleIndependentFailures
 from srearena.conductor.problems.namespace_memory_limit import NamespaceMemoryLimit
 from srearena.conductor.problems.network_policy_block import NetworkPolicyBlock
+from srearena.conductor.problems.operator_misoperation.invalid_affinity_toleration import (
+    K8SOperatorInvalidAffinityTolerationFault,
+)
+from srearena.conductor.problems.operator_misoperation.non_existent_storage import K8SOperatorNonExistentStorageFault
+from srearena.conductor.problems.operator_misoperation.overload_replicas import K8SOperatorOverloadReplicasFault
+from srearena.conductor.problems.operator_misoperation.security_context_fault import K8SOperatorSecurityContextFault
+from srearena.conductor.problems.operator_misoperation.wrong_update_strategy import K8SOperatorWrongUpdateStrategyFault
 from srearena.conductor.problems.payment_service_failure import PaymentServiceFailure
 from srearena.conductor.problems.payment_service_unreachable import PaymentServiceUnreachable
 from srearena.conductor.problems.persistent_volume_affinity_violation import PersistentVolumeAffinityViolation
@@ -40,6 +47,7 @@ from srearena.conductor.problems.recommendation_service_cache_failure import Rec
 from srearena.conductor.problems.resource_request import ResourceRequestTooLarge, ResourceRequestTooSmall
 from srearena.conductor.problems.revoke_auth import MongoDBRevokeAuth
 from srearena.conductor.problems.rolling_update_misconfigured import RollingUpdateMisconfigured
+from srearena.conductor.problems.rpc_retry_storm import RPCRetryStorm
 from srearena.conductor.problems.scale_pod import ScalePodSocialNet
 from srearena.conductor.problems.service_dns_resolution_failure import ServiceDNSResolutionFailure
 from srearena.conductor.problems.sidecar_port_conflict import SidecarPortConflict
@@ -242,6 +250,12 @@ class ProblemRegistry:
             # "operator_security_context_fault-localization-1": K8SOperatorSecurityContextFaultLocalization,
             # "operator_wrong_update_strategy-detection-1": K8SOperatorWrongUpdateStrategyDetection,
             # "operator_wrong_update_strategy-localization-1": K8SOperatorWrongUpdateStrategyLocalization,
+            "operator_overload_replicas": K8SOperatorOverloadReplicasFault,
+            "operator_non_existent_storage": K8SOperatorNonExistentStorageFault,
+            "operator_invalid_affinity_toleration": K8SOperatorInvalidAffinityTolerationFault,
+            "operator_security_context_fault": K8SOperatorSecurityContextFault,
+            "operator_wrong_update_strategy_fault": K8SOperatorWrongUpdateStrategyFault,
+            "rpc_retry_storm": RPCRetryStorm,
         }
         self.kubectl = KubeCtl()
         self.non_emulated_cluster_problems = []
