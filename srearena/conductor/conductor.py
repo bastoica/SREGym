@@ -192,13 +192,7 @@ class Conductor:
 
             self.logger.info(f"[STAGE] Done, recover fault")
 
-<<<<<<< Updated upstream
-            self.transient_issue_generator.stop_continuous_injection()
-            if self.transient_config["switch"]:
-=======
-            # self.transient_issue_generator.stop_continuous_injection()
             if self.transient_config['switch']:
->>>>>>> Stashed changes
                 self.transient_issue_generator.stop_continuous_injection()
 
             self.problem.recover_fault()
