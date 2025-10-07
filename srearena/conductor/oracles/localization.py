@@ -14,11 +14,9 @@ class LocalizationOracle(Oracle):
         try:
             solution = eval(solution)
         except Exception as e:
-            # If eval fails and solution is not already a string, try wrapping it
-            if not isinstance(solution, (str, list)):
-                solution = [str(solution)]
-
+            print(f"Not a string of list of strings, try to fallback to add []")
         # Normalize string input to list
+
         if isinstance(solution, str):
             solution = [solution]
         elif not isinstance(solution, list):
