@@ -102,7 +102,7 @@ class Conductor:
 
         self.dependency_check(["kubectl", "helm"])
         print(f"[Session Start] Problem ID: {self.problem_id}")
-        self.logger.info(f"[STAGE] Start testing on problem: {self.problem_id} <{self.app.namespace}>")
+        self.logger.info(f"[STAGE] Start testing on problem: {self.problem_id}")
 
         self.fix_kubernetes()
 
@@ -192,7 +192,7 @@ class Conductor:
 
             self.logger.info(f"[STAGE] Done, recover fault")
 
-            if self.transient_config['switch']:
+            if self.transient_config["switch"]:
                 self.transient_issue_generator.stop_continuous_injection()
 
             self.problem.recover_fault()
