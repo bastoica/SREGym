@@ -79,10 +79,10 @@ SREArena can be used in the following ways:
 #### Run our demo agent "Stratus"
 We have ported [the Stratus agent](https://anonymous.4open.science/r/stratus-agent/README.md) to SREArena as a demo agent.
 
-To run the benchmark with Stratus as the demo agent, uncomment line 43 in [`main.py`](https://github.com/xlab-uiuc/SREArena/blob/main/main.py#L43).
+To run the benchmark with Stratus as the demo agent, uncomment [this line](https://github.com/xlab-uiuc/SREArena/blob/180731a32a436fa4d369703998287d70a4e7f20e/main.py#L48C3-L48C3) in `main.py`.
 It allows the benchmark to kick start the agent when the problem setup is done.
 
-If you would like to run Stratus by itself, please take a look at [`driver.py`](https://github.com/xlab-uiuc/SREArena/blob/stratus_eval/clients/stratus/stratus_agent/driver/driver.py).
+If you would like to run Stratus by itself, please take a look at [`driver.py`](https://github.com/xlab-uiuc/SREArena/blob/main/clients/stratus/stratus_agent/driver/driver.py)
 
 We evaluated Stratus with `llama-3-3-70b-instruct`, here is a quick glance of the results:
 - NOOP detection success rate: 34.7%
