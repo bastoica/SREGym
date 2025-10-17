@@ -4,6 +4,7 @@ import traceback
 
 import requests
 from fastmcp import FastMCP
+from kubernetes import client, config
 
 from clients.stratus.configs.langgraph_tool_configs import LanggraphToolConfig
 from clients.stratus.stratus_utils.get_logger import get_logger
@@ -51,6 +52,8 @@ async def localization(
     resource_name: str,
     namespace: str,
 ) -> dict[str, str]:
+    """Retrieve the UID of a specified Kubernetes resource."""
+    config.load_kube_config()
     try:
         cmd = [
             "kubectl",
@@ -63,18 +66,24 @@ async def localization(
             "jsonpath={.metadata.uid}",
         ]
         logger.info(f"[localization_mcp] Running command: {' '.join(cmd)}")
-        proc = await asyncio.create_subprocess_exec(
-            *cmd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        stdout, stderr = await proc.communicate()
-        if proc.returncode != 0:
-            err_msg = stderr.decode().strip()
-            logger.error(f"[localization_mcp] Error retrieving UID: {err_msg}")
+        if resource_type.lower() == "pod":
+            api = client.CoreV1Api()
+            obj = api.read_namespaced_pod(name=resource_name, namespace=namespace)
+        elif resource_type.lower() == "service":
+            api = client.CoreV1Api()
+            obj = api.read_namespaced_service(name=resource_name, namespace=namespace)
+        elif resource_type.lower() == "deployment":
+            api = client.AppsV1Api()
+            obj = api.read_namespaced_deployment(name=resource_name, namespace=namespace)
+        elif resource_type.lower() == "statefulset":
+            api = client.AppsV1Api()
+            obj = api.read_namespaced_stateful_set(name=resource_name, namespace=namespace)
+        else:
+            err_msg = f"Unsupported resource type: {resource_type}"
+            logger.error(f"[localization_mcp] {err_msg}")
             return {"uid": f"Error: {err_msg}"}
-        uid = stdout.decode().strip()
-        logger.info(f"[localization_mcp] Retrieved UID: {uid}")
+        uid = obj.metadata.uid
+        logger.info(f"[localization_mcp] Retrieved UID using Kubernetes client: {uid}")
         return {"uid": uid}
     except Exception as e:
         logger.error(f"[localization_mcp] Exception occurred: {e}")
