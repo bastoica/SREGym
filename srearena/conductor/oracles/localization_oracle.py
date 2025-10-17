@@ -1,0 +1,80 @@
+from typing import Any
+
+from kubernetes import client, config
+from kubernetes.config.config_exception import ConfigException
+
+
+class LocalizationOracle(Oracle):
+    def __init__(self, problem: str, expected: list[str]):
+        super().__init__(problem)
+        self.expected = expected
+
+    def get_resource_uid(self, resource_type: str, resource_name: str, namespace: str) -> str | None:
+        """Return the UID of a live resource using the Kubernetes API."""
+        try:
+            try:
+                config.load_incluster_config()
+            except ConfigException:
+                config.load_kube_config()
+            if resource_type.lower() == "pod":
+                api = client.CoreV1Api()
+                obj = api.read_namespaced_pod(resource_name, namespace)
+            elif resource_type.lower() == "service":
+                api = client.CoreV1Api()
+                obj = api.read_namespaced_service(resource_name, namespace)
+            elif resource_type.lower() == "deployment":
+                api = client.AppsV1Api()
+                obj = api.read_namespaced_deployment(resource_name, namespace)
+            elif resource_type.lower() == "statefulset":
+                api = client.AppsV1Api()
+                obj = api.read_namespaced_stateful_set(resource_name, namespace)
+            else:
+                raise ValueError(f"Unsupported resource type: {resource_type}")
+
+            return obj.metadata.uid
+
+        except client.exceptions.ApiException as e:
+            return f"Error retrieving UID for {resource_type}/{resource_name} in {namespace}: {e.reason}"
+
+    def get_ground_truth(self, problem: str) -> dict[str, Any]:
+        """Fetch ground truth UIDs from Kubernetes for a given problem."""
+        PROBLEM_RESOURCE_MAP = {
+            "operator_overload_replicas": [
+                {"resource_type": "deployment", "resource_name": "tidb-tidb", "namespace": "tidb-cluster"},
+            ],
+            "operator_invalid_affinity_toleration": [
+                {"resource_type": "statefulset", "resource_name": "tidb-tidb", "namespace": "tidb-cluster"},
+            ],
+            "operator_security_context_fault": [
+                {"resource_type": "pod", "resource_name": "tidb-cluster-tidb-0", "namespace": "tidb-cluster"},
+            ],
+            "operator_non_existent_storage": [
+                {"resource_type": "statefulset", "resource_name": "tidb-cluster-tikv", "namespace": "tidb-cluster"},
+            ],
+        }
+
+        resources = PROBLEM_RESOURCE_MAP.get(problem)
+        if not resources:
+            raise ValueError(f"No ground truth mapping found for problem '{problem}'")
+
+        results = {}
+        for res in resources:
+            uid = self.get_resource_uid(res["resource_type"], res["resource_name"], res["namespace"])
+            results[f"{res['resource_type']}/{res['resource_name']}"] = uid
+
+        return results
+
+    def evaluate_localization(self) -> dict[str, Any]:
+        """Compare Kubernetes ground truth UIDs with expected values."""
+        ground_truth = self.get_ground_truth(self.problem)
+        comparison = {}
+
+        for key, uid in ground_truth.items():
+            expected_match = uid in self.expected
+            comparison[key] = {"ground_truth_uid": uid, "match": expected_match}
+
+        return {
+            "problem": self.problem,
+            "results": comparison,
+            "all_matched": all(v["match"] for v in comparison.values()),
+        }
