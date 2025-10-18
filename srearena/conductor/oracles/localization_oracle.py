@@ -89,12 +89,14 @@ class LocalizationOracle(Oracle):
         return {
             "problem": problem_name,
             "results": comparison,
-            "matched": any(v["match"] for v in comparison.values()),
+            "success": any(v["match"] for v in comparison.values()),
         }
 
     def get_ground_truth(self, problem: str) -> dict[str, Any]:
         """Fetch ground truth UIDs from Kubernetes dynamically.
-        If the problem defines a faulty service, use its pods; otherwise, fallback to all pods in namespace.
+        - Includes both Service and Pod UIDs for faulty services.
+        - Supports Kompose (`io.kompose.service`) and standard (`app`) labels.
+        - Falls back to all pods if no match is found.
         """
         try:
             try:
@@ -107,29 +109,61 @@ class LocalizationOracle(Oracle):
         core_v1 = client.CoreV1Api()
         ns = getattr(self.problem, "namespace", "default")
 
-        faulty_services = []
+        faulty_services: list[str] = []
         if hasattr(self.problem, "faulty_service"):
-            faulty_services = [self.problem.faulty_service]
+            raw = getattr(self.problem, "faulty_service")
+            if isinstance(raw, list):
+                faulty_services.extend(raw)
+            elif isinstance(raw, str):
+                faulty_services.append(raw.strip("[]'\" "))
         elif hasattr(self.problem, "faulty_services"):
-            faulty_services = getattr(self.problem, "faulty_services", [])
+            raw = getattr(self.problem, "faulty_services", [])
+            if isinstance(raw, list):
+                faulty_services.extend(raw)
+            elif isinstance(raw, str):
+                faulty_services.append(raw.strip("[]'\" "))
 
-        results = {}
+        faulty_services = [s for s in faulty_services if s]
+        faulty_services = list(dict.fromkeys(faulty_services))
+
+        print(f"[DEBUG] Namespace: {ns}")
+        print(f"[DEBUG] Faulty services: {faulty_services}")
+
+        results: dict[str, Any] = {}
 
         if faulty_services:
             for svc in faulty_services:
-                pods = core_v1.list_namespaced_pod(namespace=ns, label_selector=f"app={svc}").items
-                if not pods:
-                    print(f"[WARN] No pods found for service '{svc}' in namespace '{ns}'")
-                for pod in pods:
-                    results[f"pod/{pod.metadata.name}"] = pod.metadata.uid
+                try:
+                    try:
+                        service_obj = core_v1.read_namespaced_service(svc, namespace=ns)
+                        svc_uid = service_obj.metadata.uid
+                        results[f"service/{svc}"] = svc_uid
+                        print(f"[INFO] Found service '{svc}' (UID: {svc_uid})")
+                    except client.exceptions.ApiException as e:
+                        print(f"[WARN] No service named '{svc}' in '{ns}' ({e.reason})")
 
-        if not results:
+                    pods = core_v1.list_namespaced_pod(namespace=ns, label_selector=f"io.kompose.service={svc}").items
+
+                    if not pods:
+                        pods = core_v1.list_namespaced_pod(namespace=ns, label_selector=f"app={svc}").items
+
+                    if not pods:
+                        print(f"[WARN] No pods found for '{svc}' — using all pods in '{ns}'.")
+                        pods = core_v1.list_namespaced_pod(namespace=ns).items
+
+                    for pod in pods:
+                        results[f"pod/{pod.metadata.name}"] = pod.metadata.uid
+                        print(f"[INFO] Found pod '{pod.metadata.name}' (UID: {pod.metadata.uid}) under service '{svc}'")
+
+                except client.exceptions.ApiException as e:
+                    print(f"[ERROR] Failed to query '{svc}' in '{ns}': {e.reason}")
+        else:
             pods = core_v1.list_namespaced_pod(namespace=ns).items
             for pod in pods:
                 results[f"pod/{pod.metadata.name}"] = pod.metadata.uid
             print(f"[INFO] Using all pods in namespace '{ns}' as fallback ground truth")
 
         if not results:
-            raise ValueError(f"No pods found for problem '{problem}' in namespace '{ns}'")
+            raise ValueError(f"No pods or services found for problem '{problem}' in namespace '{ns}'")
 
         return results
