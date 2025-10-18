@@ -14,9 +14,9 @@
 </div>
 
 
-SREArena is a unified framework to enable the design, development, and evaluation of autonomous AIOps agents that, additionally, serve the purpose of building reproducible, standardized, interoperable and scalable benchmarks. SREArena can deploy microservice cloud environments, inject faults, generate workloads, and export telemetry data, while orchestrating these components and providing interfaces for interacting with and evaluating agents. 
+SREArena is a unified framework to enable the design, development, and evaluation of autonomous AIOps agents and, additionally, serve the purpose of building reproducible, standardized, interoperable, and scalable benchmarks. SREArena offers a Kubernetes-based experiment environment that deploy cloud applications, inject faults, generate workloads, and export telemetry data, while orchestrating these components with programmable interfaces. 
 
-Moreover, SREArena provides a built-in benchmark suite with a set of problems to evaluate AIOps agents in an interactive environment. This suite can be easily extended to meet user-specific needs.
+Moreover, SREArena provides a benchmark suite with a set of problems to evaluate AIOps agents in an interactive environment. The benchmark suite can be easily extended to meet user- and application-specific needs.
 
 ### Problems
 See a complete problem list with descriptions [here](https://docs.google.com/spreadsheets/d/1FGIeLNcKsHjrZGQ_VJcQRGl6oTmYyzjW0_ve5tfM_eg/edit?usp=sharing).
@@ -79,10 +79,10 @@ SREArena can be used in the following ways:
 #### Run our demo agent "Stratus"
 We have ported [the Stratus agent](https://anonymous.4open.science/r/stratus-agent/README.md) to SREArena as a demo agent.
 
-To run the benchmark with Stratus as the demo agent, uncomment line 43 in [`main.py`](https://github.com/xlab-uiuc/SREArena/blob/main/main.py#L43).
+To run the benchmark with Stratus as the demo agent, uncomment [this line](https://github.com/xlab-uiuc/SREArena/blob/180731a32a436fa4d369703998287d70a4e7f20e/main.py#L48C3-L48C3) in `main.py`.
 It allows the benchmark to kick start the agent when the problem setup is done.
 
-If you would like to run Stratus by itself, please take a look at [`driver.py`](https://github.com/xlab-uiuc/SREArena/blob/stratus_eval/clients/stratus/stratus_agent/driver/driver.py).
+If you would like to run Stratus by itself, please take a look at [`driver.py`](https://github.com/xlab-uiuc/SREArena/blob/main/clients/stratus/stratus_agent/driver/driver.py)
 
 We evaluated Stratus with `llama-3-3-70b-instruct`, here is a quick glance of the results:
 - NOOP detection success rate: 34.7%
@@ -92,6 +92,19 @@ We evaluated Stratus with `llama-3-3-70b-instruct`, here is a quick glance of th
 - Mitigation success rate: 22.4%
 
 Detailed evaluation, with token usages and step counts, will be released soon.
+
+##### Try other LLMs on "Stratus"
+Stratus is implemented to be LLM-agnostic. You can feel free to try "Stratus" on the benchmark with different LLMs. You should configure the choice of LLM in `.env`.
+
+Three kinds of LLM are supported:
+
+1. LiteLLM-supported models
+   Basically you can use the providers in [LiteLLM's list](https://docs.litellm.ai/docs/providers), including OpenAI, Anthropic and Gemini. (Note that not all of them are available due to the version issue)
+2. IBM WatsonX 
+3. other model not supported by LiteLLM (or self-deployed)
+   **You custom provider or deployment platform must have OpenAI-compatible API.**
+
+We have examples at [.env.example](https://github.com/xlab-uiuc/SREArena/blob/main/.env.example) for them respectively.
 
 #### Run your agent on SREArena
 SREArena makes it extremely easy to develop and evaluate your agents, thanks to its decoupled design. 
@@ -351,6 +364,13 @@ export no_proxy=localhost
 }
 ``` -->
 
+### Dashboard
+
+You can run the dashboard manually, using the command.
+```
+python3 dashboard/dashboard_app.py
+```
+The dashboard will be hosted at localhost:11451 by default.
 
 
 ## License
