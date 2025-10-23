@@ -52,7 +52,7 @@ class AgentLauncher:
             return
         for line in proc.stdout:
             try:
-                sys.stdout.write(f"[{line}")
+                sys.stdout.write(f"{line}")
                 sys.stdout.flush()
             except Exception:
                 break
