@@ -67,7 +67,7 @@ class BaseAgent:
                 raise ValueError("the agent must have at least 1 tool!")
         else:
             if self.async_tools is None:
-                ai_message = (self.llm_inference_step(state["messages"], tools=self.sync_tools),)
+                ai_message = self.llm_inference_step(state["messages"], tools=self.sync_tools)
             else:
                 ai_message = self.llm_inference_step(state["messages"], tools=[*self.sync_tools, *self.async_tools])
         return {
