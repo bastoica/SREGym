@@ -1,12 +1,10 @@
 import asyncio
 import csv
+import os
 import sys
 import threading
 import time
 from datetime import datetime
-import os
-from srearena.agent_registry import get_agent
-from srearena.agent_launcher import AgentLauncher
 
 import uvicorn
 from rich.console import Console
@@ -15,6 +13,8 @@ from rich.prompt import Prompt
 from clients.stratus.stratus_agent.driver.driver import main as stratus_driver
 from mcp_server.configs.load_all_cfg import mcp_server_cfg
 from mcp_server.srearena_mcp_server import app as mcp_app
+from srearena.agent_launcher import AgentLauncher
+from srearena.agent_registry import get_agent
 from srearena.conductor.conductor import Conductor
 from srearena.conductor.conductor_api import request_shutdown, run_api
 
@@ -48,8 +48,6 @@ def driver_loop(conductor: Conductor):
             reg = get_agent(agent_to_start)
             if reg:
                 await LAUNCHER.ensure_started(reg)
-
-            # await stratus_driver()
 
             # Poll until grading completes
             while conductor.submission_stage != "done":
