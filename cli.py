@@ -10,12 +10,8 @@ import asyncio
 import json
 import logging
 import sys
-from gc import disable
 from multiprocessing import Process, set_start_method
-from threading import Thread
 
-from dashboard.dashboard_app import SREArenaDashboardServer
-from dashboard.proxy import LogProxy
 from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.patch_stdout import patch_stdout
@@ -24,6 +20,8 @@ from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
 
+from dashboard.dashboard_app import SREArenaDashboardServer
+from dashboard.proxy import LogProxy
 from srearena.conductor.conductor import Conductor
 from srearena.service.shell import Shell
 

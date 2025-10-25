@@ -93,6 +93,7 @@ def get_curr_problem():
 
 
 def get_app_class_by_name(app_name):
+    target_app = ""
     if app_name == "Social Network":
         from srearena.service.apps.social_network import SocialNetwork
 
@@ -111,10 +112,10 @@ def get_app_class_by_name(app_name):
 
         target_app = HotelReservation()
     elif app_name == "TiDB Cluster with Operator":
-        from srearena.service.apps.tidb_cluster_operator import TiDBCluster
+        from srearena.service.apps.fleet_cast import FleetCast
 
         logger.info(f"TiDB has never been tested!!")
-        target_app = TiDBCluster()
+        target_app = FleetCast()
     elif app_name == "Train Ticket":
         from srearena.service.apps.train_ticket import TrainTicket
 
@@ -542,18 +543,18 @@ async def main():
 
     # run mitigation task 1 time for mitigation
     # it includes retry logics
-    # logger.info("*" * 25 + " Starting [mitigation agent] for [mitigation] " + "*" * 25)
-    # mitigation_agent_exec_stats = await mitigation_task_main(localization_fault_summary)
-    # agent_names.extend(mitigation_agent_exec_stats["agent_name"])
-    # agent_in_tokens.extend(mitigation_agent_exec_stats["input_tokens"])
-    # agent_out_tokens.extend(mitigation_agent_exec_stats["output_tokens"])
-    # agent_total_tokens.extend(mitigation_agent_exec_stats["total_tokens"])
-    # agent_times.extend(mitigation_agent_exec_stats["time"])
-    # agent_steps.extend(mitigation_agent_exec_stats["steps"])
-    # agent_retry_attempts.extend(mitigation_agent_exec_stats["num_retry_attempts"])
-    # agent_rollback_stack.extend(mitigation_agent_exec_stats["rollback_stack"])
-    # agent_oracle_results.extend(mitigation_agent_exec_stats["oracle_results"])
-    # logger.info("*" * 25 + " Finished [mitigation agent] " + "*" * 25)
+    logger.info("*" * 25 + " Starting [mitigation agent] for [mitigation] " + "*" * 25)
+    mitigation_agent_exec_stats = await mitigation_task_main(localization_fault_summary)
+    agent_names.extend(mitigation_agent_exec_stats["agent_name"])
+    agent_in_tokens.extend(mitigation_agent_exec_stats["input_tokens"])
+    agent_out_tokens.extend(mitigation_agent_exec_stats["output_tokens"])
+    agent_total_tokens.extend(mitigation_agent_exec_stats["total_tokens"])
+    agent_times.extend(mitigation_agent_exec_stats["time"])
+    agent_steps.extend(mitigation_agent_exec_stats["steps"])
+    agent_retry_attempts.extend(mitigation_agent_exec_stats["num_retry_attempts"])
+    agent_rollback_stack.extend(mitigation_agent_exec_stats["rollback_stack"])
+    agent_oracle_results.extend(mitigation_agent_exec_stats["oracle_results"])
+    logger.info("*" * 25 + " Finished [mitigation agent] " + "*" * 25)
 
     for lst in [
         agent_names,

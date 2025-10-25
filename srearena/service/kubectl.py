@@ -40,6 +40,22 @@ class KubeCtl:
     def list_nodes(self):
         """Return a list of all running nodes."""
         return self.core_v1_api.list_node()
+    
+    def get_concise_deployments_info(self, namespace=None):
+        """Return a concise info of a deployment."""
+        cmd = f"kubectl get deployment {f'-n {namespace}' if namespace else ''} -o wide"
+        result = self.exec_command(cmd)
+        return result
+
+    def get_concise_pods_info(self, namespace=None):
+        """Return a concise info of a pod."""
+        cmd = f"kubectl get pod {f'-n {namespace}' if namespace else ''} -o wide"
+        result = self.exec_command(cmd)
+        return result
+    
+    def list_deployments(self, namespace):
+        """Return a list of all deployments within a specified namespace."""
+        return self.apps_v1_api.list_namespaced_deployment(namespace)
 
     def get_cluster_ip(self, service_name, namespace):
         """Retrieve the cluster IP address of a specified service within a namespace."""
@@ -235,20 +251,26 @@ class KubeCtl:
 
             raise Exception(f"[red]Timeout: Namespace '{namespace}' was not deleted within {max_wait} seconds.")
 
-    def delete_job(self, job_name: str = None, label: str = None, namespace: str = 'default'):
+    def delete_job(self, job_name: str = None, label: str = None, namespace: str = "default"):
         """Delete a Kubernetes Job."""
         console = Console()
         api_instance = client.BatchV1Api()
         try:
             if job_name:
-                api_instance.delete_namespaced_job(name=job_name, namespace=namespace, body=client.V1DeleteOptions(propagation_policy="Foreground"))
+                api_instance.delete_namespaced_job(
+                    name=job_name, namespace=namespace, body=client.V1DeleteOptions(propagation_policy="Foreground")
+                )
                 console.log(f"[bold green]Job '{job_name}' deleted successfully.")
             elif label:
                 # If label is provided, delete jobs by label
                 jobs = api_instance.list_namespaced_job(namespace=namespace, label_selector=label)
                 if jobs.items:
                     for job in jobs.items:
-                        api_instance.delete_namespaced_job(name=job.metadata.name, namespace=namespace, body=client.V1DeleteOptions(propagation_policy="Foreground"))
+                        api_instance.delete_namespaced_job(
+                            name=job.metadata.name,
+                            namespace=namespace,
+                            body=client.V1DeleteOptions(propagation_policy="Foreground"),
+                        )
                         console.log(f"[bold green]Job with label '{label}' deleted successfully.")
                 else:
                     console.log(f"[yellow]No jobs found with label '{label}' in namespace '{namespace}'.")
@@ -256,7 +278,7 @@ class KubeCtl:
         except client.exceptions.ApiException as e:
             if e.status == 404:
                 console.log(f"[yellow]Job '{job_name}' not found in namespace '{namespace}' (already deleted)")
-                return True 
+                return True
             else:
                 console.log(f"[red]Error deleting job '{job_name}': {e}")
                 return False
@@ -264,12 +286,12 @@ class KubeCtl:
             console.log(f"[red]Unexpected error deleting job '{job_name}': {e}")
             return False
 
-    def wait_for_job_completion(self, job_name: str, namespace: str='default', timeout: int = 600):
+    def wait_for_job_completion(self, job_name: str, namespace: str = "default", timeout: int = 600):
         """Wait for a Kubernetes Job to complete successfully within a specified timeout."""
         api_instance = client.BatchV1Api()
         console = Console()
         start_time = time.time()
-        
+
         console.log(f"[yellow]Waiting for job '{job_name}' to complete...")
         with console.status("[bold green]Waiting for job to be done...") as status:
             while time.time() - start_time < timeout:
@@ -292,16 +314,16 @@ class KubeCtl:
                     succeeded = job.status.succeeded or 0
                     failed = job.status.failed or 0
                     active = job.status.active or 0
-                    
+
                     if succeeded > 0:
                         console.log(f"[bold green]Job '{job_name}' completed successfully! (succeeded: {succeeded})")
                         return True
                     elif failed > 0:
                         console.log(f"[bold red]Job '{job_name}' failed! (failed: {failed})")
                         return False
-                    
+
                     time.sleep(2)
-                    
+
                 except client.exceptions.ApiException as e:
                     if e.status == 404:
                         console.log(f"[red]Job '{job_name}' not found!")
@@ -312,7 +334,7 @@ class KubeCtl:
                 except Exception as e:
                     console.log(f"[red]Unexpected error: {e}")
                     time.sleep(2)
-            
+
             console.log(f"[bold red]Timeout waiting for job '{job_name}' to complete!")
         return False
 
@@ -616,6 +638,24 @@ class KubeCtl:
             print(f"✅ Scaled deployment '{name}' in namespace '{namespace}' to {replicas} replicas.")
         except client.exceptions.ApiException as e:
             raise RuntimeError(f"❌ Failed to scale deployment '{name}' in namespace '{namespace}': {e}")
+
+    def get_pod_cpu_usage(self, namespace: str):
+        cmd = f"kubectl top pod -n {namespace} --no-headers"
+        out = self.exec_command(cmd)
+        # make the result into a dict
+        result = {}
+        for line in out.split("\n"):
+            if line:
+                pod_name, cpu, _ = line.split(None, 2)
+                cpu = cpu.replace("m", "")
+                result[pod_name] = cpu
+        return result
+
+    def trigger_rollout(self, deployment_name: str, namespace: str):
+        self.exec_command(f"kubectl rollout restart deployment {deployment_name} -n {namespace}")
+
+    def trigger_scale(self, deployment_name: str, namespace: str, replicas: int):
+        self.exec_command(f"kubectl scale deployment {deployment_name} -n {namespace} --replicas={replicas}")
 
 
 # Example usage:

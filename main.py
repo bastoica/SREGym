@@ -1,5 +1,6 @@
 import asyncio
 import csv
+import logging
 import os
 import sys
 import threading
@@ -10,7 +11,8 @@ import uvicorn
 from rich.console import Console
 from rich.prompt import Prompt
 
-from clients.stratus.stratus_agent.driver.driver import main as stratus_driver
+from dashboard.dashboard_app import SREArenaDashboardServer
+from dashboard.proxy import LogProxy
 from mcp_server.configs.load_all_cfg import mcp_server_cfg
 from mcp_server.srearena_mcp_server import app as mcp_app
 from srearena.agent_launcher import AgentLauncher
@@ -41,6 +43,7 @@ def driver_loop(conductor: Conductor):
         all_results = []
         for pid in conductor.problems.get_problem_ids():
             console.log(f"\n🔍 Starting problem: {pid}")
+
             conductor.problem_id = pid
 
             await conductor.start_problem()
@@ -107,7 +110,41 @@ def _run_driver_and_shutdown(conductor: Conductor):
     request_shutdown()
 
 
+def run_dashboard_server():
+    """Entry point for multiprocessing child: construct Dash in child process."""
+    # Silence child process stdout/stderr and noisy loggers
+    import logging
+    import os
+    import sys
+
+    try:
+        sys.stdout = open(os.devnull, "w")
+        sys.stderr = open(os.devnull, "w")
+    except Exception:
+        pass
+    server = SREArenaDashboardServer(host="127.0.0.1", port=11451, debug=False)
+    server.run(threaded=False)
+    print("Dashboard server started on 127.0.0.1:11451")
+
+
 def main():
+    # set up the logger
+    logging.getLogger("srearena-global").setLevel(logging.INFO)
+    logging.getLogger("srearena-global").addHandler(LogProxy())
+
+    """
+    try:
+        set_start_method("spawn")
+    except RuntimeError:
+        pass
+
+    # Start dashboard in a separate process; construct server inside the child
+    p = Process(target=run_dashboard_server, daemon=True)
+    p.start()
+    
+    time.sleep(5)
+    """
+
     agent_name = Prompt.ask("[bold cyan]What would you like to call your agent?[/]", default="arena")
     conductor = Conductor()
     conductor.register_agent(agent_name)
