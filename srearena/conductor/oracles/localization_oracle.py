@@ -30,6 +30,12 @@ class LocalizationOracle(Oracle):
             elif resource_type.lower() == "statefulset":
                 api = client.AppsV1Api()
                 obj = api.read_namespaced_stateful_set(resource_name, namespace)
+            elif resource_type.lower() == "persistentvolumeclaim":
+                api = client.CoreV1Api()
+                obj = api.read_namespaced_persistent_volume_claim(resource_name, namespace)
+            elif resource_type.lower() == "persistentvolume":
+                api = client.CoreV1Api()
+                obj = api.read_persistent_volume(resource_name)
             else:
                 raise ValueError(f"Unsupported resource type: {resource_type}")
 
@@ -37,35 +43,6 @@ class LocalizationOracle(Oracle):
 
         except client.exceptions.ApiException as e:
             return f"Error retrieving UID for {resource_type}/{resource_name} in {namespace}: {e.reason}"
-
-    # def get_ground_truth(self, problem: str) -> dict[str, Any]:
-    #     """Fetch ground truth UIDs from Kubernetes for a given problem."""
-    #     PROBLEM_RESOURCE_MAP = {
-    #         "operator_overload_replicas": [
-    #             {"resource_type": "deployment", "resource_name": "basic-tidb", "namespace": "tidb-cluster"},
-    #         ],
-    #         "operator_invalid_affinity_toleration": [
-    #             {"resource_type": "statefulset", "resource_name": "basic-tidb", "namespace": "tidb-cluster"},
-    #         ],
-    #         "operator_security_context_fault": [
-    #             {"resource_type": "pod", "resource_name": "basic-tidb-0", "namespace": "tidb-cluster"},
-    #         ],
-    #         "operator_non_existent_storage": [
-    #             {"resource_type": "statefulset", "resource_name": "basic-tikv", "namespace": "tidb-cluster"},
-    #         ],
-
-    #     }
-
-    #     resources = PROBLEM_RESOURCE_MAP.get(problem)
-    #     if not resources:
-    #         raise ValueError(f"No ground truth mapping found for problem '{problem}'")
-
-    #     results = {}
-    #     for res in resources:
-    #         uid = self.get_resource_uid(res["resource_type"], res["resource_name"], res["namespace"])
-    #         results[f"{res['resource_type']}/{res['resource_name']}"] = uid
-
-    #     return results
 
     def evaluate(self, solution) -> dict[str, Any]:
         """Compare Kubernetes ground truth UIDs with agent-provided solution (expected values)."""
