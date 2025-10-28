@@ -1,6 +1,6 @@
 <div align="center">
 
-<h1>A Unified Framework for Benchmarking SRE Agents</h1>
+<h1>SREGym: A Unified Framework for Benchmarking SRE Agents</h1>
 
 [🚀Quick Start](#🚀quickstart) |
 [📦Installation](#📦installation) |
@@ -57,16 +57,12 @@ kind create cluster --config kind/kind-config-x86.yaml
 kind create cluster --config kind/kind-config-arm.yaml
 ```
 
-If you're running into issues, consider building a Docker image for your machine by following this [README](kind/README.md). Please also open an issue.
-
-When using kind, each node pulls images from docker hub independently, which can easily hit the rate limitation. You can uncomment `containerdConfigPatches` in the corresponding kind config file to pull images from our exclusive image registry without rate limiting.
-
 <h2 id="⚙️usage">⚙️ Usage</h2>
 
 SREGym can be used in the following ways:
 - [Evaluating agents on SREGym](#run-agent-on-SREGym)
-- [Add new applications to SREGym](#how-to-add-new-applications-to-SREGym)
 - [Add new problems to SREGym](#how-to-add-new-problems-to-SREGym)
+- [Add new applications to SREGym](#how-to-add-new-applications-to-SREGym)
 
 ### Evaluate agent on SREGym
 
@@ -78,7 +74,12 @@ To start, first create your `.env`:
 mv .env.example .env
 ```
 
-Select your model and paste your API key.
+Then, select your model and paste your API key.
+
+Finally:
+```bash
+python main.py
+```
 
 #### Run your agent on SREGym
 SREGym makes it extremely easy to develop and evaluate your agents, thanks to its decoupled design. 
