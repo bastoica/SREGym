@@ -2,7 +2,6 @@
 
 <h1>A Unified Framework for Benchmarking SRE Agents</h1>
 
-<!-- [🤖Overview](#🤖overview) |  -->
 [🚀Quick Start](#🚀quickstart) |
 [📦Installation](#📦installation) |
 [⚙️Usage](#⚙️usage) |
@@ -45,14 +44,7 @@ Choose either a) or b) to set up your cluster and then proceed to the next steps
 ### a) Kubernetes Cluster (Recommended)
 SREGym supports any remote kubernetes cluster that your `kubectl` context is set to, whether it's a cluster from a cloud provider or one you build yourself. 
 
-We have some Ansible playbooks to setup clusters on providers like [CloudLab](https://www.cloudlab.us/) and our own machines. Follow this [README](./scripts/ansible/README.md) to set up your own cluster.
-
-<h2 id="⚙️usage">⚙️ Usage</h2>
-
-SREGym can be used in the following ways:
-- [Run agent on SREGym](#run-agent-on-SREGym)
-- [Add new applications to SREGym](#how-to-add-new-applications-to-SREGym)
-- [Add new problems to SREGym](#how-to-add-new-problems-to-SREGym)
+We have an Ansible playbook to setup clusters on providers like [CloudLab](https://www.cloudlab.us/) and our own machines. Follow this [README](./scripts/ansible/README.md) to set up your own cluster.
 
 ### b) Emulated cluster
 SREGym can be run on an emulated cluster using [kind](https://kind.sigs.k8s.io/) on your local machine. However, not all problems are supported.
@@ -69,38 +61,24 @@ If you're running into issues, consider building a Docker image for your machine
 
 When using kind, each node pulls images from docker hub independently, which can easily hit the rate limitation. You can uncomment `containerdConfigPatches` in the corresponding kind config file to pull images from our exclusive image registry without rate limiting.
 
+<h2 id="⚙️usage">⚙️ Usage</h2>
 
-### Run agent on SREGym
+SREGym can be used in the following ways:
+- [Evaluating agents on SREGym](#run-agent-on-SREGym)
+- [Add new applications to SREGym](#how-to-add-new-applications-to-SREGym)
+- [Add new problems to SREGym](#how-to-add-new-problems-to-SREGym)
+
+### Evaluate agent on SREGym
 
 #### Run our demo agent "Stratus"
-We have ported [the Stratus agent](https://anonymous.4open.science/r/stratus-agent/README.md) to SREGym as a demo agent.
+We have ported [the Stratus agent](https://github.com/xlab-uiuc/stratus) to SREGym as a demo agent.
 
-To run the benchmark with Stratus as the demo agent, uncomment [this line](https://github.com/xlab-uiuc/SREGym/blob/180731a32a436fa4d369703998287d70a4e7f20e/main.py#L48C3-L48C3) in `main.py`.
-It allows the benchmark to kick start the agent when the problem setup is done.
+To start, first create your `.env`:
+```bash
+mv .env.example .env
+```
 
-If you would like to run Stratus by itself, please take a look at [`driver.py`](https://github.com/xlab-uiuc/SREGym/blob/main/clients/stratus/stratus_agent/driver/driver.py)
-
-We evaluated Stratus with `llama-3-3-70b-instruct`, here is a quick glance of the results:
-- NOOP detection success rate: 34.7%
-- Faulty system detection success rate: 89.8%
-- Localization success rate: 16.3%
-   - percentage of agent answer subsets ground truth: 18.4%
-- Mitigation success rate: 22.4%
-
-Detailed evaluation, with token usages and step counts, will be released soon.
-
-##### Try other LLMs on "Stratus"
-Stratus is implemented to be LLM-agnostic. You can feel free to try "Stratus" on the benchmark with different LLMs. You should configure the choice of LLM in `.env`.
-
-Three kinds of LLM are supported:
-
-1. LiteLLM-supported models
-   Basically you can use the providers in [LiteLLM's list](https://docs.litellm.ai/docs/providers), including OpenAI, Anthropic and Gemini. (Note that not all of them are available due to the version issue)
-2. IBM WatsonX 
-3. other model not supported by LiteLLM (or self-deployed)
-   **You custom provider or deployment platform must have OpenAI-compatible API.**
-
-We have examples at [.env.example](https://github.com/xlab-uiuc/SREGym/blob/main/.env.example) for them respectively.
+Select your model and paste your API key.
 
 #### Run your agent on SREGym
 SREGym makes it extremely easy to develop and evaluate your agents, thanks to its decoupled design. 
@@ -350,6 +328,9 @@ You can run the dashboard manually, using the command.
 python dashboard/dashboard_app.py
 ```
 The dashboard will be hosted at localhost:11451 by default.
+
+## Acknowledgements
+Thank you to [Laude Institute](https://www.laude.org/) for supporting this project.
 
 
 ## License
