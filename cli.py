@@ -10,7 +10,6 @@ import asyncio
 import json
 import logging
 import sys
-from gc import disable
 from multiprocessing import Process, set_start_method
 from threading import Thread
 
@@ -24,6 +23,7 @@ from rich.panel import Panel
 
 from dashboard.dashboard_app import SREArenaDashboardServer
 from dashboard.proxy import LogProxy
+from logger import init_logger
 from srearena.conductor.conductor import Conductor
 from srearena.service.shell import Shell
 
@@ -150,6 +150,7 @@ def run_dashboard_server():
 
 async def main():
     # set up the logger
+    """
     logging.getLogger("srearena-global").setLevel(logging.INFO)
     logging.getLogger("srearena-global").addHandler(LogProxy())
 
@@ -161,6 +162,9 @@ async def main():
     # Start dashboard in a separate process; construct server inside the child
     p = Process(target=run_dashboard_server, daemon=True)
     p.start()
+    """
+
+    init_logger()
 
     """
     import os, subprocess
