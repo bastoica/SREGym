@@ -11,6 +11,7 @@ import json
 import logging
 import sys
 from multiprocessing import Process, set_start_method
+from threading import Thread
 
 from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import WordCompleter
@@ -19,24 +20,22 @@ from prompt_toolkit.styles import Style
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
-from dashboard.proxy import LogProxy
+
 from dashboard.dashboard_app import SREArenaDashboardServer
-from threading import Thread
+from dashboard.proxy import LogProxy
 from logger import init_logger
 from srearena.conductor.conductor import Conductor
 from srearena.service.shell import Shell
 
 WELCOME = """
-# SREArena
-- Type your commands or actions below.
+# SREGym
+- This CLI is used by benchmark developers to test new problems.
 """
 
 OPTIONS = """
-- Use `start <problem_id>` to begin a new problem.
-- Use `deploy <app_name>` / `undeploy <app_name>` to manage standalone apps.
-- Use `list` to see deployed apps.
-- Use `options` to re-print this list.
-- Use `exit` to quit.
+- Use `start <problem_id>` to run your selected problem.
+- Tools like `get_logs`, `get_metrics`, and `get_traces` are available in this CLI.
+- Use the `submit()` function in the console to test an agent submission.
 """
 
 WARNING = (
@@ -76,11 +75,6 @@ class HumanAgent:
                 sys.exit(0)
             if cmd[0].lower() == "options":
                 self.console.print(Markdown(OPTIONS), justify="center")
-                continue
-            if cmd[0].lower() == "list":
-                apps = self.conductor.get_deployed_apps()
-                text = "\n".join(apps) if apps else "No apps deployed"
-                self.console.print(Panel(text, title="Deployed Apps"))
                 continue
             if cmd[0].lower() == "start" and len(cmd) == 2:
                 pid = cmd[1]
@@ -156,7 +150,7 @@ def run_dashboard_server():
 
 async def main():
     # set up the logger
-    '''
+    """
     logging.getLogger("srearena-global").setLevel(logging.INFO)
     logging.getLogger("srearena-global").addHandler(LogProxy())
 
@@ -168,8 +162,8 @@ async def main():
     # Start dashboard in a separate process; construct server inside the child
     p = Process(target=run_dashboard_server, daemon=True)
     p.start()
-    '''
-    
+    """
+
     init_logger()
 
     """

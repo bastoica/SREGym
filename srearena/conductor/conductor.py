@@ -42,7 +42,7 @@ class Conductor:
         self.results = {}
 
         self.tasklist = None
-        self.logger = logging.getLogger("srearena-global") # this is for dashboard
+        self.logger = logging.getLogger("srearena-global")  # this is for dashboard
         self.local_logger = logging.getLogger("all.srearena.conductor")
 
         self.transient_config = {
@@ -77,7 +77,9 @@ class Conductor:
             problems = tasklist["all"]["problems"]
 
         if self.problem_id not in (problems if problems else []):
-            self.local_logger.warning("problem_id not found in tasklist. Currently assuming that all tasks will be run.")
+            self.local_logger.warning(
+                "problem_id not found in tasklist. Currently assuming that all tasks will be run."
+            )
             self.tasklist = ["noop", "detection", "localization", "mitigation", "done"]
         else:
             problem_tasklist = problems[self.problem_id]
@@ -91,7 +93,9 @@ class Conductor:
                 self.local_logger.error(msg)
                 raise RuntimeError(msg)
 
-            self.local_logger.info(f"Tasklist specified for {self.problem_id}. Configured tasks to run: {problem_tasklist}")
+            self.local_logger.info(
+                f"Tasklist specified for {self.problem_id}. Configured tasks to run: {problem_tasklist}"
+            )
 
             problem_tasklist.append("done")
             problem_tasklist.insert(0, "noop")
@@ -107,12 +111,19 @@ class Conductor:
         self.app = self.problem.app
         self.detection_oracle = DetectionOracle(self.problem)
         self.results = {}
-        
+
         self.dependency_check(["kubectl", "helm"])
         self.local_logger.debug(f"Dependency check passed: kubectl, helm")
-        
+
         self.local_logger.info(f"[Session Start] Problem ID: {self.problem_id}")
         self.logger.info(f"[STAGE] Start testing on problem: {self.problem_id}")
+
+        if self.problem.requires_khaos() and self.kubectl.is_emulated_cluster():
+            raise RuntimeError(
+                f"Problem '{self.problem_id}' requires Khaos for eBPF-based fault injection, "
+                "but Khaos cannot be deployed on emulated clusters (kind, minikube, k3d, etc.). "
+                "Please use a real Kubernetes cluster to run this problem."
+            )
 
         self.fix_kubernetes()
 
@@ -148,7 +159,9 @@ class Conductor:
             self.local_logger.info("Start Eval for Noop", extra={"sol": sol})
             r = self.detection_oracle.evaluate(sol)
             self.results["NOOP Detection"] = r
-            self.logger.info(f"[EVAL] NOOP Detection {"Succeed" if self.results["NOOP Detection"]["success"] else "Failed"}\n")
+            self.logger.info(
+                f"[EVAL] NOOP Detection {"Succeed" if self.results["NOOP Detection"]["success"] else "Failed"}\n"
+            )
             if r.get("reason") == "Invalid Format":
                 return dict(self.results)
 
@@ -156,9 +169,10 @@ class Conductor:
 
             self.logger.info(f"[ENV] Injected fault")
 
-            self.configure_transient_issues()
-            if self.transient_config["switch"]:
-                self._start_transient_issues()
+            # FIXME: Disabled until https://github.com/xlab-uiuc/SREGym/issues/296 is complete
+            # self.configure_transient_issues()
+            # if self.transient_config["switch"]:
+            #     self._start_transient_issues()
 
         # DETECTION
         if self.submission_stage == "detection":
@@ -224,7 +238,7 @@ class Conductor:
     def fix_kubernetes(self):
         self.local_logger.info("Fixing Kubernetes... to normal state.")
         self.local_logger.info("[FIX] Imbalance leftover if any")
-        
+
         injector = VirtualizationFaultInjector(namespace="kube-system")
         injector.recover_daemon_set_image_replacement(
             daemon_set_name="kube-proxy", original_image="registry.k8s.io/kube-proxy:v1.31.13"
@@ -252,8 +266,10 @@ class Conductor:
         )
         self.kubectl.wait_for_ready("kube-system")
 
-        self.local_logger.info("[DEPLOY] Deploying Khaos DaemonSet...")
-        self.khaos.ensure_deployed()
+        # Only deploy Khaos if the problem requires it
+        if self.problem and self.problem.requires_khaos():
+            self.local_logger.info("[DEPLOY] Deploying Khaos DaemonSet...")
+            self.khaos.ensure_deployed()
 
         self.local_logger.info("[DEPLOY] Setting up OpenEBS…")
         self.kubectl.exec_command("kubectl apply -f https://openebs.github.io/charts/openebs-operator.yaml")
@@ -265,9 +281,9 @@ class Conductor:
 
         self.local_logger.info("[DEPLOY] Deploying Prometheus…")
         self.prometheus.deploy()
-        
+
         self.logger.info(f"[ENV] Set up neccesary components: metrics-server, Khaos, OpenEBS, Prometheus")
-        
+
         self.local_logger.info("[DEPLOY] Deploying and starting workload")
         self.problem.app.deploy()
         self.logger.info(f"[ENV] Deploy application: {self.problem.app.name}")
