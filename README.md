@@ -173,7 +173,7 @@ The Stratus agent in [`clients/stratus`](https://github.com/xlab-uiuc/SREGym/tre
 demonstrates usages of these MCP tools in an agent.
 
 ## Acknowledgements
-Thank you to [Laude Institute](https://www.laude.org/) for supporting this project.
+We thank the [Laude Institute](https://www.laude.org/) for supporting this project.
 
 ## License
 Licensed under the [MIT](LICENSE.txt) license.
