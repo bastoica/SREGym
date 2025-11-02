@@ -129,17 +129,21 @@ There are at most 4 phases in each problem of SREGym:
 
 #### Configuring Task Lists
 
-By default, SREGym runs the common evaluation with all available problems and tasks. If you want to run a **custom evaluation** with a specific subset of problems or tasks, you can configure this using [`tasklist.yaml`](./SREGym/conductor/tasklist.yml).
+By default, SREGym runs the common evaluation with all available problems and tasks. If you want to run a **custom evaluation** with a specific subset of problems or tasks, first create `tasklist.yml` from the template at [`tasklist.yaml.example`](./sregym/conductor/tasklist.yml.example):
 
-The task list follows this format for each problem:
+```bash
+cp sregym/conductor/tasklist.yml.example sregym/conductor/tasklist.yml
+```
+
+You can edit the task list using `tasklist.yml`. The task list follows this format for each problem:
 ```yaml
-k8s_target_port-misconfig:
+<problem_id>:
   - detection
   - localization
   - mitigation
 ```
 
-To create a custom evaluation, edit `tasklist.yaml` and specify which problems and tasks you want to run. For each problem (identified by `problem_id`), list any combination of `detection`, `localization`, or `mitigation` tasks (in this order). The `noop` phase is automatically included as the starting stage.
+To create a custom evaluation, edit `tasklist.yaml` and specify which problems and tasks you want to run. For each problem (identified by `problem_id`), list any combination of `detection`, `localization`, or `mitigation` tasks (in this order). The `noop` phase is implied to always be the starting stage.
 
 **Note:** If no entry exists for a problem in `tasklist.yaml`, all tasks will run by default. Additionally, `localization` and `mitigation` may be skipped if the problem does not have a corresponding oracle attached.
 
