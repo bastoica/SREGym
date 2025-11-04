@@ -144,18 +144,27 @@ def installations():
     install_git()
 
 
-def _brew_exists() -> bool:
+# make it take parameter node
+def _brew_exists(node: str) -> bool:
+    """Check if Homebrew is installed on a remote node via SSH."""
     try:
         subprocess.run(
-            ["bash", "-lc", "command -v brew >/dev/null 2>&1"],
+            [
+                "ssh",
+                "-o",
+                "StrictHostKeyChecking=no",
+                node,
+                "bash -lc 'command -v brew >/dev/null 2>&1'",
+            ],
             env=ENV,
             stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             check=True,
+            timeout=30,
         )
         return True
-    except (subprocess.CalledProcessError, FileNotFoundError):
+    except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
         return False
 
 
@@ -322,23 +331,30 @@ def _brew_shellenv_cmd() -> str:
 
 
 def _install_brew_if_needed():
-    if _brew_exists():
-        print("------Homebrew already installed.")
-        return
-    print("Homebrew not found — installing non-interactively for Linux/macOS…")
     for node in _read_nodes("nodes.txt"):
-        print(f"\n=== [Install Homebrew] {node} ===")
-        remote_cmd = 'NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
-        cmd = f"ssh -o StrictHostKeyChecking=no {node} '{remote_cmd}'"
+        if _brew_exists(node):
+            print(f"[{node}] Homebrew already installed.")
+            continue
 
+        print(f"[{node}] Installing Homebrew (non-interactive)...")
+        remote_cmd = (
+            "bash -lc 'NONINTERACTIVE=1 /bin/bash -c "
+            '"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"\''
+        )
         subprocess.run(
-            ["bash", "-lc", cmd],
+            [
+                "ssh",
+                "-o",
+                "StrictHostKeyChecking=no",
+                node,
+                remote_cmd,
+            ],
             env=ENV,
             stdin=subprocess.DEVNULL,
             timeout=TIMEOUT,
             check=True,
         )
-    print("Homebrew installed.")
+        print(f"[{node}] Homebrew installed.")
 
 
 def install_python():
@@ -376,39 +392,41 @@ def _resolve_kind_config() -> str | None:
 
 
 def create_cluster():
-    cfg = _resolve_kind_config()
 
     for node in _read_nodes("nodes.txt"):
-        if cfg:
-            print(f"\n=== [Create Kind Cluster] {node} ===")
-            TMUX_SESSION = "cluster_setup"
-            cmd = [
-                "ssh",
-                "-o",
-                "StrictHostKeyChecking=no",
-                node,
-                f"tmux new-session -d -s {TMUX_SESSION} "
-                f"'kind create cluster --config {shlex.quote(cfg)}; "
-                f"sleep infinity'",
-            ]
-            subprocess.run(
-                cmd,
-                check=True,
-                cwd=str(SREGYM_ROOT),
-            )
-        else:
-            cmd = [
-                "ssh",
-                "-o",
-                "StrictHostKeyChecking=no",
-                node,
-                f"tmux new-session -d -s {TMUX_SESSION} " f"'kind create cluster; " f"sleep infinity'",
-            ]
-            subprocess.run(
-                cmd,
-                check=True,
-                cwd=str(SREGYM_ROOT),
-            )
+        print(f"\n=== [Create Kind Cluster] {node} ===")
+        TMUX_SESSION = "cluster_setup"
+        # cmd = [
+        #     "ssh",
+        #     "-o",
+        #     "StrictHostKeyChecking=no",
+        #     node,
+        #     f"tmux new-session -d -s {TMUX_SESSION} "
+        #     f"'kind create cluster --config {shlex.quote(cfg)}; "
+        #     f"sleep infinity'",
+        # ]
+        cmd = f'ssh -o StrictHostKeyChecking=no {node} "bash -ic \\"tmux new-session -d -s cluster_setup \'kind create cluster --config /users/lilygn/SREGym/kind/kind-config-x86.yaml; sleep infinity\'\\""'
+        # cmd = f'ssh -o StrictHostKeyChecking=no {node} "bash -ic ls"'
+
+        subprocess.run(
+            cmd,
+            check=True,
+            shell=True,
+            executable="/bin/zsh",
+        )
+
+        #     cmd = [
+        #         "ssh",
+        #         "-o",
+        #         "StrictHostKeyChecking=no",
+        #         node,
+        #         f"tmux new-session -d -s cluster-setup " f"'kind create cluster; " f"sleep infinity'",
+        #     ]
+        #     subprocess.run(
+        #         cmd,
+        #         check=True,
+        #         cwd=str(SREGYM_ROOT),
+        #     )
 
 
 def install_kubectl():
@@ -450,7 +468,7 @@ def set_up_environment():
         pass
     nodes = _read_nodes("nodes.txt")
     # TMUX_SESSION = "cluster_setup"
-    create_cluster()
+    # create_cluster()
     cmd = " && ".join(commands)
     print(f"\n==> RUN: {cmd}")
     try:
@@ -489,11 +507,15 @@ if __name__ == "__main__":
     scp_scripts_to_all("nodes.txt")
     # clone()
     # comment_out_problems()
-    # install_kubectl()
+    # kill_server()
+
     run_installations_all("nodes.txt")
+    install_kubectl()
+    create_cluster()
+
     copy_env()
     run_setup_env_all("nodes.txt")
 
-    # install_kubectl()
-    kill_server()
+    # # install_kubectl()
+    # kill_server()
     run_submit()
