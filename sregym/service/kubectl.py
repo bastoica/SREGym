@@ -292,7 +292,7 @@ class KubeCtl:
             console.log(f"[red]Unexpected error deleting job '{job_name}': {e}")
             return False
 
-    def wait_for_job_completion(self, job_name: str, namespace: str = "default", timeout: int = 600):
+    def wait_for_job_completion_(self, job_name: str, namespace: str = "default", timeout: int = 600):
         """Wait for a Kubernetes Job to complete successfully within a specified timeout."""
         api_instance = client.BatchV1Api()
         console = Console()
