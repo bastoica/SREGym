@@ -14,7 +14,7 @@ try:
 except ModuleNotFoundError as e:
     local_logger.error("Your Kubeconfig is missing. Please set up a cluster.")
     exit(1)
-from kubernetes import dynamic
+
 from kubernetes.client import api_client
 from kubernetes.client.rest import ApiException
 from rich.console import Console
