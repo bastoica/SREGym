@@ -310,10 +310,11 @@ def run_submit(nodes_file: str = "nodes.txt"):
         "'env -i PATH=/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:/usr/local/bin:/usr/bin:/bin "
         "HOME=$HOME TERM=$TERM "
         'bash -lc "echo PATH=\\$PATH; '
-        "command -v kubectl; kubectl version --client --short || true; "
+        "command -v kubectl; kubectl version --client || true; "
         "command -v helm || true; "
         "cd /users/lilygn/SREGym && "
-        "/users/$USER/SREGym/.venv/bin/python3 main.py 2>&1 | tee -a global_benchmark_Log_$(date +%Y-%m-%d).txt; "
+        "source .venv/bin/activate && "
+        "python main.py 2>&1 | tee -a global_benchmark_Log_$(date +%Y-%m-%d).txt; "
         "sleep infinity\"'"
     )
 
