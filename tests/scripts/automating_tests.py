@@ -283,7 +283,6 @@ def read_file(file_path: Path) -> list[str]:
 def comment_out_problems():
     nodes = _read_nodes("nodes.txt")
     problems = read_file("registry.txt")
-    problem_count = len(problems) / len(nodes)
     mapping = {}
     m = len(problems)
     n = len(nodes)
@@ -292,10 +291,11 @@ def comment_out_problems():
         end = (i + 1) * m // n
         mapping[node] = problems[start:end]
     for node, probs in mapping.items():
-        for prob in probs:
-            print(f"On node {node}, comment out line: {prob.strip()}")
-            cmd = f'ssh -o StrictHostKeyChecking=no {node} "sed -i \'/\\"{prob}\\":/s/^/#/\' ~/SREGym/sregym/conductor/problems/registry.py"'
-            subprocess.run(cmd, shell=True, check=True)
+        for prob in problems:
+            if prob not in mapping[node]:
+                print(f"On node {node}, comment out line: {prob.strip()}")
+                cmd = f'ssh -o StrictHostKeyChecking=no {node} "sed -i \'/\\"{prob}\\":/s/^/#/\' ~/SREGym/sregym/conductor/problems/registry.py"'
+                subprocess.run(cmd, shell=True, check=True)
 
 
 def run_submit(nodes_file: str = "nodes.txt"):
