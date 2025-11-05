@@ -46,7 +46,7 @@ class Conductor:
         self.local_logger = logging.getLogger("all.sregym.conductor")
 
         self.transient_config = {
-            "switch": True,
+            "switch": False,
             "min_duration": 40,
             "max_duration": 60,
             "fault_types": [FaultType.FAIL_SLOW, FaultType.FAIL_STOP],
