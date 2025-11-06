@@ -1,9 +1,9 @@
 """Interface to K8S controller service."""
 
 import json
+import logging
 import subprocess
 import time
-import logging
 
 local_logger = logging.getLogger("all.infra.kubectl")
 local_logger.propagate = True
@@ -14,6 +14,7 @@ try:
 except ModuleNotFoundError as e:
     local_logger.error("Your Kubeconfig is missing. Please set up a cluster.")
     exit(1)
+from kubernetes import dynamic
 from kubernetes.client import api_client
 from kubernetes.client.rest import ApiException
 from rich.console import Console
@@ -45,7 +46,7 @@ class KubeCtl:
     def list_nodes(self):
         """Return a list of all running nodes."""
         return self.core_v1_api.list_node()
-    
+
     def get_concise_deployments_info(self, namespace=None):
         """Return a concise info of a deployment."""
         cmd = f"kubectl get deployment {f'-n {namespace}' if namespace else ''} -o wide"
@@ -57,7 +58,7 @@ class KubeCtl:
         cmd = f"kubectl get pod {f'-n {namespace}' if namespace else ''} -o wide"
         result = self.exec_command(cmd)
         return result
-    
+
     def list_deployments(self, namespace):
         """Return a list of all deployments within a specified namespace."""
         return self.apps_v1_api.list_namespaced_deployment(namespace)
