@@ -2,39 +2,27 @@
 
 <h1>SREGym: A Benchmarking Platform for SRE Agents</h1>
 
-[Overview](#🤖overview) | 
-[🚀Quick Start](#🚀quickstart) |
+[🔍Overview](#🤖overview) | 
 [📦Installation](#📦installation) |
+[🚀Quick Start](#🚀quickstart) |
 [⚙️Usage](#⚙️usage) |
 [🤝Contributing](./CONTRIBUTING.md) |
+[📖Docs](https://sregym.com/docs) |
 [![Slack](https://img.shields.io/badge/-Slack-4A154B?style=flat-square&logo=slack&logoColor=white)](https://join.slack.com/t/SREGym/shared_invite/zt-3gvqxpkpc-RvCUcyBEMvzvXaQS9KtS_w)
 </div>
 
-<h2 id="overview">🤖 Overview</h2>
+<h2 id="overview">🔍 Overview</h2>
+<!-- FIXME: We need a convincing paragraph here that shows our advantage over prior works -->
+SREGym is a unified platform to enable the design, development, and evaluation of AI agents for Site Reliability Engineering (SRE). The core idea is to create live system environments for SRE agents to solve real-world problems. SREGym also provides a comprehensive SRE benchmark suite with a wide variety of problems for evaluating SRE agents and for training next-generation AI agents.
 
-SREGym is a unified platform to enable the design, development, and evaluation of AI agents for Site Reliability Engineering (SRE). The core idea is to create live system environments for SRE agents to solve real-world problems.
-
-SREGym also provides a comprehensive SRE benchmark suite with a wide variety of problems for evaluating SRE agents and for training next-generation AI agents.
-
+<!-- FIXME: Update this figure. -->
 ![SREGym Architecture Figure](./assets/SREGymFigure.png)
 
-### SRE Problems
-Problems in SREGym consist of three components: an application, a fault, and an oracle. When evaluating a problem, SREGym first deploys the application specified in the problem. After deployment, the fault is injected into the system to cause the incident. Then, SREGym begins evaluating the agent and uses the oracle as the ground truth for the problem’s solution.
-<!-- TODO, merge sentences, shouldn't have just a couple sentences on their own. -->
-<!-- We should clarify our advantages and why it's unique compared to AIOpsLab and ITBench,
-we should articulate it in the first paragraph -->
-
 <!-- Figure note: We list some of the applications, we should list some of the faults as well in the figure/ -->
-<!-- Remove the numbers, and the stuff in the legend -->
 <!-- Take the problem set out, not as necessary for the figure -->
 <!-- Have a big amount of space for the problem definition -->
 <!-- Use a black background for the figure -->
-
-<!-- SRE Problems is too specific, we should aim to sell here We should show our features -->
-![alt text](image.png)
 See our [registry](https://sregym.com/problems/problem-repertoire/head) for a complete list of problems.
-
-SREGym is built to be extensible, we always welcome new contributions. See [CONTRIBUTING](./CONTRIBUTING.md) to get started.
 
 <h2 id="📦installation">📦 Installation</h2>
 
