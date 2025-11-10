@@ -121,12 +121,15 @@ class LocalizationOracle(Oracle):
         if isinstance(solution, str):
             # Check if it's a comma-separated list
             # strip char before [
-            solution = solution.split("[")[1]
-            # strip char after ]
-            solution = solution.split("]")[0]
-            if "," in solution:
-                # split by comma, strip space and quote
-                solution = [s.strip().strip("\"'") for s in solution.split(",")]
+            if "[" in solution and "]" in solution:
+                solution = solution.split("[")[1]
+                # strip char after ]
+                solution = solution.split("]")[0]
+                if "," in solution:
+                    # split by comma, strip space and quote
+                    solution = [s.strip().strip("\"'") for s in solution.split(",")]
+                else:
+                    solution = [solution.strip().strip("\"'")]
             else:
                 solution = [solution.strip().strip("\"'")]
         elif isinstance(solution, list):
