@@ -66,7 +66,6 @@ from sregym.conductor.problems.wrong_service_selector import WrongServiceSelecto
 from sregym.service.kubectl import KubeCtl
 
 
-# When adding a new problem, please update tasklist.yml.example as well
 class ProblemRegistry:
     def __init__(self):
         self.PROBLEM_REGISTRY = {
