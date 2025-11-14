@@ -20,7 +20,6 @@ ENV = {
     "SUDO_ASKPASS": "/bin/false",
 }
 TIMEOUT = 1800
-base = Path(__file__).resolve().parent
 
 
 scripts = [
@@ -39,7 +38,7 @@ def init_user_paths(user: str):
     KIND_DIR = SREGYM_ROOT / "kind"
     REMOTE_ENV = f"/users/{user}/SREGym/.env"
     LOCAL_ENV = Path(__file__).resolve().parent.parent.parent / ".env"
-    REMOTE_SELF_PATH = f"/users/{user}/scripts/automating_tests.py"
+    REMOTE_SELF_PATH = f"/users/{user}/e2e-testing-scripts/automating_tests.py"
 
 
 def _read_nodes(path: str = "nodes.txt") -> list[str]:
@@ -506,9 +505,9 @@ if __name__ == "__main__":
     init_user_paths(user)
     kill_server()
 
-    # scp_scripts_to_all(user, "nodes.txt")
+    scp_scripts_to_all(user, "nodes.txt")
     clone(nodes_file="nodes.txt")
-    # comment_out_problems()
+    comment_out_problems()
 
     run_installations_all(user, "nodes.txt")
     sleep(50)
