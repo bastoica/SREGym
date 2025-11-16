@@ -15,6 +15,9 @@ class IncorrectImage(Problem):
         self.namespace = self.app.namespace
         self.faulty_service = ["product-catalog"]
         self.injector = ApplicationFaultInjector(namespace=self.namespace)
+        self.root_cause = (
+            "The 'product-catalog' deployment is mis-configured to pull the non-existent image 'app-image:latest'."
+        )
         super().__init__(app=self.app, namespace=self.namespace)
 
         self.localization_oracle = DeploymentItselfLocalizationOracle(
