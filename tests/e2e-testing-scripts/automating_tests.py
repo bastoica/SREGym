@@ -180,7 +180,7 @@ def comment_out_problems():
                 cmd = f'ssh -o StrictHostKeyChecking=no {node} "sed -i \'/\\"{prob}\\":/s/^/#/\' ~/SREGym/sregym/conductor/problems/registry.py"'
                 subprocess.run(cmd, shell=True, check=True)
         for l in agent_run_lines:
-            cmd = f'ssh -o StrictHostKeyChecking=no {node} "sed -i \'/\\"{l}\\":/s/^/#/\' ~/SREGym/main.py"'
+            cmd = f"ssh -o StrictHostKeyChecking=no {node} \"sed -i '/^{l}$/ s/^/#/' ~/SREGym/main.py\""
             subprocess.run(cmd, shell=True, check=True)
 
 
