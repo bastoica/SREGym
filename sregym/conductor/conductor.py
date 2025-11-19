@@ -10,6 +10,7 @@ from sregym.conductor.constants import StartProblemResult
 from sregym.conductor.oracles.detection import DetectionOracle
 from sregym.conductor.problems.registry import ProblemRegistry
 from sregym.conductor.utils import is_ordered_subset
+from sregym.service.dm_dust_manager import DmDustManager
 from sregym.generators.fault.inject_remote_os import RemoteOSFaultInjector
 from sregym.generators.fault.inject_virtual import VirtualizationFaultInjector
 from sregym.generators.noise.transient_issues.transient_issues import FaultType, PodScope, TransientIssuesGenerator
@@ -29,6 +30,7 @@ class Conductor:
         self.agent_name = None
 
         self.khaos = KhaosController(self.kubectl)
+        self.dm_dust_manager = DmDustManager(self.kubectl)
 
         self.problem = None
         self.detection_oracle = None
@@ -294,8 +296,31 @@ class Conductor:
         )
         self.kubectl.wait_for_ready("openebs")
 
+        print("Setting up OpenEBS LocalPV-Device…")
+        device_sc_yaml = """
+        apiVersion: storage.k8s.io/v1
+        kind: StorageClass
+        metadata:
+        name: openebs-device
+        annotations:
+            openebs.io/cas-type: local
+        provisioner: openebs.io/local
+        parameters:
+        localpvType: "device"
+        volumeBindingMode: WaitForFirstConsumer
+        """
+        self.kubectl.exec_command("kubectl apply -f - <<EOF\n" + device_sc_yaml + "\nEOF")
+
         self.local_logger.info("[DEPLOY] Deploying Prometheus…")
         self.prometheus.deploy()
+
+        # Set up fault injection infrastructure based on problem type
+        # Only one can be active at /var/openebs/local at a time
+        problem_name = self.problem.__class__.__name__
+        
+        if "LatentSectorError" in problem_name:
+            print("Setting up dm-dust infrastructure for LSE fault injection...")
+            self.dm_dust_manager.setup_openebs_dm_dust_infrastructure()
 
         self.logger.info(f"[ENV] Set up necessary components: metrics-server, Khaos, OpenEBS, Prometheus")
 
