@@ -26,7 +26,7 @@ logger = get_logger()
 def get_client():
     session_id = str(uuid.uuid4())
     transport = SSETransport(
-        url=f"{os.environ['MCP_SERVER_URL']}/kubectl_mcp_tools/sse",
+        url=f"{os.getenv("MCP_SERVER_PORT", "9954")}/kubectl_mcp_tools/sse",
         headers={"sregym_ssid": session_id},
     )
     client = Client(transport)
