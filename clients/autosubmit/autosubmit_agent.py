@@ -11,14 +11,19 @@ def automatic_submit():
     while ctr < 10000:
         subprocess.run(
             [
-                "bash",
-                "-c",
-                f"curl -v {server_url}/submit",
-                '-H "Content-Type: application/json" -d \'{"solution":"yes"}\'',
+                "curl",
+                "-X",
+                "POST",
+                "http://localhost:8000/submit",
+                "-H",
+                "Content-Type: application/json",
+                "-d",
+                '{"solution":"yes"}',
             ],
-            stdin=subprocess.DEVNULL,
+            capture_output=True,
+            text=True,
         )
-        sleep(60)
+        sleep(1)
         ctr += 1
 
 
