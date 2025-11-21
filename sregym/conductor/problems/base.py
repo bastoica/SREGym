@@ -9,6 +9,7 @@ class Problem(ABC):
         self.namespace = namespace
         self.fault_injected = False
         self.results = {}
+        self.root_cause = None  # root cause of the problem in natural language
 
         # Optional: attach oracles in subclass
         self.diagnosis_oracle = None
