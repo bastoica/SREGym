@@ -17,7 +17,7 @@ class GCCapacityDegradation(Problem):
         self.root_cause = "All deployments have the GOGC environment variable set to 10 (instead of the default 100), causing aggressive garbage collection that degrades service capacity and performance. This is a metastable failure."
         super().__init__(app=self.app, namespace=self.app.namespace)
         # === Attach evaluation oracles ===
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
 
     @mark_fault_injected
     def inject_fault(self):

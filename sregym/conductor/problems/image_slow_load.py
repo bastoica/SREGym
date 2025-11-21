@@ -19,7 +19,7 @@ class ImageSlowLoad(Problem):
         self.root_cause = f"The `{self.faulty_service}` service has a feature flag enabled that causes slow image loading, resulting in degraded user experience and performance issues."
         super().__init__(app=self.app, namespace=self.app.namespace)
         # === Attach evaluation oracles ===
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
 
     @mark_fault_injected
     def inject_fault(self):

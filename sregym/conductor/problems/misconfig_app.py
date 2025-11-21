@@ -18,7 +18,7 @@ class MisconfigAppHotelRes(Problem):
         self.root_cause = "The 'geo' deployment is configured to use a buggy container image 'yinfangchen/geo:app3', this causes the pod keep restarting and entering the 'Error' state."
         super().__init__(app=self.app, namespace=self.app.namespace)
         # === Attach evaluation oracles ===
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
 
         self.app.create_workload()
         self.mitigation_oracle = MitigationOracle(problem=self)

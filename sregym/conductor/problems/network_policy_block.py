@@ -25,7 +25,7 @@ class NetworkPolicyBlock(Problem):
         self.root_cause = f"A NetworkPolicy `{self.policy_name}` is configured to block all ingress and egress traffic to/from pods labeled with `app={self.faulty_service}`, causing complete network isolation and service unavailability."
         self.networking_v1 = client.NetworkingV1Api()
 
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
         self.mitigation_oracle = NetworkPolicyMitigationOracle(problem=self)
 
     @mark_fault_injected

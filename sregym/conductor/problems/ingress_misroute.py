@@ -21,7 +21,7 @@ class IngressMisroute(Problem):
 
         self.networking_v1 = client.NetworkingV1Api()
 
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
         self.mitigation_oracle = IngressMisrouteMitigationOracle(problem=self)
 
     @mark_fault_injected

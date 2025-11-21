@@ -30,7 +30,7 @@ class ReadinessProbeMisconfiguration(Problem):
 
         self.kubectl = KubeCtl()
         self.root_cause = f"The deployment `{self.faulty_service}` has a misconfigured readiness probe pointing to a non-existent health endpoint (/healthz on port 8080), causing pods to never become ready and be excluded from service endpoints."
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
 
         self.app.create_workload()
         self.mitigation_oracle = MitigationOracle(problem=self)

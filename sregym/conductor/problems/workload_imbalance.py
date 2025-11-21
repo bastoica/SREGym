@@ -21,7 +21,7 @@ class WorkloadImbalance(Problem):
         super().__init__(app=self.app, namespace=self.namespace)
 
         # not so precise here by now
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
 
         self.mitigation_oracle = ImbalanceMitigationOracle(problem=self)
 

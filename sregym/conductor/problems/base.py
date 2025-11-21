@@ -11,7 +11,7 @@ class Problem(ABC):
         self.results = {}
 
         # Optional: attach oracles in subclass
-        self.localization_oracle = None
+        self.diagnosis_oracle = None
         self.mitigation_oracle = None
 
     def requires_khaos(self) -> bool:

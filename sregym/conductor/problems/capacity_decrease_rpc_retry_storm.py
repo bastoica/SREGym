@@ -18,7 +18,7 @@ class CapacityDecreaseRPCRetryStorm(Problem):
         self.root_cause = f"The ConfigMap `{self.faulty_service}` has misconfigured RPC timeout (50ms) and retry settings (30 retries), causing an RPC retry storm that overwhelms the service. It is a metastable failure."
         super().__init__(app=self.app, namespace=self.app.namespace)
         # === Attach evaluation oracles ===
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
 
         self.mitigation_oracle = RPCRetryStormMitigationOracle(problem=self)
 

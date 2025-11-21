@@ -24,7 +24,7 @@ class TrainTicketF22(Problem):
         self.root_cause = f"The deployment `{self.faulty_service}` has a SQL column name mismatch error in its database queries, causing database operation failures."
 
         self.kubectl = KubeCtl()
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
 
         self.app.create_workload()
         self.mitigation_oracle = CompoundedOracle(

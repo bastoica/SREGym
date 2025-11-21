@@ -25,7 +25,7 @@ class EnvVariableShadowing(Problem):
 
         self.kubectl = KubeCtl()
         self.root_cause = f"The deployment `{self.faulty_service}` has environment variables (e.g., FRONTEND_HOST) that shadow expected values, causing incorrect service configuration."
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
 
         self.app.create_workload()
         self.mitigation_oracle = MitigationOracle(problem=self)

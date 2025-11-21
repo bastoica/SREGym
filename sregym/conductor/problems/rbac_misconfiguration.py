@@ -23,7 +23,7 @@ class RBACMisconfiguration(Problem):
         super().__init__(app=self.app, namespace=self.app.namespace)
         self.root_cause = f"The deployment `{self.faulty_service}` uses a ServiceAccount with a ClusterRole that lacks ConfigMap permissions, but an init container tries to access a ConfigMap, causing the init container to fail and pods to remain in Init state."
 
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
 
         self.app.create_workload()
         self.mitigation_oracle = MitigationOracle(problem=self)

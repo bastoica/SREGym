@@ -2,345 +2,345 @@ all:
   problems:
     faulty_image_correlated:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     update_incompatible_correlated:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     incorrect_image:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     incorrect_port_assignment:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     misconfig_app_hotel_res:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     missing_env_variable_astronomy_shop:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     revoke_auth_mongodb-1:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     revoke_auth_mongodb-2:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     storage_user_unregistered-1:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     storage_user_unregistered-2:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     valkey_auth_disruption:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     valkey_memory_disruption:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     capacity_decrease_rpc_retry_storm:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     gc_capacity_degradation:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     load_spike_rpc_retry_storm:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     assign_to_non_existent_node:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     auth_miss_mongodb:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     configmap_drift_hotel_reservation:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     duplicate_pvc_mounts_astronomy_shop:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     duplicate_pvc_mounts_hotel_reservation:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     duplicate_pvc_mounts_social_network:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     env_variable_shadowing_astronomy_shop:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     k8s_target_port-misconfig:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     liveness_probe_misconfiguration_astronomy_shop:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     liveness_probe_misconfiguration_hotel_reservation:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     liveness_probe_misconfiguration_social_network:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     liveness_probe_too_aggressive_astronomy_shop:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     liveness_probe_too_aggressive_hotel_reservation:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     liveness_probe_too_aggressive_social_network:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     missing_configmap_hotel_reservation:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     missing_configmap_social_network:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     missing_service_astronomy_shop:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     missing_service_hotel_reservation:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     missing_service_social_network:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     namespace_memory_limit:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     pod_anti_affinity_deadlock:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     persistent_volume_affinity_violation:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     pvc_claim_mismatch:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     rbac_misconfiguration:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     readiness_probe_misconfiguration_astronomy_shop:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     readiness_probe_misconfiguration_hotel_reservation:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     readiness_probe_misconfiguration_social_network:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     resource_request_too_large:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     resource_request_too_small:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     rolling_update_misconfigured_hotel_reservation:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     rolling_update_misconfigured_social_network:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     scale_pod_zero_social_net:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     service_dns_resolution_failure_astronomy_shop:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     service_dns_resolution_failure_social_network:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     sidecar_port_conflict_astronomy_shop:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     sidecar_port_conflict_hotel_reservation:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     sidecar_port_conflict_social_network:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     stale_coredns_config_astronomy_shop:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     stale_coredns_config_social_network:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     taint_no_toleration_social_network:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     wrong_bin_usage:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     wrong_dns_policy_astronomy_shop:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     wrong_dns_policy_hotel_reservation:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     wrong_dns_policy_social_network:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     wrong_service_selector_astronomy_shop:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     wrong_service_selector_hotel_reservation:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     wrong_service_selector_social_network:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     astronomy_shop_ad_service_failure:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     astronomy_shop_ad_service_high_cpu:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     astronomy_shop_ad_service_manual_gc:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     astronomy_shop_cart_service_failure:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     astronomy_shop_ad_service_image_slow_load:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     astronomy_shop_payment_service_failure:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     astronomy_shop_payment_service_unreachable:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     astronomy_shop_product_catalog_service_failure:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     astronomy_shop_recommendation_service_cache_failure:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     kafka_queue_problems_hotel_reservation:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     loadgenerator_flood_homepage:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     trainticket_f17_nested_sql_select_clause_error:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     trainticket_f22_sql_column_name_mismatch_error:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     read_error:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     ingress_misroute:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     network_policy_block:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     social_net_hotel_res_astro_shop_concurrent_failures:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     kubelet_crash:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     workload_imbalance:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     operator_overload_replicas:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     operator_non_existent_storage:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     operator_invalid_affinity_toleration:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     operator_security_context_fault:
     - detection
-    - localization
+    - diagnosis
     - mitigation
     operator_wrong_update_strategy_fault:
     - detection
-    - localization
+    - diagnosis
     - mitigation

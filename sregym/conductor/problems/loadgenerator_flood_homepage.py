@@ -19,7 +19,7 @@ class LoadGeneratorFloodHomepage(Problem):
         self.root_cause = "The load generator has a feature flag enabled that causes it to flood the homepage with excessive requests, overwhelming the frontend service."
         super().__init__(app=self.app, namespace=self.app.namespace)
         # === Attach evaluation oracles ===
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
 
     @mark_fault_injected
     def inject_fault(self):

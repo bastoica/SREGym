@@ -20,7 +20,7 @@ class K8STargetPortMisconfig(Problem):
         self.root_cause = f"The service `{self.faulty_service}` has a misconfigured target port (9999 instead of 9090), causing connection failures."
 
         # === Attach evaluation oracles ===
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
 
         self.app.create_workload()
         self.mitigation_oracle = TargetPortMisconfigMitigationOracle(problem=self)

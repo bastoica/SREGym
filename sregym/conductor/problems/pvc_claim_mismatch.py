@@ -30,7 +30,7 @@ class PVCClaimMismatch(Problem):
         self.root_cause = "Multiple MongoDB deployments are configured with PVC claim names that do not exist (claimName-broken), causing pods to remain in Pending state."
         super().__init__(app=self.app, namespace=self.app.namespace)
         # === Attach evaluation oracles ===
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
 
         self.app.create_workload()
         self.mitigation_oracle = MitigationOracle(problem=self)

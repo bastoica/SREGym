@@ -20,8 +20,8 @@ class TaintNoToleration(Problem):
 
         super().__init__(app=self.app, namespace=self.namespace)
 
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
-        # TODO: support more precise localization oracle: Nodes or DeploymentConfiguration
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        # TODO: support more precise diagnosis oracle: Nodes or DeploymentConfiguration
 
         self.app.create_workload()
         self.mitigation_oracle = MitigationOracle(problem=self)

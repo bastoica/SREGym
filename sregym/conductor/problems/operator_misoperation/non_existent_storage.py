@@ -26,7 +26,7 @@ class K8SOperatorNonExistentStorageFault(Problem):
         self.kubectl = KubeCtl()
         self.problem_id = "operator_non_existent_storage"
         self.root_cause = "The TiDBCluster custom resource specifies a non-existent StorageClass, causing PVC creation to fail and pods to remain in Pending state."
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
         self.mitigation_oracle = NonExistentStorageClassMitigationOracle(problem=self, deployment_name="basic")
 
     @mark_fault_injected

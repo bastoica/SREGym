@@ -28,7 +28,7 @@ class ServiceDNSResolutionFailure(Problem):
         self.kubectl = KubeCtl()
         self.root_cause = f"CoreDNS is configured with an NXDOMAIN template for the service `{self.faulty_service}.{self.namespace}.svc.cluster.local`, causing DNS resolution to fail for this service."
 
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
 
         self.app.create_workload()
         self.mitigation_oracle = DNSResolutionMitigationOracle(problem=self)

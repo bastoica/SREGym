@@ -35,7 +35,7 @@ class LivenessProbeMisconfiguration(Problem):
         self.kubectl = KubeCtl()
         self.injector = VirtualizationFaultInjector(namespace=self.app.namespace)
         self.root_cause = f"The deployment `{self.faulty_service}` has a misconfigured liveness probe pointing to a non-existent health endpoint (/healthz on port 8080), causing pods to be restarted repeatedly."
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
 
         self.mitigation_oracle = MitigationOracle(problem=self)
 

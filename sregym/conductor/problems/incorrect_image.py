@@ -19,7 +19,7 @@ class IncorrectImage(Problem):
         )
         super().__init__(app=self.app, namespace=self.namespace)
 
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
         self.mitigation_oracle = IncorrectImageMitigationOracle(
             problem=self, actual_images={"product-catalog": "app-image:latest"}
         )

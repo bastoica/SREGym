@@ -20,7 +20,7 @@ class AssignNonExistentNode(Problem):
         self.root_cause = f"The deployment `{self.faulty_service}` is configured with a nodeSelector pointing to a non-existent node (extra-node), causing pods to remain in Pending state."
         super().__init__(app=self.app, namespace=self.app.namespace)
         # === Attach evaluation oracles ===
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
 
         self.app.create_workload()
         self.mitigation_oracle = AssignNonExistentNodeMitigationOracle(problem=self)

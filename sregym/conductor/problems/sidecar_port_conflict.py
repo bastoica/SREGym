@@ -27,7 +27,7 @@ class SidecarPortConflict(Problem):
 
         self.kubectl = KubeCtl()
         self.root_cause = f"The deployment `{self.faulty_service}` has a sidecar container that binds to the same port as the main container, causing port conflicts and preventing the service from starting properly."
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
 
         self.app.create_workload()
         self.mitigation_oracle = MitigationOracle(problem=self)

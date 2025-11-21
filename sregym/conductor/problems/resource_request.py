@@ -30,7 +30,7 @@ class ResourceRequest(Problem):
         self.kubectl = KubeCtl()
         self.namespace = self.app.namespace
         # Note: root_cause will be set in subclasses (ResourceRequestTooLarge/ResourceRequestTooSmall)
-        # localization_oracle will be set in subclasses after root_cause is set
+        # diagnosis_oracle will be set in subclasses after root_cause is set
         self.app.create_workload()
         self.mitigation_oracle = MitigationOracle(problem=self)
 
@@ -64,7 +64,7 @@ class ResourceRequestTooLarge(ResourceRequest):
     def __init__(self, app_name: str = "hotel_reservation", faulty_service: str = "frontend"):
         super().__init__(app_name, faulty_service)
         self.root_cause = f"The deployment `{self.faulty_service}` has a memory request that exceeds the node's memory capacity, causing pods to be unschedulable and remain in Pending state."
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
 
     def set_memory_limit(self, deployment_yaml):
         dyaml = copy.deepcopy(deployment_yaml)
@@ -79,7 +79,7 @@ class ResourceRequestTooSmall(ResourceRequest):
     def __init__(self, app_name: str = "hotel_reservation", faulty_service: str = "frontend"):
         super().__init__(app_name, faulty_service)
         self.root_cause = f"The deployment `{self.faulty_service}` has a memory limit that is too small (10Mi), causing pods to be killed due to OOM (Out of Memory) errors."
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
 
     def set_memory_limit(self, deployment_yaml):
         dyaml = copy.deepcopy(deployment_yaml)

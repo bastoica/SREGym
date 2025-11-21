@@ -27,7 +27,7 @@ class K8SOperatorWrongUpdateStrategyFault(Problem):
         self.root_cause = "The TiDBCluster custom resource specifies an invalid update strategy, causing deployment updates to fail or get stuck."
         self.app.create_workload()
 
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
         self.mitigation_oracle = WrongUpdateStrategyMitigationOracle(problem=self, deployment_name="basic")
 
     @mark_fault_injected

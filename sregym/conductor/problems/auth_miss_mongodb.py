@@ -18,7 +18,7 @@ class MongoDBAuthMissing(Problem):
         self.root_cause = f"The MongoDB service `{self.faulty_service}` is configured to require TLS authentication, but the certificates are not properly configured, causing connection failures."
         super().__init__(app=self.app, namespace=self.app.namespace)
         # === Attach evaluation oracles ===
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
 
         self.app.create_workload()
         self.mitigation_oracle = MitigationOracle(problem=self)

@@ -29,7 +29,7 @@ class MissingService(Problem):
         self.kubectl = KubeCtl()
         self.namespace = self.app.namespace
         self.root_cause = f"The service `{self.faulty_service}` has been deleted, causing service discovery failures for dependent services."
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
         self.app.create_workload()
         self.mitigation_oracle = MitigationOracle(problem=self)
 

@@ -23,7 +23,7 @@ class K8SOperatorSecurityContextFault(Problem):
         self.faulty_service = faulty_service
         self.kubectl = KubeCtl()
         self.root_cause = "The TiDBCluster custom resource specifies an invalid runAsUser value in the security context, causing pods to fail to start or be rejected by the security policy."
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
         self.mitigation_oracle = SecurityContextMitigationOracle(problem=self, deployment_name="basic")
         self.app.create_workload()
 

@@ -38,8 +38,8 @@ class ReadError(Problem):
         print(f"== Fault Injection: read_error ==")
         self.target_node = self.injector.inject_node(self.namespace, "read_error", self.target_node)
         print(f"[debug] target_node: {self.target_node}")
-        # Setup localization oracle here since we now have the target node
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        # Setup diagnosis oracle here since we now have the target node
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
         print(f"Injected read_error into pods on node {self.target_node}\n")
 
     @mark_fault_injected

@@ -28,7 +28,7 @@ class LivenessProbeTooAggressive(Problem):
         self.kubectl = KubeCtl()
         self.injector = VirtualizationFaultInjector(namespace=self.app.namespace)
         self.root_cause = f"The deployment `{self.faulty_service}` has an overly aggressive liveness probe (initialDelaySeconds=0, periodSeconds=1, failureThreshold=1) with terminationGracePeriodSeconds=0, causing pods to be killed immediately if the probe fails."
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
 
         self.app.create_workload()
         self.mitigation_oracle = SustainedReadinessOracle(problem=self, sustained_period=30)

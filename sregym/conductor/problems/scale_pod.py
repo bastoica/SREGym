@@ -24,7 +24,7 @@ class ScalePodSocialNet(Problem):
         self.root_cause = f"The deployment `{self.faulty_service}` is scaled down to 0 replicas, causing the service to be unavailable."
         super().__init__(app=self.app, namespace=self.app.namespace)
         # === Attach evaluation oracles ===
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
 
         self.app.create_workload()
         self.mitigation_oracle = ScalePodZeroMitigationOracle(problem=self)

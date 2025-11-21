@@ -17,7 +17,7 @@ class NamespaceMemoryLimit(Problem):
         self.root_cause = f"The namespace has a ResourceQuota with a memory limit (1Gi) that is too restrictive, preventing the deployment `{self.faulty_service}` from scheduling new pods or causing existing pods to be evicted."
         super().__init__(app=self.app, namespace=self.app.namespace)
 
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
         self.mitigation_oracle = NamespaceMemoryLimitMitigationOracle(problem=self)
 
         self.app.create_workload()

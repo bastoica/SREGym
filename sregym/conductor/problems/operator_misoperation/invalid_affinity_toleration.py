@@ -26,7 +26,7 @@ class K8SOperatorInvalidAffinityTolerationFault(Problem):
         self.root_cause = "The TiDBCluster custom resource specifies an invalid toleration effect, causing pods to be unschedulable and remain in Pending state."
         self.app.create_workload()
 
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
 
         self.mitigation_oracle = InvalidAffinityMitigationOracle(problem=self, deployment_name="basic")
 

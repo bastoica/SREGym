@@ -24,7 +24,7 @@ class MissingConfigMap(Problem):
 
         self.kubectl = KubeCtl()
         self.root_cause = f"The ConfigMap required by the deployment `{self.faulty_service}` has been deleted, causing the pods to fail to start or malfunction."
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
 
         self.app.create_workload()
         self.mitigation_oracle = MitigationOracle(problem=self)

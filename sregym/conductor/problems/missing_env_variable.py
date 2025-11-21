@@ -25,7 +25,7 @@ class MissingEnvVariable(Problem):
         super().__init__(app=self.app, namespace=self.app.namespace)
 
         self.kubectl = KubeCtl()
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
 
         self.app.create_workload()
         self.mitigation_oracle = MissingEnvVariableMitigationOracle(problem=self)

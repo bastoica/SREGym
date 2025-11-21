@@ -13,7 +13,7 @@ local_logger.setLevel(logging.DEBUG)
 
 class OrLocalizationOracle(LocalizationOracle):
 
-    # only for two single localization oracles
+    # only for two single diagnosis oracles
     # TODO： implement more complicated oracles
 
     def __init__(self, problem, namespace: str, oracle1: LocalizationOracle, oracle2: LocalizationOracle):

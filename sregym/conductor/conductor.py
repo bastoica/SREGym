@@ -8,7 +8,7 @@ import yaml
 from dashboard.proxy import LogProxy
 from sregym.conductor.constants import StartProblemResult
 from sregym.conductor.oracles.detection import DetectionOracle
-from sregym.conductor.oracles.localization_oracle import LocalizationOracle
+from sregym.conductor.oracles.localization_oracle import LocalizationOracle as DiagnosisOracle
 from sregym.conductor.problems.registry import ProblemRegistry
 from sregym.conductor.utils import is_ordered_subset
 from sregym.generators.fault.inject_remote_os import RemoteOSFaultInjector
@@ -40,7 +40,7 @@ class Conductor:
         self.execution_start_time = None
 
         # grading flow state
-        # submission_stage reflects the current AgentAct name (e.g., "localization", "mitigation") or "done"
+        # submission_stage reflects the current AgentAct name (e.g., "diagnosis", "mitigation") or "done"
         self.submission_stage = None
         self.results = {}
 
@@ -76,12 +76,12 @@ class Conductor:
         file_dir = Path(__file__).resolve().parent
         tasklist_path = file_dir / "tasklist.yml"
 
-        # If tasklist file doesn't exist, default to running localization + mitigation
+        # If tasklist file doesn't exist, default to running diagnosis + mitigation
         if not tasklist_path.exists():
             self.local_logger.info(
-                "No tasklist.yml found. Defaulting to running localization and mitigation for this problem."
+                "No tasklist.yml found. Defaulting to running diagnosis and mitigation for this problem."
             )
-            self.tasklist = ["localization", "mitigation"]
+            self.tasklist = ["diagnosis", "mitigation"]
             return
 
         with open(tasklist_path, "r") as f:
@@ -94,9 +94,9 @@ class Conductor:
 
         if self.problem_id not in (problems if problems else []):
             self.local_logger.warning(
-                "problem_id not found in tasklist. Defaulting to running localization and mitigation."
+                "problem_id not found in tasklist. Defaulting to running diagnosis and mitigation."
             )
-            self.tasklist = ["localization", "mitigation"]
+            self.tasklist = ["diagnosis", "mitigation"]
         else:
             problem_tasklist = problems[self.problem_id]
             if not problem_tasklist:
@@ -104,8 +104,8 @@ class Conductor:
                 self.local_logger.error(msg)
                 raise RuntimeError(msg)
 
-            if not is_ordered_subset(problem_tasklist, ["localization", "mitigation"]):
-                msg = f"Task list for {self.problem_id} is either out of order or has an unknown step (allowed: localization, mitigation)"
+            if not is_ordered_subset(problem_tasklist, ["diagnosis", "mitigation"]):
+                msg = f"Task list for {self.problem_id} is either out of order or has an unknown step (allowed: diagnosis, mitigation)"
                 self.local_logger.error(msg)
                 raise RuntimeError(msg)
 
@@ -113,7 +113,7 @@ class Conductor:
                 f"Tasklist specified for {self.problem_id}. Configured AgentActs to run: {problem_tasklist}"
             )
 
-            # Use the tasklist as-is (only AgentAct names, e.g., localization, mitigation)
+            # Use the tasklist as-is (only AgentAct names, e.g., diagnosis, mitigation)
             self.tasklist = problem_tasklist
 
     def _build_act_sequence(self):
@@ -128,9 +128,9 @@ class Conductor:
 
         # Map AgentAct names to their precondition/evaluation functions
         agent_act_definitions = {
-            "localization": {
-                "precondition": self._precondition_localization,
-                "evaluation": self._evaluate_localization,
+            "diagnosis": {
+                "precondition": self._precondition_diagnosis,
+                "evaluation": self._evaluate_diagnosis,
             },
             "mitigation": {
                 "precondition": self._precondition_mitigation,
@@ -145,8 +145,8 @@ class Conductor:
                 self.local_logger.warning(f"Unknown AgentAct '{name}' in tasklist; skipping.")
                 continue
 
-            if name == "localization":
-                if getattr(self.problem, "localization_oracle", None):
+            if name == "diagnosis":
+                if getattr(self.problem, "diagnosis_oracle", None):
                     configured_agent_acts.append(
                         {
                             "type": "AgentAct",
@@ -156,7 +156,7 @@ class Conductor:
                         }
                     )
                 else:
-                    self.local_logger.info("⏩ Localization oracle is not attached. Skipping localization.")
+                    self.local_logger.info("⏩ Diagnosis oracle is not attached. Skipping diagnosis.")
 
             elif name == "mitigation":
                 if getattr(self.problem, "mitigation_oracle", None):
@@ -193,33 +193,33 @@ class Conductor:
         self.problem.inject_fault()
         self.logger.info("[ENV] Injected fault")
 
-        # Prepare localization checkpoint if available, after fault injection but before agent acts
+        # Prepare diagnosis checkpoint if available, after fault injection but before agent acts
         if (
-            hasattr(self.problem, "localization_oracle")
-            and self.problem.localization_oracle
-            and isinstance(self.problem.localization_oracle, LocalizationOracle)
+            hasattr(self.problem, "diagnosis_oracle")
+            and self.problem.diagnosis_oracle
+            and isinstance(self.problem.diagnosis_oracle, DiagnosisOracle)
         ):
-            self.problem.localization_oracle.load_localization_checkpoint()
-            self.local_logger.info("Localization checkpoint loaded after fault injection.")
+            self.problem.diagnosis_oracle.load_localization_checkpoint()
+            self.local_logger.info("Diagnosis checkpoint loaded after fault injection.")
 
         # FIXME: Disabled until https://github.com/xlab-uiuc/SREGym/issues/296 is complete
         # self.configure_transient_issues()
         # if self.transient_config["switch"]:
         #     self._start_transient_issues()
 
-    # -------- AgentAct: localization --------
-    def _precondition_localization(self):
-        self.local_logger.info("Precondition for Localization AgentAct executed. No real action.")
+    # -------- AgentAct: diagnosis --------
+    def _precondition_diagnosis(self):
+        self.local_logger.info("Precondition for Diagnosis AgentAct executed. No real action.")
 
-    def _evaluate_localization(self, solution):
-        """Evaluation logic for localization AgentAct."""
-        self.local_logger.info("Start Eval for Localization", extra={"sol": solution})
-        r = self.problem.localization_oracle.evaluate(solution)
-        self.results["Localization"] = r
+    def _evaluate_diagnosis(self, solution):
+        """Evaluation logic for diagnosis AgentAct."""
+        self.local_logger.info("Start Eval for Diagnosis", extra={"sol": solution})
+        r = self.problem.diagnosis_oracle.evaluate(solution)
+        self.results["Diagnosis"] = r
         self.results["TTL"] = time.time() - self.execution_start_time
         self.logger.info(
-            f"[EVAL] Localization "
-            f"{'Succeed' if self.results['Localization']['success'] else 'Failed'}\n "
+            f"[EVAL] Diagnosis "
+            f"{'Succeed' if self.results['Diagnosis']['success'] else 'Failed'}\n "
             f"TTL: {self.results['TTL']}"
         )
         return r

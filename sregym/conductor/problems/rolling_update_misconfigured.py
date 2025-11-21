@@ -24,7 +24,7 @@ class RollingUpdateMisconfigured(Problem):
 
         self.kubectl = KubeCtl()
         self.root_cause = f"The deployment `{self.faulty_service}` has a misconfigured rolling update strategy (maxUnavailable=100%, maxSurge=0%) with an init container that hangs indefinitely, causing the deployment to be stuck during updates."
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
 
         self.app.create_workload()
         self.mitigation_oracle = RollingUpdateMitigationOracle(problem=self, deployment_name=self.faulty_service)

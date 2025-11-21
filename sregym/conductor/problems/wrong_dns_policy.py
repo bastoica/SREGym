@@ -28,7 +28,7 @@ class WrongDNSPolicy(Problem):
         self.kubectl = KubeCtl()
         self.root_cause = f"The deployment `{self.faulty_service}` has a misconfigured DNS policy (set to None with external nameserver 8.8.8.8), causing DNS resolution failures for cluster-internal services."
 
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
 
         self.app.create_workload()
         self.mitigation_oracle = DNSResolutionMitigationOracle(problem=self)

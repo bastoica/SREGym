@@ -16,7 +16,7 @@ class ValkeyMemoryDisruption(Problem):
         self.root_cause = "A job is flooding the valkey-cart store with large payloads (10MB each), causing it to enter an out-of-memory (OOM) state."
 
         # === Attach evaluation oracles ===
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
 
         self.app.create_workload()
 

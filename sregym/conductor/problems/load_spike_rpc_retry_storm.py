@@ -18,7 +18,7 @@ class LoadSpikeRPCRetryStorm(Problem):
         self.root_cause = f"The ConfigMap `{self.faulty_service}` has misconfigured RPC timeout (50ms) and retry settings (30 retries), combined with a load spike, causing an RPC retry storm that overwhelms the service."
         super().__init__(app=self.app, namespace=self.app.namespace)
         # === Attach evaluation oracles ===
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
 
         self.mitigation_oracle = RPCRetryStormMitigationOracle(problem=self)
 

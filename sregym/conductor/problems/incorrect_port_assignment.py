@@ -20,7 +20,7 @@ class IncorrectPortAssignment(Problem):
         self.root_cause = f"The deployment `{self.faulty_service}` has the environment variable `{self.env_var}` configured with an incorrect port `{self.incorrect_port}` instead of `{self.correct_port}`."
         super().__init__(app=self.app, namespace=self.namespace)
         # === Attach evaluation oracles ===
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
         self.mitigation_oracle = IncorrectPortAssignmentMitigationOracle(problem=self)
 
         self.app.create_workload()

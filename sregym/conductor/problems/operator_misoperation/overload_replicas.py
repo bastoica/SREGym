@@ -27,7 +27,7 @@ class K8SOperatorOverloadReplicasFault(Problem):
         self.kubectl = KubeCtl()
         self.root_cause = "The TiDBCluster custom resource is configured with an excessive number of replicas (100,000), overwhelming the cluster and causing only a few pods to be created successfully."
         self.app.create_workload()
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
         self.mitigation_oracle = OverloadReplicasMitigationOracle(problem=self, deployment_name="basic")
 
     @mark_fault_injected

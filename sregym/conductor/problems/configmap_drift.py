@@ -19,7 +19,7 @@ class ConfigMapDrift(Problem):
 
         self.kubectl = KubeCtl()
         self.root_cause = f"The ConfigMap `{self.faulty_service}-config` is missing critical configuration keys (e.g., GeoMongoAddress), causing the deployment `{self.faulty_service}` to malfunction."
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
         self.configmap_name = f"{self.faulty_service}-config"
 
         self.app.create_workload()

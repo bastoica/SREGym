@@ -28,7 +28,7 @@ class WrongServiceSelector(Problem):
         self.kubectl = KubeCtl()
         self.root_cause = f"The service `{self.faulty_service}` has a misconfigured selector that includes an additional incorrect label, preventing it from matching the intended pods."
 
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
 
         self.app.create_workload()
         self.mitigation_oracle = ServiceEndpointMitigationOracle(problem=self)

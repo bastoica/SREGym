@@ -25,7 +25,7 @@ class UpdateIncompatibleCorrelated(Problem):
         self.injector = ApplicationFaultInjector(namespace=self.namespace)
         super().__init__(app=self.app, namespace=self.namespace)
 
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
         # not really the incorrect image problem, just reuse the incorrect image function
         self.mitigation_oracle = IncorrectImageMitigationOracle(
             problem=self, actual_images={service: "mongo:8.0.14-rc0" for service in self.faulty_service}

@@ -18,7 +18,7 @@ class FaultyImageCorrelated(Problem):
         super().__init__(app=self.app, namespace=self.namespace)
         self.root_cause = "The deployment `frontend`, `geo`, `profile`, `rate`, `recommendation`, `reservation`, `user`, and `search` are configured to use a faulty image 'jackcuii/hotel-reservation:latest'."
 
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
         # not really the incorrect image problem, just reuse the incorrect image function
         self.mitigation_oracle = IncorrectImageMitigationOracle(
             problem=self,

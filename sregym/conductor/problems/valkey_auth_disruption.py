@@ -18,7 +18,7 @@ class ValkeyAuthDisruption(Problem):
         self.root_cause = f"The valkey-cart service has an invalid password configured, causing authentication failures for dependent services."
 
         # === Attach evaluation oracles ===
-        self.localization_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
         self.mitigation_oracle = ValkeyAuthMitigation(problem=self)
 
         self.app.create_workload()
