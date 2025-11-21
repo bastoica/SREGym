@@ -1,8 +1,5 @@
 """Otel demo kafkaQueueProblems feature flag fault."""
 
-from typing import Any
-
-from sregym.conductor.oracles.detection import DetectionOracle
 from sregym.conductor.oracles.llm_as_a_judge.llm_as_a_judge_oracle import LLMAsAJudgeOracle
 from sregym.conductor.problems.base import Problem
 from sregym.generators.fault.inject_otel import OtelFaultInjector
