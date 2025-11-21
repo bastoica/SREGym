@@ -8,7 +8,7 @@ import yaml
 from dashboard.proxy import LogProxy
 from sregym.conductor.constants import StartProblemResult
 from sregym.conductor.oracles.detection import DetectionOracle
-from sregym.conductor.oracles.localization_oracle import LocalizationOracle as DiagnosisOracle
+from sregym.conductor.oracles.diagnosis_oracle import LocalizationOracle as DiagnosisOracle
 from sregym.conductor.problems.registry import ProblemRegistry
 from sregym.conductor.utils import is_ordered_subset
 from sregym.generators.fault.inject_remote_os import RemoteOSFaultInjector

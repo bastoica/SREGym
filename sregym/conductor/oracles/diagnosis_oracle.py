@@ -12,7 +12,7 @@ local_logger.propagate = True
 local_logger.setLevel(logging.DEBUG)
 
 
-class LocalizationOracle(Oracle):
+class DiagnosisOracle(Oracle):
     """Logic of Localization Oracle"""
 
     # BEFORE the agent are ask to act, expect function will be called and checkpoint will be saved
