@@ -762,7 +762,7 @@ spec:
         print(f"[KernelInjector] PVC {pvc_name} restored to healthy device")
         self.recovery_data = None
 
-    def drop_caches(self, node: str) -> None:
+    def drop_caches(self, node: str, show_log:bool = True) -> None:
         """
         Drop page cache, dentries, and inodes on the target node.
         This forces the application to read from the disk, hitting the bad blocks.
@@ -772,4 +772,5 @@ spec:
         # but writing to /proc is more universal.
         script = "echo 3 > /proc/sys/vm/drop_caches"
         self._exec_on_node(node, script)
-        print(f"[KernelInjector] Dropped caches on node {node}")
+        if show_log:
+            print(f"[KernelInjector] Dropped caches on node {node}")

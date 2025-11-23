@@ -201,7 +201,7 @@ class SilentDataCorruption(Problem):
             lat = 30 + random.randint(0, 10000)*0.0001
             lon = -120 + random.randint(0, 10000)*0.0001
             self.mongo_write(test_id, lat, lon)
-            self.injector.drop_caches(self.target_node)
+            self.injector.drop_caches(self.target_node, show_log=False)
             self.mongo_read(test_id)
 
         print(f"[SDC] Silent data corruption injection complete")
