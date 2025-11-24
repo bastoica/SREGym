@@ -32,7 +32,7 @@ def get_current_datetime_formatted():
     return formatted_datetime
 
 
-def driver_loop(conductor: Conductor, problem_filter: str = None):
+def driver_loop(conductor: Conductor, problem_filter: str = None, disable_agent: bool = False):
     """
     Deploy each problem and wait for HTTP grading via POST /submit.
     Returns a list of flattened dicts with results per problem.
@@ -40,6 +40,7 @@ def driver_loop(conductor: Conductor, problem_filter: str = None):
     Args:
         conductor: The Conductor instance
         problem_filter: Optional problem ID to run. If specified, only this problem will be run.
+        disable_agent: If True, skip starting the agent.
     """
 
     async def driver():
@@ -74,9 +75,10 @@ def driver_loop(conductor: Conductor, problem_filter: str = None):
                     console.log(f"⏭️  Skipping problem '{pid}': requires Khaos but running on emulated cluster")
                     continue
 
-                reg = get_agent(agent_name)
-                if reg:
-                    await LAUNCHER.ensure_started(reg)
+                if not disable_agent:
+                    reg = get_agent(agent_name)
+                    if reg:
+                        await LAUNCHER.ensure_started(reg)
 
                 # Poll until grading completes
                 while conductor.submission_stage != "done":
@@ -130,9 +132,9 @@ def start_mcp_server_after_api():
     server.run()
 
 
-def _run_driver_and_shutdown(conductor: Conductor, problem_filter: str = None):
+def _run_driver_and_shutdown(conductor: Conductor, problem_filter: str = None, disable_agent: bool = False):
     """Run the benchmark driver, stash results, then tell the API to exit."""
-    results = driver_loop(conductor, problem_filter=problem_filter)
+    results = driver_loop(conductor, problem_filter=problem_filter, disable_agent=disable_agent)
     setattr(main, "results", results)
     # ⬇️ Ask the API server (running in main thread) to stop so we can write CSV
     request_shutdown()
@@ -196,6 +198,7 @@ def main():
         default=None,
         help="Run only a specific problem by its ID (e.g., 'target_port')",
     )
+    parser.add_argument("--disable-agent", action="store_true", help="Disables running the agent.")
     args = parser.parse_args()
 
     # set up the logger
@@ -209,7 +212,7 @@ def main():
     # Start the driver in the background; it will call request_shutdown() when finished
     driver_thread = threading.Thread(
         target=_run_driver_and_shutdown,
-        args=(conductor, args.problem),
+        args=(conductor, args.problem, args.disable_agent),
         name="driver",
         daemon=True,
     )
