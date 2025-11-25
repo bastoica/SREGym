@@ -212,6 +212,7 @@ def main():
     init_logger()
 
     # Start dashboard in a separate process
+    dashboard_process = None
     if not args.use_external_harness:
         dashboard_process = start_dashboard_process()
 
@@ -246,7 +247,7 @@ def main():
         driver_thread.join(timeout=5)
 
         # Terminate dashboard process gracefully if it's still running
-        if dashboard_process is not None and dashboard_process.is_alive():
+        if dashboard_process is not None and dashboard_process.is_alive() and not args.use_external_harness:
             try:
                 # Send SIGTERM to allow graceful shutdown (triggers _export_on_exit)
                 dashboard_process.terminate()
