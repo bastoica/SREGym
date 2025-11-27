@@ -80,5 +80,6 @@ jobs:
           echo "Found $ISSUE_COUNT issues"
           if [ "$ISSUE_COUNT" -gt 0 ]; then
             echo "::warning::Found $ISSUE_COUNT SRE reliability issues"
+            exit 1
           fi
         fi
