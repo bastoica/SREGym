@@ -22,9 +22,8 @@ class WrongServiceSelector(Problem):
             self.app = AstronomyShop()
         else:
             raise ValueError(f"Unsupported app name: {app_name}")
-
-        super().__init__(app=self.app, namespace=self.app.namespace)
-
+        self.namespace = self.app.namespace
+        super().__init__(app=self.app, namespace=self.namespace)
         self.kubectl = KubeCtl()
         self.root_cause = f"The service `{self.faulty_service}` has a misconfigured selector that includes an additional incorrect label, preventing it from matching the intended pods."
 

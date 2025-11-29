@@ -1,5 +1,6 @@
 """Interface to the social network application from DeathStarBench"""
 
+import logging
 import time
 
 from sregym.generators.workload.wrk2 import Wrk2, Wrk2WorkloadManager
@@ -9,11 +10,11 @@ from sregym.service.apps.base import Application
 from sregym.service.apps.helpers import get_frontend_url
 from sregym.service.helm import Helm
 from sregym.service.kubectl import KubeCtl
-import logging
 
 local_logger = logging.getLogger("all.sregym.social_network")
 local_logger.propagate = True
 local_logger.setLevel(logging.DEBUG)
+
 
 class SocialNetwork(Application):
     def __init__(self):
@@ -107,3 +108,7 @@ class SocialNetwork(Application):
             self.create_workload()
         self.wrk.url = get_frontend_url(self) + "/wrk2-api/post/compose"
         self.wrk.start()
+
+    def stop_workload(self):
+        if hasattr(self, "wrk"):
+            self.wrk.stop()

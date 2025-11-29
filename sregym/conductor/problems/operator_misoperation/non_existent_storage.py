@@ -20,8 +20,9 @@ from sregym.utils.decorators import mark_fault_injected
 
 class K8SOperatorNonExistentStorageFault(Problem):
     def __init__(self, faulty_service="tidb-app"):
-        app = FleetCast()
-        super().__init__(app=app, namespace="tidb-cluster")
+        self.app = FleetCast()
+        super().__init__(app=self.app, namespace="tidb-cluster")
+        self.namespace = self.app.namespace
         self.faulty_service = faulty_service
         self.kubectl = KubeCtl()
         self.problem_id = "operator_non_existent_storage"

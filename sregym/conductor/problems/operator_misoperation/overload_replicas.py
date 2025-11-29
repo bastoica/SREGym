@@ -21,8 +21,9 @@ from sregym.utils.decorators import mark_fault_injected
 
 class K8SOperatorOverloadReplicasFault(Problem):
     def __init__(self, faulty_service="tidb-app"):
-        app = FleetCast()
-        super().__init__(app=app, namespace="tidb-cluster")
+        self.app = FleetCast()
+        super().__init__(app=self.app, namespace="tidb-cluster")
+        self.namespace = self.app.namespace
         self.faulty_service = faulty_service
         self.kubectl = KubeCtl()
         self.root_cause = "The TiDBCluster custom resource is configured with an excessive number of replicas (100,000), overwhelming the cluster and causing only a few pods to be created successfully."

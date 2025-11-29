@@ -26,7 +26,8 @@ class ReadinessProbeMisconfiguration(Problem):
         else:
             raise ValueError(f"Unsupported app name: {app_name}")
 
-        super().__init__(app=self.app, namespace=self.app.namespace)
+        self.namespace = self.app.namespace
+        super().__init__(app=self.app, namespace=self.namespace)
 
         self.kubectl = KubeCtl()
         self.root_cause = f"The deployment `{self.faulty_service}` has a misconfigured readiness probe pointing to a non-existent health endpoint (/healthz on port 8080), causing pods to never become ready and be excluded from service endpoints."

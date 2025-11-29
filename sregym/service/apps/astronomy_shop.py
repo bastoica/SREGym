@@ -69,6 +69,10 @@ class AstronomyShop(Application):
             self.create_workload()
         self.wrk.start()
 
+    def stop_workload(self):
+        if hasattr(self, "wrk"):
+            self.wrk.stop()
+
 
 # Run this code to test installation/deletion
 # if __name__ == "__main__":

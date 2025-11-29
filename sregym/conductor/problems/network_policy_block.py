@@ -21,7 +21,8 @@ class NetworkPolicyBlock(Problem):
         )
         self.app.create_workload()
 
-        super().__init__(app=self.app, namespace=self.app.namespace)
+        self.namespace = self.app.namespace
+        super().__init__(app=self.app, namespace=self.namespace)
         self.root_cause = f"A NetworkPolicy `{self.policy_name}` is configured to block all ingress and egress traffic to/from pods labeled with `app={self.faulty_service}`, causing complete network isolation and service unavailability."
         self.networking_v1 = client.NetworkingV1Api()
 

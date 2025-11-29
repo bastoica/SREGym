@@ -14,8 +14,8 @@ class ConfigMapDrift(Problem):
         self.faulty_service = faulty_service
 
         self.app = HotelReservation()
-
-        super().__init__(app=self.app, namespace=self.app.namespace)
+        self.namespace = self.app.namespace
+        super().__init__(app=self.app, namespace=self.namespace)
 
         self.kubectl = KubeCtl()
         self.root_cause = f"The ConfigMap `{self.faulty_service}-config` is missing critical configuration keys (e.g., GeoMongoAddress), causing the deployment `{self.faulty_service}` to malfunction."

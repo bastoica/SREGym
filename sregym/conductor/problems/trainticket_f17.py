@@ -20,7 +20,8 @@ class TrainTicketF17(Problem):
         self.fault_name = "fault-17-nested-sql-select-clause-error"
         self.app = TrainTicket()
 
-        super().__init__(app=self.app, namespace=self.app.namespace)
+        self.namespace = self.app.namespace
+        super().__init__(app=self.app, namespace=self.namespace)
         self.root_cause = f"The deployment `{self.faulty_service}` has a nested SQL SELECT clause error in its database queries, causing database operation failures."
 
         self.kubectl = KubeCtl()

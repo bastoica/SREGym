@@ -18,8 +18,9 @@ from sregym.utils.decorators import mark_fault_injected
 
 class K8SOperatorSecurityContextFault(Problem):
     def __init__(self, faulty_service="tidb-app"):
-        app = FleetCast()
-        super().__init__(app=app, namespace="tidb-cluster")
+        self.app = FleetCast()
+        super().__init__(app=self.app, namespace="tidb-cluster")
+        self.namespace = self.app.namespace
         self.faulty_service = faulty_service
         self.kubectl = KubeCtl()
         self.root_cause = "The TiDBCluster custom resource specifies an invalid runAsUser value in the security context, causing pods to fail to start or be rejected by the security policy."

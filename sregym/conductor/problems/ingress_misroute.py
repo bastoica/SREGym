@@ -18,9 +18,9 @@ class IngressMisroute(Problem):
         self.ingress_name = "hotel-reservation-ingress"
         self.root_cause = f"The ingress `{self.ingress_name}` has a misconfigured routing rule for path `{self.path}`, routing traffic to the wrong service (`{self.wrong_service}` instead of `{self.correct_service}`)."
         super().__init__(app=self.app, namespace=self.app.namespace)
-
+        self.namespace = self.app.namespace
         self.networking_v1 = client.NetworkingV1Api()
-
+        self.faulty_service = [correct_service, wrong_service]
         self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
         self.mitigation_oracle = IngressMisrouteMitigationOracle(problem=self)
 

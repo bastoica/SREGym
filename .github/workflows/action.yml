@@ -35,7 +35,7 @@ jobs:
           --source-root=. \
           --overwrite
     
-    - name: Run Queries (CSV, skipping problem_lifecycle.ql)
+    - name: Run Queries 
       run: |
         QUERIES=$(find tests/sre-ql/queries -name "*.ql" ! -name "problem_lifecycle.ql")
         echo "Running queries:"

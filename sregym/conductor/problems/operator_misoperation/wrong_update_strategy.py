@@ -20,13 +20,13 @@ from sregym.utils.decorators import mark_fault_injected
 
 class K8SOperatorWrongUpdateStrategyFault(Problem):
     def __init__(self, faulty_service="tidb-app"):
-        app = FleetCast()
-        super().__init__(app=app, namespace="tidb-cluster")
+        self.app = FleetCast()
+        super().__init__(app=self.app, namespace="tidb-cluster")
+        self.namespace = self.app.namespace
         self.faulty_service = faulty_service
         self.kubectl = KubeCtl()
         self.root_cause = "The TiDBCluster custom resource specifies an invalid update strategy, causing deployment updates to fail or get stuck."
         self.app.create_workload()
-
         self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
         self.mitigation_oracle = WrongUpdateStrategyMitigationOracle(problem=self, deployment_name="basic")
 

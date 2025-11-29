@@ -2,7 +2,7 @@ import logging
 import os
 import subprocess
 
-REPO = "/home/azureuser/SREGym"
+REPO = "~/SREGym"
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)  # Change to DEBUG for more detailed logs
@@ -60,7 +60,7 @@ def save_private_key(key_data, filename):
 
 def copy_and_execute_script(username, private_key, public_ip, script):
     """Copy and execute the shell script on the remote VM."""
-    remote_path = f"{username}@{public_ip}:/home/{username}"
+    remote_path = f"{username}@{public_ip}:~"
     try:
         # Copy the shell script to the remote VM
         run_command(
@@ -82,7 +82,7 @@ def copy_and_execute_script(username, private_key, public_ip, script):
                 "-i",
                 private_key,
                 f"{username}@{public_ip}",
-                f"bash /home/{username}/{os.path.basename(script)}",
+                f"bash ~/{os.path.basename(script)}",
             ]
         )
     except Exception as e:

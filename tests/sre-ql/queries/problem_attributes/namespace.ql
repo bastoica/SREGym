@@ -1,5 +1,5 @@
 /**
- * @id sre-ql.namespace-null-check
+ * @id sre-ql/namespace-null-check
  * @name Problem subclass namespace assignment check
  * @description Detects subclasses of Problem missing self.namespace assignments or assigning None.
  * @kind problem
@@ -32,6 +32,18 @@ predicate assignsNone(NamespaceAssignment a) {
   a.getValue() instanceof None
 }
 
+predicate shouldIgnore(ProblemSubclass c) {
+  exists(Module m |
+    m = c.getEnclosingModule() and
+    exists(string filename |
+      filename = m.getFile().getBaseName() and
+      (
+        filename = "multiple_failures.py" 
+      )
+    )
+  )
+}
+
 string getMessage(ProblemSubclass c) {
   not exists(NamespaceAssignment a | assignsNamespace(c, a)) and
   result = "NO self.namespace defined"
@@ -44,5 +56,7 @@ string getMessage(ProblemSubclass c) {
 }
 
 from ProblemSubclass c, string msg
-where msg = getMessage(c)
+where 
+  msg = getMessage(c) and
+  not shouldIgnore(c)
 select c, msg

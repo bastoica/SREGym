@@ -1,5 +1,5 @@
 /**
- * @id sre-ql.null-check
+ * @id sre-ql/app-null-check
  * @name Problem subclass app assignment check
  * @description Detects subclasses of Problem missing self.app assignments or assigning None.
  * @kind problem

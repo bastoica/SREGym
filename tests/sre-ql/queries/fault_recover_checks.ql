@@ -1,5 +1,5 @@
 /**
- * @id sre-ql.fault-injection-recovery-check
+ * @id sre-ql/fault-injection-recovery-check
  * @name Fault injection and recovery consistency check
  * @description Detects Problem subclasses with missing or inconsistent inject_fault/recover_fault methods.
  * @kind problem

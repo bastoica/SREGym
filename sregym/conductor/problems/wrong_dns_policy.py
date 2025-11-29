@@ -22,8 +22,8 @@ class WrongDNSPolicy(Problem):
             self.app = AstronomyShop()
         else:
             raise ValueError(f"Unsupported app name: {app_name}")
-
-        super().__init__(app=self.app, namespace=self.app.namespace)
+        self.namespace = self.app.namespace
+        super().__init__(app=self.app, namespace=self.namespace)
 
         self.kubectl = KubeCtl()
         self.root_cause = f"The deployment `{self.faulty_service}` has a misconfigured DNS policy (set to None with external nameserver 8.8.8.8), causing DNS resolution failures for cluster-internal services."

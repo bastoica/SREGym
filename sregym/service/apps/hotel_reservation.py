@@ -1,5 +1,6 @@
-import time
 import logging
+import time
+
 from sregym.generators.workload.wrk2 import Wrk2, Wrk2WorkloadManager
 from sregym.observer.trace_api import TraceAPI
 from sregym.paths import FAULT_SCRIPTS, HOTEL_RES_METADATA, TARGET_MICROSERVICES
@@ -7,10 +8,10 @@ from sregym.service.apps.base import Application
 from sregym.service.apps.helpers import get_frontend_url
 from sregym.service.kubectl import KubeCtl
 
-
 local_logger = logging.getLogger("all.application")
 local_logger.propagate = True
 local_logger.setLevel(logging.DEBUG)
+
 
 class HotelReservation(Application):
     def __init__(self):
@@ -93,7 +94,9 @@ class HotelReservation(Application):
         """Delete the entire namespace for the hotel reservation application."""
         if self.trace_api:
             self.trace_api.stop_port_forward()
+
         self.kubectl.delete_namespace(self.namespace)
+
         self.kubectl.wait_for_namespace_deletion(self.namespace)
         pvs = self.kubectl.exec_command(
             "kubectl get pv --no-headers | grep 'hotel-reservation' | awk '{print $1}'"
@@ -150,3 +153,7 @@ class HotelReservation(Application):
             self.create_workload()
         self.wrk.url = get_frontend_url(self)
         self.wrk.start()
+
+    def stop_workload(self):
+        if hasattr(self, "wrk"):
+            self.wrk.stop()

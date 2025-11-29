@@ -1,16 +1,17 @@
-import time
 import logging
+import time
+
 from sregym.generators.workload.blueprint_hotel_work import BHotelWrk, BHotelWrkWorkloadManager
 from sregym.observer.trace_api import TraceAPI
 from sregym.paths import BLUEPRINT_HOTEL_RES_METADATA, FAULT_SCRIPTS, TARGET_MICROSERVICES
 from sregym.service.apps.base import Application
 from sregym.service.kubectl import KubeCtl
 
-
 local_logger = logging.getLogger("all.application")
 local_logger.propagate = True
 local_logger.setLevel(logging.DEBUG)
-    
+
+
 class BlueprintHotelReservation(Application):
     def __init__(self):
         super().__init__(BLUEPRINT_HOTEL_RES_METADATA)
@@ -62,5 +63,9 @@ class BlueprintHotelReservation(Application):
         pass
 
     def start_workload(self):
+        # The observation workload interface is in the problem class, keeping this interface empty to keep consistency in conductor
+        pass
+
+    def stop_workload(self):
         # The observation workload interface is in the problem class, keeping this interface empty to keep consistency in conductor
         pass
