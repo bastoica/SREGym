@@ -1,4 +1,5 @@
 import logging
+from contextlib import AsyncExitStack
 from typing import Annotated, Any, Optional
 
 from fastmcp import Client
@@ -48,9 +49,13 @@ class ExecKubectlCmdSafely(BaseTool):
         logger.debug(
             f"calling mcp exec_kubectl_cmd_safely from " f'langchain exec_kubectl_cmd_safely, with command: "{command}"'
         )
-        async with self._client:
+        exit_stack = AsyncExitStack()
+        try:
+            await exit_stack.enter_async_context(self._client)
             result = await self._client.call_tool("exec_kubectl_cmd_safely", arguments={"cmd": command})
-        text_result = "\n".join([part.text for part in result])
+            text_result = "\n".join([part.text for part in result])
+        finally:
+            await exit_stack.aclose()
         return Command(
             update={
                 "messages": [
@@ -135,9 +140,13 @@ class ExecReadOnlyKubectlCmd(BaseTool):
                 f"calling mcp exec_kubectl_cmd_safely from "
                 f'langchain exec_read_only_kubectl_cmd, with command: "{command}"'
             )
-            async with self._client:
+            exit_stack = AsyncExitStack()
+            try:
+                await exit_stack.enter_async_context(self._client)
                 result = await self._client.call_tool("exec_kubectl_cmd_safely", arguments={"cmd": command})
-            text_result = "\n".join([part.text for part in result])
+                text_result = "\n".join([part.text for part in result])
+            finally:
+                await exit_stack.aclose()
         return Command(
             update={
                 "messages": [
@@ -175,9 +184,13 @@ class RollbackCommand(BaseTool):
     ) -> Command:
         logger.debug(f"tool_call_id in {self.name}: {tool_call_id}")
         logger.debug(f"calling langchain rollback_command")
-        async with self._client:
+        exit_stack = AsyncExitStack()
+        try:
+            await exit_stack.enter_async_context(self._client)
             result = await self._client.call_tool("rollback_command")
-        text_result = "\n".join([part.text for part in result])
+            text_result = "\n".join([part.text for part in result])
+        finally:
+            await exit_stack.aclose()
         return Command(
             update={
                 "rollback_stack": str(text_result),
@@ -219,12 +232,16 @@ class GetPreviousRollbackableCmd(BaseTool):
     ) -> Command:
         logger.debug(f"tool_call_id in {self.name}: {tool_call_id}")
         logger.debug(f"calling langchain get_previous_rollbackable_cmd")
-        async with self._client:
+        exit_stack = AsyncExitStack()
+        try:
+            await exit_stack.enter_async_context(self._client)
             result = await self._client.call_tool("get_previous_rollbackable_cmd")
-        if len(result) == 0:
-            text_result = "There is no previous rollbackable command."
-        else:
-            text_result = "\n".join([part.text for part in result])
+            if len(result) == 0:
+                text_result = "There is no previous rollbackable command."
+            else:
+                text_result = "\n".join([part.text for part in result])
+        finally:
+            await exit_stack.aclose()
         return Command(
             update={
                 "messages": [
