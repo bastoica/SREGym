@@ -4,7 +4,7 @@ image:
   registry: registry.k8s.io
   repository: kube-state-metrics/kube-state-metrics
   # If unset use v + .Charts.appVersion
-  tag: ""
+  tag: "v2.9.2"
   sha: ""
   pullPolicy: IfNotPresent
 

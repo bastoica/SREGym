@@ -1,9 +1,6 @@
 """MongoDB storage user unregistered problem in the HotelReservation application."""
 
-from turtle import pd
-
 from sregym.conductor.oracles.mitigation import MitigationOracle
-from sregym.conductor.oracles.pod_of_deployment_oracle import PodOfDeploymentOracle
 from sregym.conductor.problems.base import Problem
 from sregym.generators.fault.inject_app import ApplicationFaultInjector
 from sregym.service.apps.hotel_reservation import HotelReservation
@@ -17,11 +14,10 @@ class MisconfigAppHotelRes(Problem):
         self.kubectl = KubeCtl()
         self.namespace = self.app.namespace
         self.faulty_service = "geo"
+        self.root_cause = "The 'geo' deployment is configured to use a buggy container image 'yinfangchen/geo:app3', this causes the pod keep restarting and entering the 'Error' state."
         super().__init__(app=self.app, namespace=self.app.namespace)
         # === Attach evaluation oracles ===
-        self.localization_oracle = PodOfDeploymentOracle(
-            problem=self, namespace=self.namespace, expected_deployment_name=self.faulty_service
-        )
+        self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
 
         self.app.create_workload()
         self.mitigation_oracle = MitigationOracle(problem=self)

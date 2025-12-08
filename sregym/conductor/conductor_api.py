@@ -1,3 +1,4 @@
+import logging
 import os
 import threading
 from typing import Optional
@@ -10,8 +11,6 @@ from rich.markdown import Markdown
 from rich.panel import Panel
 from uvicorn import Config, Server
 
-import logging
-
 app = FastAPI()
 _conductor = None
 
@@ -19,6 +18,7 @@ _server: Optional[Server] = None
 _shutdown_event = threading.Event()
 
 local_logger = logging.getLogger("all.sregym.conductor_api")
+
 
 def request_shutdown():
     """
@@ -43,20 +43,22 @@ class SubmitRequest(BaseModel):
 
 @app.post("/submit")
 async def submit_solution(req: SubmitRequest):
-    allowed = {"noop", "detection", "localization", "mitigation"}
+    allowed = {"noop", "detection", "diagnosis", "mitigation"}
     if _conductor is None or _conductor.submission_stage not in allowed:
         local_logger.error(f"Cannot submit at stage: {_conductor.submission_stage!r}")
         raise HTTPException(status_code=400, detail=f"Cannot submit at stage: {_conductor.submission_stage!r}")
 
+    # replace double quotes with single quotes
+    req.solution = req.solution.replace('"', "'")
     wrapped = f'```\nsubmit("{req.solution}")\n```'
     local_logger.debug(f"Wrapped submit content: {wrapped}")
-    
+
     try:
         results = await _conductor.submit(wrapped)
     except Exception as e:
         local_logger.error(f"Grading error: {e}")
         raise HTTPException(status_code=400, detail=f"Grading error: {e}")
-    
+
     local_logger.debug(f"API returns Grading results by now: {results}")
     return results
 
@@ -113,7 +115,7 @@ def run_api(conductor):
             """
 **Available Endpoints**
 - **POST /submit**: `{ "solution": "<your-solution>" }` → grades the current stage  
-- **GET /status**: returns `{ "stage": "setup" | "noop" | "detection" | "localization" | "mitigation" | "done" }`
+- **GET /status**: returns `{ "stage": "setup" | "noop" | "detection" | "diagnosis" | "mitigation" | "done" }`
 """
         )
     )

@@ -12,7 +12,7 @@ local_logger.propagate = True
 local_logger.setLevel(logging.DEBUG)
 
 
-class LocalizationOracle(Oracle):
+class DiagnosisOracle(Oracle):
     """Logic of Localization Oracle"""
 
     # BEFORE the agent are ask to act, expect function will be called and checkpoint will be saved
@@ -158,7 +158,7 @@ class LocalizationOracle(Oracle):
         correctness = self.compare_truth(new_expectation, solution)
 
         local_logger.info(
-            f"Eval Localization: new_expectation: {new_expectation}, solution: {solution} | {"✅" if correctness else "❌"}"
+            f"Eval Diagnosis: new_expectation: {new_expectation}, solution: {solution} | {"✅" if correctness else "❌"}"
         )
 
         return {
@@ -201,12 +201,12 @@ class LocalizationOracle(Oracle):
             if len(pods) > 1:
                 # print(pods)
                 raise ValueError(
-                    f"More than one pod found for deployment {deployment_name} in namespace {namespace}: {pods}, can not evaluate localization."
+                    f"More than one pod found for deployment {deployment_name} in namespace {namespace}: {pods}, can not evaluate diagnosis."
                 )
             if len(pods) == 0:
                 # print(pods)
                 raise ValueError(
-                    f"No pod found for deployment {deployment_name} in namespace {namespace}, can not evaluate localization."
+                    f"No pod found for deployment {deployment_name} in namespace {namespace}, can not evaluate diagnosis."
                 )
             return pods[0].metadata.uid, pods[0].metadata.name
         except Exception as e:

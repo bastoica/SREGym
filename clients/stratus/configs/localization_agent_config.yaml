@@ -83,7 +83,7 @@ async_tools:
       The tool to submit benchmark results
           
           Args:
-              ans (str): the answer you would like to submit to the benchmark. You should submit a python-formatted list of string(s) to indicate the faulty components where the root cause(s) is(are) in. Eash string should be a Kubernetes UID of a resource (You can call the `get_resource_uid` tool to get the UID). And you should use the single quotes to wrap the string(s) in the list.
-prompts_path: localization_agent_prompts.yaml
+              ans (str): the answer you would like to submit to the benchmark. Use natural language to describe the root cause of the failure.
 
+prompts_path: localization_agent_prompts.yaml
 
