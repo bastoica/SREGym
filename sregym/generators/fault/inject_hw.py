@@ -18,15 +18,26 @@ class HWFaultInjector(FaultInjector):
         self.khaos_ns = khaos_namespace
         self.khaos_daemonset_label = khaos_label
 
-    def inject(self, microservices: List[str], fault_type: str):
+    def inject(
+        self,
+        microservices: List[str],
+        fault_type: str,
+        params: List[str | int] | None = None,
+    ):
         for pod_ref in microservices:
             ns, pod = self._split_ns_pod(pod_ref)
             node = self._get_pod_node(ns, pod)
             container_id = self._get_container_id(ns, pod)
             host_pid = self._get_host_pid_on_node(node, container_id)
-            self._exec_khaos_fault_on_node(node, fault_type, host_pid)
+            self._exec_khaos_fault_on_node(node, fault_type, host_pid, params)
 
-    def inject_node(self, namespace: str, fault_type: str, target_node: str = None):
+    def inject_node(
+        self,
+        namespace: str,
+        fault_type: str,
+        target_node: str = None,
+        params: List[str | int] | None = None,
+    ):
 
         if target_node:
             selected_node = self._find_node_starting_with(target_node)
@@ -44,7 +55,7 @@ class HWFaultInjector(FaultInjector):
         
         print(f"Found {len(target_pods)} pods on node {selected_node}: {', '.join(target_pods)}")
         
-        self.inject(target_pods, fault_type)
+        self.inject(target_pods, fault_type, params)
         return selected_node
 
     def recover_node(self, namespace: str, fault_type: str, target_node: str):
@@ -220,9 +231,27 @@ class HWFaultInjector(FaultInjector):
 
         raise RuntimeError("cgroup search found no matching PID")
 
-    def _exec_khaos_fault_on_node(self, node: str, fault_type: str, host_pid: int):
+    def _exec_khaos_fault_on_node(
+        self,
+        node: str,
+        fault_type: str,
+        host_pid: int,
+        params: List[str | int] | None = None,
+    ):
         pod_name = self._get_khaos_pod_on_node(node)
-        cmd = ["kubectl", "-n", self.khaos_ns, "exec", pod_name, "--", "/khaos/khaos", fault_type, str(host_pid)]
+        cmd = [
+            "kubectl",
+            "-n",
+            self.khaos_ns,
+            "exec",
+            pod_name,
+            "--",
+            "/khaos/khaos",
+            fault_type,
+            str(host_pid),
+        ]
+        if params:
+            cmd.extend(str(p) for p in params)
         subprocess.run(cmd, check=True)
 
     def _exec_khaos_recover_on_node(self, node: str, fault_type: str):

@@ -15,6 +15,7 @@ from sregym.conductor.problems.incorrect_image import IncorrectImage
 from sregym.conductor.problems.incorrect_port_assignment import IncorrectPortAssignment
 from sregym.conductor.problems.ingress_misroute import IngressMisroute
 from sregym.conductor.problems.kafka_queue_problems import KafkaQueueProblems
+from sregym.conductor.problems.khaos_faults import KhaosFaultName, KhaosFaultProblem
 from sregym.conductor.problems.kubelet_crash import KubeletCrash
 from sregym.conductor.problems.latent_sector_error import LatentSectorError
 from sregym.conductor.problems.liveness_probe_misconfiguration import LivenessProbeMisconfiguration
@@ -42,7 +43,6 @@ from sregym.conductor.problems.pod_anti_affinity_deadlock import PodAntiAffinity
 from sregym.conductor.problems.product_catalog_failure import ProductCatalogServiceFailure
 from sregym.conductor.problems.pvc_claim_mismatch import PVCClaimMismatch
 from sregym.conductor.problems.rbac_misconfiguration import RBACMisconfiguration
-from sregym.conductor.problems.read_error import ReadError
 from sregym.conductor.problems.readiness_probe_misconfiguration import ReadinessProbeMisconfiguration
 from sregym.conductor.problems.recommendation_service_cache_failure import RecommendationServiceCacheFailure
 from sregym.conductor.problems.resource_request import ResourceRequestTooLarge, ResourceRequestTooSmall
@@ -156,9 +156,55 @@ class ProblemRegistry:
             "trainticket_f17_nested_sql_select_clause_error": TrainTicketF17,
             "trainticket_f22_sql_column_name_mismatch_error": TrainTicketF22,
             # ==================== HARDWARE FAULT INJECTOR ====================
-            "read_error": ReadError,
             "latent_sector_error": LatentSectorError,
             "silent_data_corruption": SilentDataCorruption,
+
+            "read_error": lambda: KhaosFaultProblem(KhaosFaultName.read_error),
+            "pread_error": lambda: KhaosFaultProblem(KhaosFaultName.pread_error),
+            "write_error": lambda: KhaosFaultProblem(KhaosFaultName.write_error),
+            "pwrite_error": lambda: KhaosFaultProblem(KhaosFaultName.pwrite_error),
+            "fsync_error": lambda: KhaosFaultProblem(KhaosFaultName.fsync_error),
+            "open_error": lambda: KhaosFaultProblem(KhaosFaultName.open_error),
+            "close_fail": lambda: KhaosFaultProblem(KhaosFaultName.close_fail),
+            "dup_fail": lambda: KhaosFaultProblem(KhaosFaultName.dup_fail),
+            "getrandom_fail": lambda: KhaosFaultProblem(KhaosFaultName.getrandom_fail),
+            "gettimeofday_fail": lambda: KhaosFaultProblem(KhaosFaultName.gettimeofday_fail),
+            "ioctl_fail": lambda: KhaosFaultProblem(KhaosFaultName.ioctl_fail),
+            "cuda_malloc_fail": lambda: KhaosFaultProblem(KhaosFaultName.cuda_malloc_fail),
+            "getaddrinfo_fail": lambda: KhaosFaultProblem(KhaosFaultName.getaddrinfo_fail),
+            "nanosleep_throttle": lambda: KhaosFaultProblem(KhaosFaultName.nanosleep_throttle),
+            "nanosleep_interrupt": lambda: KhaosFaultProblem(KhaosFaultName.nanosleep_interrupt),
+            "fork_fail": lambda: KhaosFaultProblem(KhaosFaultName.fork_fail),
+            "clock_drift": lambda: KhaosFaultProblem(KhaosFaultName.clock_drift),
+            "setns_fail": lambda: KhaosFaultProblem(KhaosFaultName.setns_fail),
+            "prlimit_fail": lambda: KhaosFaultProblem(KhaosFaultName.prlimit_fail),
+            "socket_block": lambda: KhaosFaultProblem(KhaosFaultName.socket_block),
+            "mmap_fail": lambda: KhaosFaultProblem(KhaosFaultName.mmap_fail),
+            "mmap_oom": lambda: KhaosFaultProblem(KhaosFaultName.mmap_oom),
+            "brk_fail": lambda: KhaosFaultProblem(KhaosFaultName.brk_fail),
+            "mlock_fail": lambda: KhaosFaultProblem(KhaosFaultName.mlock_fail),
+            "bind_enetdown": lambda: KhaosFaultProblem(KhaosFaultName.bind_enetdown),
+            "mount_io_error": lambda: KhaosFaultProblem(KhaosFaultName.mount_io_error),
+            "force_close_ret_err": lambda: KhaosFaultProblem(KhaosFaultName.force_close_ret_err),
+            "force_read_ret_ok": lambda: KhaosFaultProblem(KhaosFaultName.force_read_ret_ok),
+            "force_open_ret_eperm": lambda: KhaosFaultProblem(KhaosFaultName.force_open_ret_eperm),
+            "force_mmap_eagain": lambda: KhaosFaultProblem(KhaosFaultName.force_mmap_eagain),
+            "force_brk_eagain": lambda: KhaosFaultProblem(KhaosFaultName.force_brk_eagain),
+            "force_mlock_eperm": lambda: KhaosFaultProblem(KhaosFaultName.force_mlock_eperm),
+            "force_mprotect_eacces": lambda: KhaosFaultProblem(KhaosFaultName.force_mprotect_eacces),
+            "force_swapon_einval": lambda: KhaosFaultProblem(KhaosFaultName.force_swapon_einval),
+            "oom_memchunk": lambda: KhaosFaultProblem(KhaosFaultName.oom_memchunk),
+            "oom_heapspace": lambda: KhaosFaultProblem(KhaosFaultName.oom_heapspace),
+            "oom_nonswap": lambda: KhaosFaultProblem(KhaosFaultName.oom_nonswap),
+            "hfrag_memchunk": lambda: KhaosFaultProblem(KhaosFaultName.hfrag_memchunk),
+            "hfrag_heapspace": lambda: KhaosFaultProblem(KhaosFaultName.hfrag_heapspace),
+            "ptable_permit": lambda: KhaosFaultProblem(KhaosFaultName.ptable_permit),
+            "stack_rndsegfault": lambda: KhaosFaultProblem(KhaosFaultName.stack_rndsegfault),
+            "thrash_swapon": lambda: KhaosFaultProblem(KhaosFaultName.thrash_swapon),
+            "thrash_swapoff": lambda: KhaosFaultProblem(KhaosFaultName.thrash_swapoff),
+            "memleak_munmap": lambda: KhaosFaultProblem(KhaosFaultName.memleak_munmap),
+            "packet_loss_sendto": lambda: KhaosFaultProblem(KhaosFaultName.packet_loss_sendto),
+            "packet_loss_recvfrom": lambda: KhaosFaultProblem(KhaosFaultName.packet_loss_recvfrom),
             # ==================== DIRECT K8S API ====================
             "ingress_misroute": lambda: IngressMisroute(path="/api", correct_service="frontend-service", wrong_service="recommendation-service"),
             "network_policy_block": lambda: NetworkPolicyBlock(faulty_service="payment-service"),
