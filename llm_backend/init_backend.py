@@ -61,7 +61,7 @@ def get_llm_backend_for_tools():
         }
         set_param(config_params, model_config, "model_name", "openai/gpt-4o")
         set_param(config_params, model_config, "url", None)
-        set_param(config_params, model_config, "api_key", None, required=True)
+        set_param(config_params, model_config, "api_key", None, required=False)
         set_param(config_params, model_config, "top_p", 0.95)
         set_param(config_params, model_config, "temperature", 0.0)
         set_param(config_params, model_config, "max_tokens", None)
