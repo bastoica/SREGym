@@ -1,13 +1,16 @@
 """Interface for helm operations"""
 
+import logging
 import subprocess
 import time
-import logging
+
 from sregym.service.kubectl import KubeCtl
 
 local_logger = logging.getLogger("all.infra.helm")
 local_logger.propagate = True
 local_logger.setLevel(logging.DEBUG)
+
+
 class Helm:
     @staticmethod
     def install(**args):
@@ -21,14 +24,14 @@ class Helm:
             extra_args (List[str)]: Extra arguments for the helm install command
             remote_chart (bool): Whether the chart is remote (from a Helm repo)
         """
-        
+
         release_name = args.get("release_name")
         chart_path = args.get("chart_path")
         namespace = args.get("namespace")
         version = args.get("version")
         extra_args = args.get("extra_args")
         remote_chart = args.get("remote_chart", False)
-        
+
         local_logger.info(f"Helm Install: {release_name} in namespace {namespace}")
 
         if not remote_chart:
@@ -74,7 +77,7 @@ class Helm:
         """
         release_name = args.get("release_name")
         namespace = args.get("namespace")
-        
+
         local_logger.info(f"Helm Uninstall: {release_name} in namespace {namespace}")
 
         if not Helm.exists_release(release_name, namespace):
@@ -149,7 +152,7 @@ class Helm:
             values_file (str): Path to the values.yaml file
             set_values (dict): Key-value pairs for --set options
         """
-        
+
         release_name = args.get("release_name")
         chart_path = args.get("chart_path")
         namespace = args.get("namespace")
@@ -220,7 +223,7 @@ class Helm:
 if __name__ == "__main__":
     sn_configs = {
         "release_name": "social-network",
-        "chart_path": "/home/oppertune/DeathStarBench/socialNetwork/helm-chart/socialnetwork",
+        "chart_path": "~/DeathStarBench/socialNetwork/helm-chart/socialnetwork",
         "namespace": "social-network",
     }
     Helm.install(**sn_configs)

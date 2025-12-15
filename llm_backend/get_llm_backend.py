@@ -32,7 +32,7 @@ class LiteLLMBackend:
         self,
         provider: str,
         model_name: str,
-        api_key: str,
+        api_key: Optional[str] = None,
         url: Optional[str] = None,
         top_p: Optional[float] = None,
         temperature: Optional[float] = None,

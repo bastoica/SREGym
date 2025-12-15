@@ -20,7 +20,8 @@ class RollingUpdateMisconfigured(Problem):
         else:
             raise ValueError(f"Unsupported app name: {app_name}")
 
-        super().__init__(app=self.app, namespace=self.app.namespace)
+        self.namespace = self.app.namespace
+        super().__init__(app=self.app, namespace=self.namespace)
 
         self.kubectl = KubeCtl()
         self.root_cause = f"The deployment `{self.faulty_service}` has a misconfigured rolling update strategy (maxUnavailable=100%, maxSurge=0%) with an init container that hangs indefinitely, causing the deployment to be stuck during updates."

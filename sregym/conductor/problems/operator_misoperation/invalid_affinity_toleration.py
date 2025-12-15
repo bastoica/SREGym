@@ -18,14 +18,14 @@ from sregym.utils.decorators import mark_fault_injected
 
 class K8SOperatorInvalidAffinityTolerationFault(Problem):
     def __init__(self, faulty_service="tidb-app"):
-        app = FleetCast()
-        print("App's namespace:", app.namespace)
-        super().__init__(app=app, namespace="tidb-cluster")
+        self.app = FleetCast()
+        self.namespace = self.app.namespace
+        print("App's namespace:", self.namespace)
+        super().__init__(app=self.app, namespace="tidb-cluster")
         self.faulty_service = faulty_service
         self.kubectl = KubeCtl()
         self.root_cause = "The TiDBCluster custom resource specifies an invalid toleration effect, causing pods to be unschedulable and remain in Pending state."
         self.app.create_workload()
-
         self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
 
         self.mitigation_oracle = InvalidAffinityMitigationOracle(problem=self, deployment_name="basic")

@@ -53,3 +53,7 @@ class CapacityDecreaseRPCRetryStorm(Problem):
         if not hasattr(self, "wrk"):
             self.create_workload()
         self.wrk.start()
+
+    def stop_workload(self):
+        if hasattr(self, "wrk"):
+            self.wrk.stop()

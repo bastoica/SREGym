@@ -20,9 +20,10 @@ class TrainTicketF22(Problem):
         self.fault_name = "fault-22-sql-column-name-mismatch-error"
         self.app = TrainTicket()
 
-        super().__init__(app=self.app, namespace=self.app.namespace)
-        self.root_cause = f"The deployment `{self.faulty_service}` has a SQL column name mismatch error in its database queries, causing database operation failures."
+        self.namespace = self.app.namespace
+        super().__init__(app=self.app, namespace=self.namespace)
 
+        self.root_cause = f"The deployment `{self.faulty_service}` has a SQL column name mismatch error in its database queries, causing database operation failures."
         self.kubectl = KubeCtl()
         self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
 

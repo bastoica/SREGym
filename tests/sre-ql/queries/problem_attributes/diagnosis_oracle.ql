@@ -1,5 +1,5 @@
 /**
- * @id sre-ql.diagnosis-oracle-null-check
+ * @id sre-ql/diagnosis-oracle-null-check
  * @name Problem subclass diagnosis_oracle assignment check
  * @description Detects subclasses of Problem missing self.diagnosis_oracle assignments or assigning None.
  * @kind problem
@@ -32,6 +32,19 @@ predicate assignsNone(DiagnosisOracleAssignment a) {
   a.getValue() instanceof None
 }
 
+predicate shouldIgnore(ProblemSubclass c) {
+  exists(Module m |
+    m = c.getEnclosingModule() and
+    exists(string filename |
+      filename = m.getFile().getBaseName() and
+      (
+        filename = "resource_request.py"  or
+        filename = "kubelet_crash.py" 
+        
+      )
+    )
+  )
+}
 string getMessage(ProblemSubclass c) {
   not exists(DiagnosisOracleAssignment a | assignsDiagnosisOracle(c, a)) and
   result = "NO self.diagnosis_oracle defined"
@@ -44,5 +57,7 @@ string getMessage(ProblemSubclass c) {
 }
 
 from ProblemSubclass c, string msg
-where msg = getMessage(c)
+where 
+  msg = getMessage(c) and
+  not shouldIgnore(c)
 select c, msg

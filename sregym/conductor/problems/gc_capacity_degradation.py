@@ -50,6 +50,10 @@ class GCCapacityDegradation(Problem):
             self.create_workload()
         self.wrk.start()
 
+    def stop_workload(self):
+        if hasattr(self, "wrk"):
+            self.wrk.stop()
+
     def run_workload(self, namespace="default"):
         self.start_workload()
         job_name = self.wrk.job_name

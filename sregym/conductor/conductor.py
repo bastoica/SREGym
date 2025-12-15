@@ -5,7 +5,6 @@ from pathlib import Path
 
 import yaml
 
-from dashboard.proxy import LogProxy
 from sregym.conductor.constants import StartProblemResult
 from sregym.conductor.oracles.detection import DetectionOracle
 from sregym.conductor.oracles.diagnosis_oracle import DiagnosisOracle
@@ -339,7 +338,7 @@ class Conductor:
         self.local_logger.info("Deploying app...")
         self.deploy_app()
         self.local_logger.info("App deployed.")
-        
+
         # Update NoiseManager with problem context
         try:
             nm = get_noise_manager()
@@ -527,4 +526,3 @@ class Conductor:
                 deployed_apps.append(app_name)
 
         return deployed_apps
-

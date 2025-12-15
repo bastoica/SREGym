@@ -30,7 +30,8 @@ class LivenessProbeMisconfiguration(Problem):
         else:
             raise ValueError(f"Unsupported app name: {app_name}")
 
-        super().__init__(app=self.app, namespace=self.app.namespace)
+        self.namespace = self.app.namespace
+        super().__init__(app=self.app, namespace=self.namespace)
 
         self.kubectl = KubeCtl()
         self.injector = VirtualizationFaultInjector(namespace=self.app.namespace)

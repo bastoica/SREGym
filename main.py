@@ -13,8 +13,6 @@ from pathlib import Path
 import uvicorn
 from rich.console import Console
 
-from dashboard.dashboard_app import SREGymDashboardServer
-from dashboard.proxy import LogProxy
 from logger import init_logger
 from mcp_server.configs.load_all_cfg import mcp_server_cfg
 from mcp_server.sregym_mcp_server import app as mcp_app
@@ -161,107 +159,11 @@ def _run_driver_and_shutdown(
     request_shutdown()
 
 
-def run_dashboard_server():
-    """Entry point for multiprocessing child: construct Dash in child process."""
-    # Silence child process stdout/stderr to prevent output from being printed
-    import logging
-    import os
-    import sys
-
-    # Redirect stdout and stderr to devnull
-    try:
-        sys.stdout = open(os.devnull, "w")
-        sys.stderr = open(os.devnull, "w")
-    except Exception:
-        pass
-
-    # Also silence logging output
-    logging.getLogger("werkzeug").setLevel(logging.ERROR)
-    logging.getLogger("dash").setLevel(logging.ERROR)
-
-    # Create and run the dashboard server
-    server = SREGymDashboardServer(host="127.0.0.1", port=11451, debug=False)
-    server.run(threaded=False)
-
-
-def start_dashboard_process():
-    """Start the dashboard server in a separate process and return the process object."""
-    # Set multiprocessing start method to 'spawn' for better cross-platform compatibility
-    try:
-        multiprocessing.set_start_method("spawn", force=True)
-    except RuntimeError:
-        # Already set, ignore
-        pass
-
-    # Start dashboard in a separate process
-    dashboard_process = None
-    try:
-        dashboard_process = multiprocessing.Process(
-            target=run_dashboard_server,
-            name="dashboard-server",
-            daemon=True,  # Daemon process will be terminated when main process exits
-        )
-        dashboard_process.start()
-        # Give dashboard a moment to start up
-        time.sleep(2)
-    except Exception as e:
-        logger.warning(f"⚠️  Failed to start dashboard server: {e}")
-
-    return dashboard_process
-
-
 def main(args):
     # set up the logger
     init_logger()
 
     os.environ["MODEL_ID"] = args.model
-    print("Setting MODEL_ID: ", args.model)
-
-    # Parse command-line arguments
-    parser = argparse.ArgumentParser(description="Run SREGym benchmark suite")
-    parser.add_argument(
-        "--problem",
-        type=str,
-        default=None,
-        help="Run only a specific problem by its ID (e.g., 'target_port')",
-    )
-    parser.add_argument(
-        "--use-external-harness", action="store_true", help="For use in external harnesses, deploy the fault and exit."
-    )
-    parser.add_argument(
-        "--noise-config",
-        type=str,
-        default=None,
-        help="Path to noise configuration YAML file",
-    )
-    args = parser.parse_args()
-
-    # set up the logger
-    init_logger()
-
-    # Initialize Noise Manager if config is provided or default config exists
-    nm = None
-    noise_config_path = args.noise_config
-    default_noise_config = "sregym/generators/noise/noise_config.yaml"
-
-    # Use default path if no argument provided but default file exists
-    if not noise_config_path and os.path.exists(default_noise_config):
-        noise_config_path = default_noise_config
-
-    if noise_config_path:
-        try:
-            from sregym.generators.noise.manager import get_noise_manager
-
-            nm = get_noise_manager()
-            nm.load_config(noise_config_path)
-            logger.info(f"✅ Noise manager initialized with config: {noise_config_path}")
-        except Exception as e:
-            logger.warning(f"⚠️ Failed to initialize noise manager: {e}")
-
-    # Start dashboard in a separate process
-    dashboard_process = None
-    if not args.use_external_harness:
-        dashboard_process = start_dashboard_process()
 
     conductor = Conductor()
 
@@ -300,21 +202,6 @@ def main(args):
 
         # Give driver a moment to finish setting results
         driver_thread.join(timeout=5)
-
-        # Terminate dashboard process gracefully if it's still running
-        if dashboard_process is not None and dashboard_process.is_alive() and not args.use_external_harness:
-            try:
-                # Send SIGTERM to allow graceful shutdown (triggers _export_on_exit)
-                dashboard_process.terminate()
-                # Give dashboard time to export trace data (export can take a few seconds)
-                dashboard_process.join(timeout=5)
-                # Force kill only if still alive after graceful shutdown timeout
-                if dashboard_process.is_alive():
-                    logger.warning("⚠️  Dashboard process did not exit gracefully, forcing termination...")
-                    dashboard_process.kill()
-                    dashboard_process.join(timeout=1)
-            except Exception as e:
-                logger.error(f"⚠️  Error terminating dashboard process: {e}")
 
     # When API shuts down, collect results from driver
     results = getattr(main, "results", [])

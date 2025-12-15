@@ -8,9 +8,9 @@ from sregym.utils.decorators import mark_fault_injected
 
 class ValkeyMemoryDisruption(Problem):
     def __init__(self):
-        app = AstronomyShop()
-        super().__init__(app=app, namespace=app.namespace)
-
+        self.app = AstronomyShop()
+        self.namespace = self.app.namespace
+        super().__init__(app=self.app, namespace=self.namespace)
         self.faulty_service = "valkey-cart"
         self.kubectl = KubeCtl()
         self.root_cause = "A job is flooding the valkey-cart store with large payloads (10MB each), causing it to enter an out-of-memory (OOM) state."

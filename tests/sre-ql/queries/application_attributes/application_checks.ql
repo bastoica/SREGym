@@ -1,5 +1,5 @@
 /**
- * @id sre-ql.application-load-json-check
+ * @id sre-ql/application-load-json-check
  * @name Application subclass load_app_json call check
  * @description Detects Application subclasses that don't call self.load_app_json() or super().load_app_json().
  * @kind problem

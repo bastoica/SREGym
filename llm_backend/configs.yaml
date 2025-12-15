@@ -76,3 +76,7 @@
   model_name: "azure/gpt-4o"
   api_key: "$AZURE_API_KEY"
   url: "$AZURE_API_BASE"
+
+"bedrock-claude-sonnet-4.5":
+  provider: "litellm"
+  model_name: "bedrock/us.anthropic.claude-sonnet-4-5-20250929-v1:0"

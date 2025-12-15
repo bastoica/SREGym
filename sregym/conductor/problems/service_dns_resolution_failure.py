@@ -23,7 +23,8 @@ class ServiceDNSResolutionFailure(Problem):
         else:
             raise ValueError(f"Unsupported app name: {app_name}")
 
-        super().__init__(app=self.app, namespace=self.app.namespace)
+        self.namespace = self.app.namespace
+        super().__init__(app=self.app, namespace=self.namespace)
 
         self.kubectl = KubeCtl()
         self.root_cause = f"CoreDNS is configured with an NXDOMAIN template for the service `{self.faulty_service}.{self.namespace}.svc.cluster.local`, causing DNS resolution to fail for this service."
