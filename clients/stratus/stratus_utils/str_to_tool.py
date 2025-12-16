@@ -25,9 +25,15 @@ logger = get_logger()
 
 def get_client():
     session_id = str(uuid.uuid4())
+    # Set SSE read timeout to None for unlimited, or a large value in seconds
+    sse_timeout = float(os.getenv("SSE_READ_TIMEOUT", "3600"))  # Default 1 hour
+    if sse_timeout < 0:
+        sse_timeout = None  # Unlimited
+
     transport = SSETransport(
         url=f"{os.getenv("MCP_SERVER_URL", "http://localhost:9954")}/kubectl_mcp_tools/sse",
         headers={"sregym_ssid": session_id},
+        sse_read_timeout=sse_timeout,
     )
     client = Client(transport)
     return client
