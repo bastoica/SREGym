@@ -73,6 +73,15 @@ class ChaosMeshNoise(BaseNoise):
             # Create namespace if not exists
             self.kubectl.exec_command(f"kubectl create ns {self.namespace}")
 
+            # Check if CRDs exist but helm release doesn't (orphaned CRDs)
+            helm_check = self.kubectl.exec_command(f"helm list -n {self.namespace}")
+            crd_check = self.kubectl.exec_command("kubectl get crd | grep chaos-mesh.org")
+
+            if "chaos-mesh" not in helm_check and "chaos-mesh.org" in crd_check:
+                logger.info("Found orphaned Chaos Mesh CRDs. Cleaning up before installation...")
+                print("🧹 Cleaning up orphaned Chaos Mesh CRDs...")
+                self.kubectl.exec_command("kubectl delete crd $(kubectl get crd | grep chaos-mesh.org | awk '{print $1}')")
+
             # Install Chaos Mesh
             # Detect container runtime
             runtime = "docker"
@@ -90,17 +99,19 @@ class ChaosMeshNoise(BaseNoise):
             except:
                 pass
 
+            # Use upgrade --install to handle both install and upgrade cases
+            # This also handles orphaned CRDs from previous installations
             install_cmd = (
-                f"helm install chaos-mesh chaos-mesh/chaos-mesh "
-                f"-n {self.namespace} --version 2.8.0 "
+                f"helm upgrade --install chaos-mesh chaos-mesh/chaos-mesh "
+                f"-n {self.namespace} --create-namespace --version 2.8.0 "
                 f"--set chaosDaemon.runtime={runtime} "
                 f"--set chaosDaemon.socketPath={socket_path}"
             )
-            
+
             logger.info(f"Installing Chaos Mesh with command: {install_cmd}")
             result = self.kubectl.exec_command(install_cmd)
-            
-            if "Error" in result and "already exists" not in result:
+
+            if "Error" in result and "has no deployed releases" not in result:
                 logger.error(f"Failed to install Chaos Mesh: {result}")
                 return
 

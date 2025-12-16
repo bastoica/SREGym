@@ -42,6 +42,12 @@ class ChaosInjector:
         # Check if the release already exists
         release_exists = Helm.exists_release(chaos_configs["release_name"], chaos_configs["namespace"])
         if not release_exists:
+            # Check for orphaned CRDs (CRDs without a helm release)
+            crd_check = self.kubectl.exec_command("kubectl get crd 2>/dev/null | grep chaos-mesh.org || true")
+            if crd_check and "chaos-mesh.org" in crd_check:
+                print("[ChaosInjector] Found orphaned Chaos Mesh CRDs. Cleaning up before installation...")
+                self.kubectl.exec_command("kubectl delete crd $(kubectl get crd | grep chaos-mesh.org | awk '{print $1}') 2>/dev/null || true")
+
             Helm.install(**chaos_configs)
             self.kubectl.wait_for_ready("chaos-mesh")
         else:
