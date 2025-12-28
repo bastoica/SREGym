@@ -38,12 +38,10 @@ def get_metrics(query: str, ctx: Context) -> str:
         
     noise_manager.on_tool_call("prometheus", query, ssid)
 
-    prometheus_port = os.environ.get("PROMETHEUS_PORT", None)
-    if prometheus_port is None:
-        err_msg = "PROMETHEUS_PORT environment variable is not set!"
-        logger.error(err_msg)
-        raise RuntimeError(err_msg)
-    prometheus_url = "http://localhost:" + os.environ["PROMETHEUS_PORT"]
+    # Use default port 9090 if PROMETHEUS_PORT is not set
+    # This handles cases where port forwarding cleanup fails or hasn't been set up yet
+    prometheus_port = os.environ.get("PROMETHEUS_PORT", "9090")
+    prometheus_url = f"http://localhost:{prometheus_port}"
     observability_client = ObservabilityClient(prometheus_url)
     try:
         url = f"{prometheus_url}/api/v1/query"
