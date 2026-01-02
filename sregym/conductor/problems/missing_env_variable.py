@@ -12,18 +12,17 @@ class MissingEnvVariable(Problem):
         self.faulty_service = faulty_service
         self.app_name = app_name
 
-        if self.app_name == "astronomy_shop":
-            self.app = AstronomyShop()
-            self.env_var = "CART_ADDR"
-            self.env_var_value = "cart:8080"
-            self.root_cause = (
-                f"The deployment `{self.faulty_service}` is missing the environment variable `{self.env_var}`."
-            )
-        else:
-            raise ValueError(f"Unsupported app name: {app_name}")
+        if self.app_name != "astronomy_shop":
+            raise ValueError
 
+        self.app = AstronomyShop()
         self.namespace = self.app.namespace
         super().__init__(app=self.app, namespace=self.namespace)
+        self.env_var = "CART_ADDR"
+        self.env_var_value = "cart:8080"
+        self.root_cause = (
+            f"The deployment `{self.faulty_service}` is missing the environment variable `{self.env_var}`."
+        )
 
         self.kubectl = KubeCtl()
         self.diagnosis_oracle = LLMAsAJudgeOracle(problem=self, expected=self.root_cause)
