@@ -90,19 +90,14 @@ class ClaudeCodeAgent:
         if not candidate_files:
             return None
 
-        candidate_dirs = sorted(
-            {f.parent for f in candidate_files if f.parent.is_dir()}
-        )
+        candidate_dirs = sorted({f.parent for f in candidate_files if f.parent.is_dir()})
         if not candidate_dirs:
             return None
 
         if len(candidate_dirs) == 1:
             return candidate_dirs[0]
 
-        logger.warning(
-            "Multiple Claude Code session directories found; "
-            "could not identify the correct one"
-        )
+        logger.warning("Multiple Claude Code session directories found; " "could not identify the correct one")
         return None
 
     def get_usage_metrics(self) -> dict[str, int]:
@@ -182,6 +177,15 @@ class ClaudeCodeAgent:
         # Extract model name (remove provider prefix if present)
         model = self.model_name.split("/")[-1]
 
+        # Default to "sonnet" if model name contains non-Anthropic provider patterns
+        invalid_patterns = ["bedrock", "litellm", "azure", "openai", "watsonx", "gemini"]
+        if any(pattern in model.lower() for pattern in invalid_patterns):
+            logger.warning(
+                f"Model '{model}' appears to be for a non-Anthropic provider. "
+                f"Defaulting to 'sonnet' for Claude Code."
+            )
+            model = "sonnet"
+
         logger.info(f"Running Claude Code with instruction: {instruction}")
         logger.info(f"Using model: {model}")
 
@@ -198,13 +202,19 @@ class ClaudeCodeAgent:
         api_key = os.environ.get("ANTHROPIC_API_KEY", "")
         oauth_token = os.environ.get("CLAUDE_CODE_OAUTH_TOKEN", "")
 
+        if not api_key and not oauth_token:
+            logger.error("=" * 80)
+            logger.error("ERROR: No Anthropic API authentication found")
+            logger.error("Please set one of the following environment variables:")
+            logger.error("  - ANTHROPIC_API_KEY")
+            logger.error("  - CLAUDE_CODE_OAUTH_TOKEN")
+            logger.error("=" * 80)
+            return 1
+
         if api_key:
             env["ANTHROPIC_API_KEY"] = api_key
         if oauth_token:
             env["CLAUDE_CODE_OAUTH_TOKEN"] = oauth_token
-
-        if not api_key and not oauth_token:
-            logger.warning("Neither ANTHROPIC_API_KEY nor CLAUDE_CODE_OAUTH_TOKEN set")
 
         # Set model name
         env["ANTHROPIC_MODEL"] = model
