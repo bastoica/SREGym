@@ -88,7 +88,9 @@ class TiDBClusterDeployer:
         print(f"Installing/upgrading TiDB Operator via Helm in namespace '{self.operator_namespace}'...")
         self.create_namespace(self.operator_namespace)
         self.run_cmd("helm repo add pingcap https://charts.pingcap.org || true")
-        self.run_cmd("helm repo update")
+        # Use || true to ignore repo update failures - charts are already cached
+        # and transient DNS issues shouldn't block deployment
+        self.run_cmd("helm repo update || true")
 
         values_arg = ""
         if self.operator_values_path:
