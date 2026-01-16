@@ -17,6 +17,7 @@ from sregym.service.apps.app_registry import AppRegistry
 from sregym.service.cluster_state import ClusterStateManager
 from sregym.service.dm_dust_manager import DmDustManager
 from sregym.service.dm_flakey_manager import DmFlakeyManager
+from sregym.service.k8s_proxy import KubernetesAPIProxy
 from sregym.service.khaos import KhaosController
 from sregym.service.kubectl import KubeCtl
 from sregym.service.telemetry.prometheus import Prometheus
@@ -36,6 +37,13 @@ class Conductor:
         self.dm_flakey_manager = DmFlakeyManager(self.kubectl)
         self.cluster_state = ClusterStateManager(self.kubectl)
         self._baseline_captured = False
+
+        # Kubernetes API proxy to hide chaos engineering namespaces from agents
+        self.k8s_proxy = KubernetesAPIProxy(
+            hidden_namespaces={"chaos-mesh", "khaos"},
+            listen_port=16443,
+        )
+        self._agent_kubeconfig_path: str | None = None
 
         self.problem = None
         self.detection_oracle = None
@@ -61,6 +69,29 @@ class Conductor:
 
     def register_agent(self, name="agent"):
         self.agent_name = name
+
+    def start_k8s_proxy(self):
+        """
+        Start the Kubernetes API proxy that hides chaos engineering namespaces.
+        Should be called before launching agents.
+        """
+        self.local_logger.info("Starting Kubernetes API filtering proxy...")
+        self.k8s_proxy.start()
+        self._agent_kubeconfig_path = self.k8s_proxy.generate_agent_kubeconfig()
+        self.local_logger.info(f"Agent kubeconfig generated at: {self._agent_kubeconfig_path}")
+
+    def stop_k8s_proxy(self):
+        """Stop the Kubernetes API proxy."""
+        self.local_logger.info("Stopping Kubernetes API filtering proxy...")
+        self.k8s_proxy.stop()
+        self._agent_kubeconfig_path = None
+
+    def get_agent_kubeconfig_path(self) -> str | None:
+        """
+        Get the path to the kubeconfig file that agents should use.
+        This kubeconfig points to the filtering proxy that hides chaos namespaces.
+        """
+        return self._agent_kubeconfig_path
 
     def dependency_check(self, binaries: list[str]):
         for b in binaries:
