@@ -159,6 +159,14 @@ dependencies = [
     "locust>=2.42.3",
 ]
 
+[tool.black]
+line-length = 120
+target-version = ["py312"]
+
+[tool.isort]
+profile = "black"
+line_length = 120
+
 [tool.ruff]
 line-length = 120
 target-version = "py312"
