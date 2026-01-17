@@ -23,7 +23,7 @@ class MitigationAgent(BaseAgent):
         self.tool_node = None
         self.max_step = kwargs.get("max_step", 20)
         self.loop_count = 0
-        self.local_logger = logging.getLogger("all.stratus.mitigation")
+        self.logger = logging.getLogger("all.stratus.mitigation")
 
     def build_agent(self):
         self.tool_node = StratusToolNode(async_tools=self.async_tools, sync_tools=self.sync_tools)
