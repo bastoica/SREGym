@@ -150,9 +150,9 @@ class ProblemRegistry:
             # ==================== OPENTELEMETRY FAULT INJECTOR ====================
             "astronomy_shop_ad_service_failure": AdServiceFailure,
             "astronomy_shop_ad_service_high_cpu": AdServiceHighCpu,
+            "astronomy_shop_ad_service_image_slow_load": ImageSlowLoad,
             "astronomy_shop_ad_service_manual_gc": AdServiceManualGc,
             "astronomy_shop_cart_service_failure": CartServiceFailure,
-            "astronomy_shop_ad_service_image_slow_load": ImageSlowLoad,
             "astronomy_shop_email_memory_leak": EmailMemoryLeak,
             "astronomy_shop_llm_inaccurate_response": LlmInaccurateResponse,
             "astronomy_shop_llm_rate_limit_error": LlmRateLimitError,
