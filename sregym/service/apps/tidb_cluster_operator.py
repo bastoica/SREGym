@@ -5,14 +5,13 @@ import time
 from pathlib import Path
 from textwrap import dedent
 
-from sregym.observer import tidb_prometheus
 from sregym.paths import BASE_DIR
 from sregym.service.helm import Helm
 
 
 class TiDBClusterDeployer:
     def __init__(self, metadata_path):
-        with open(metadata_path, "r") as f:
+        with open(metadata_path) as f:
             self.metadata = json.load(f)
 
         self.name = self.metadata["Name"]
@@ -54,15 +53,6 @@ class TiDBClusterDeployer:
     def install_crds(self):
         print(f"Installing CRDs from {self.operator_crd_url} ...")
         self.run_cmd(f"kubectl create -f {self.operator_crd_url} || kubectl replace -f {self.operator_crd_url}")
-
-    def install_local_path_provisioner(self):
-        print("Installing local-path provisioner for dynamic volume provisioning...")
-        self.run_cmd(
-            "kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml"
-        )
-        self.run_cmd(
-            'kubectl patch storageclass local-path -p \'{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}\''
-        )
 
     def apply_prometheus(self):
         ns = "observe"
@@ -166,7 +156,6 @@ SQL"
         self.run_cmd(f"kubectl -n {ns} delete pod/mysql-client --wait=false || true")
 
     def init_schema_and_seed(self):
-
         print("Initializing schema and seeding data in satellite_sim ...")
         sql = """
         CREATE DATABASE IF NOT EXISTS satellite_sim;
@@ -294,7 +283,6 @@ SQL"
     def deploy_all(self):
         print(f"----------Starting deployment: {self.name}")
         self.create_namespace(self.namespace_tidb_cluster)
-        self.install_local_path_provisioner()
         self.install_crds()
         self.install_operator_with_values()
         self.wait_for_operator_ready()
