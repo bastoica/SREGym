@@ -4,7 +4,6 @@ import hashlib
 import json
 import logging
 from dataclasses import dataclass, field
-from typing import Dict, Set
 
 from kubernetes import client
 from kubernetes.client.rest import ApiException
@@ -35,15 +34,17 @@ PROTECTED_NAMESPACES = frozenset(
 class ClusterBaseline:
     """Snapshot of cluster state to reconcile back to."""
 
-    namespaces: Set[str] = field(default_factory=set)
-    cluster_roles: Set[str] = field(default_factory=set)
-    cluster_role_bindings: Set[str] = field(default_factory=set)
-    persistent_volumes: Set[str] = field(default_factory=set)
-    storage_classes: Set[str] = field(default_factory=set)
-    crds: Set[str] = field(default_factory=set)
-    node_labels: Dict[str, Dict[str, str]] = field(default_factory=dict)
-    node_taints: Dict[str, list] = field(default_factory=dict)
-    coredns_configmap_data: Dict[str, str] = field(default_factory=dict)
+    namespaces: set[str] = field(default_factory=set)
+    cluster_roles: set[str] = field(default_factory=set)
+    cluster_role_bindings: set[str] = field(default_factory=set)
+    persistent_volumes: set[str] = field(default_factory=set)
+    storage_classes: set[str] = field(default_factory=set)
+    crds: set[str] = field(default_factory=set)
+    validating_webhook_configs: set[str] = field(default_factory=set)
+    mutating_webhook_configs: set[str] = field(default_factory=set)
+    node_labels: dict[str, dict[str, str]] = field(default_factory=dict)
+    node_taints: dict[str, list] = field(default_factory=dict)
+    coredns_configmap_data: dict[str, str] = field(default_factory=dict)
 
     def to_dict(self) -> dict:
         """Serialize baseline to a dictionary for logging/debugging."""
@@ -54,6 +55,8 @@ class ClusterBaseline:
             "persistent_volumes": sorted(self.persistent_volumes),
             "storage_classes": sorted(self.storage_classes),
             "crds": sorted(self.crds),
+            "validating_webhook_configs": sorted(self.validating_webhook_configs),
+            "mutating_webhook_configs": sorted(self.mutating_webhook_configs),
             "node_labels": self.node_labels,
             "node_taints": self.node_taints,
             "coredns_configmap_hash": hashlib.md5(
@@ -74,6 +77,7 @@ class ClusterStateManager:
         self.rbac_v1 = client.RbacAuthorizationV1Api()
         self.storage_v1 = client.StorageV1Api()
         self.apiextensions_v1 = client.ApiextensionsV1Api()
+        self.admission_v1 = client.AdmissionregistrationV1Api()
 
     def capture_baseline(self) -> ClusterBaseline:
         """
@@ -89,6 +93,8 @@ class ClusterStateManager:
             persistent_volumes=self._get_persistent_volumes(),
             storage_classes=self._get_storage_classes(),
             crds=self._get_crds(),
+            validating_webhook_configs=self._get_validating_webhook_configs(),
+            mutating_webhook_configs=self._get_mutating_webhook_configs(),
             node_labels=self._get_node_labels(),
             node_taints=self._get_node_taints(),
             coredns_configmap_data=self._get_coredns_configmap_data(),
@@ -114,6 +120,8 @@ class ClusterStateManager:
             "persistent_volumes_deleted": [],
             "storage_classes_deleted": [],
             "crds_deleted": [],
+            "validating_webhook_configs_deleted": [],
+            "mutating_webhook_configs_deleted": [],
             "nodes_labels_reset": [],
             "nodes_taints_reset": [],
             "coredns_reset": False,
@@ -195,13 +203,37 @@ class ClusterStateManager:
                 if e.status != 404:
                     logger.warning(f"Failed to delete CRD {crd}: {e}")
 
-        # 7. Reset node labels
+        # 7. Delete unexpected ValidatingWebhookConfigurations
+        current_vwc = self._get_validating_webhook_configs()
+        unexpected_vwc = current_vwc - self.baseline.validating_webhook_configs
+        for vwc in unexpected_vwc:
+            logger.info(f"Deleting unexpected ValidatingWebhookConfiguration: {vwc}")
+            try:
+                self.admission_v1.delete_validating_webhook_configuration(name=vwc)
+                changes["validating_webhook_configs_deleted"].append(vwc)
+            except ApiException as e:
+                if e.status != 404:
+                    logger.warning(f"Failed to delete ValidatingWebhookConfiguration {vwc}: {e}")
+
+        # 8. Delete unexpected MutatingWebhookConfigurations
+        current_mwc = self._get_mutating_webhook_configs()
+        unexpected_mwc = current_mwc - self.baseline.mutating_webhook_configs
+        for mwc in unexpected_mwc:
+            logger.info(f"Deleting unexpected MutatingWebhookConfiguration: {mwc}")
+            try:
+                self.admission_v1.delete_mutating_webhook_configuration(name=mwc)
+                changes["mutating_webhook_configs_deleted"].append(mwc)
+            except ApiException as e:
+                if e.status != 404:
+                    logger.warning(f"Failed to delete MutatingWebhookConfiguration {mwc}: {e}")
+
+        # 9. Reset node labels
         changes["nodes_labels_reset"] = self._reconcile_node_labels()
 
-        # 8. Reset node taints
+        # 10. Reset node taints
         changes["nodes_taints_reset"] = self._reconcile_node_taints()
 
-        # 9. Reset CoreDNS ConfigMap if modified
+        # 11. Reset CoreDNS ConfigMap if modified
         if self._is_coredns_modified():
             logger.info("Resetting CoreDNS ConfigMap to baseline")
             self._restore_coredns_configmap()
@@ -210,7 +242,7 @@ class ClusterStateManager:
         logger.info(f"Reconciliation complete: {changes}")
         return changes
 
-    def _get_namespaces(self) -> Set[str]:
+    def _get_namespaces(self) -> set[str]:
         """Get all namespace names in the cluster."""
         try:
             ns_list = self.core_v1.list_namespace()
@@ -219,7 +251,7 @@ class ClusterStateManager:
             logger.error(f"Failed to list namespaces: {e}")
             return set()
 
-    def _get_cluster_roles(self) -> Set[str]:
+    def _get_cluster_roles(self) -> set[str]:
         """Get all ClusterRole names."""
         try:
             roles = self.rbac_v1.list_cluster_role()
@@ -228,7 +260,7 @@ class ClusterStateManager:
             logger.error(f"Failed to list ClusterRoles: {e}")
             return set()
 
-    def _get_cluster_role_bindings(self) -> Set[str]:
+    def _get_cluster_role_bindings(self) -> set[str]:
         """Get all ClusterRoleBinding names."""
         try:
             bindings = self.rbac_v1.list_cluster_role_binding()
@@ -237,7 +269,7 @@ class ClusterStateManager:
             logger.error(f"Failed to list ClusterRoleBindings: {e}")
             return set()
 
-    def _get_persistent_volumes(self) -> Set[str]:
+    def _get_persistent_volumes(self) -> set[str]:
         """Get all PersistentVolume names."""
         try:
             pvs = self.core_v1.list_persistent_volume()
@@ -246,7 +278,7 @@ class ClusterStateManager:
             logger.error(f"Failed to list PersistentVolumes: {e}")
             return set()
 
-    def _get_storage_classes(self) -> Set[str]:
+    def _get_storage_classes(self) -> set[str]:
         """Get all StorageClass names."""
         try:
             scs = self.storage_v1.list_storage_class()
@@ -255,7 +287,7 @@ class ClusterStateManager:
             logger.error(f"Failed to list StorageClasses: {e}")
             return set()
 
-    def _get_crds(self) -> Set[str]:
+    def _get_crds(self) -> set[str]:
         """Get all CustomResourceDefinition names."""
         try:
             crds = self.apiextensions_v1.list_custom_resource_definition()
@@ -264,7 +296,25 @@ class ClusterStateManager:
             logger.error(f"Failed to list CRDs: {e}")
             return set()
 
-    def _get_node_labels(self) -> Dict[str, Dict[str, str]]:
+    def _get_validating_webhook_configs(self) -> set[str]:
+        """Get all ValidatingWebhookConfiguration names."""
+        try:
+            configs = self.admission_v1.list_validating_webhook_configuration()
+            return {cfg.metadata.name for cfg in configs.items}
+        except ApiException as e:
+            logger.error(f"Failed to list ValidatingWebhookConfigurations: {e}")
+            return set()
+
+    def _get_mutating_webhook_configs(self) -> set[str]:
+        """Get all MutatingWebhookConfiguration names."""
+        try:
+            configs = self.admission_v1.list_mutating_webhook_configuration()
+            return {cfg.metadata.name for cfg in configs.items}
+        except ApiException as e:
+            logger.error(f"Failed to list MutatingWebhookConfigurations: {e}")
+            return set()
+
+    def _get_node_labels(self) -> dict[str, dict[str, str]]:
         """Get labels for all nodes."""
         try:
             nodes = self.core_v1.list_node()
@@ -273,7 +323,7 @@ class ClusterStateManager:
             logger.error(f"Failed to get node labels: {e}")
             return {}
 
-    def _get_node_taints(self) -> Dict[str, list]:
+    def _get_node_taints(self) -> dict[str, list]:
         """Get taints for all nodes."""
         try:
             nodes = self.core_v1.list_node()
@@ -287,7 +337,7 @@ class ClusterStateManager:
             logger.error(f"Failed to get node taints: {e}")
             return {}
 
-    def _get_coredns_configmap_data(self) -> Dict[str, str]:
+    def _get_coredns_configmap_data(self) -> dict[str, str]:
         """Get CoreDNS ConfigMap data."""
         try:
             cm = self.core_v1.read_namespaced_config_map(name="coredns", namespace="kube-system")
